@@ -49,15 +49,30 @@
   /* BANKS SCROLL */
   .banks-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .banks-scroll::-webkit-scrollbar { display: none; }
-  .bank-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; min-width: 150px; cursor: pointer; transition: border-color 0.15s; }
-  .bank-chip:active { border-color: var(--border2); }
-  .bank-chip.add { border-style: dashed; min-width: 80px; justify-content: center; color: var(--text3); font-size: 12px; }
-  .bank-logo-wrap { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
-  .bank-logo-wrap img { width: 36px; height: 36px; object-fit: cover; display: block; }
-  .bank-chip-info { flex: 1; min-width: 0; }
-  .bank-chip-name { font-size: 11px; color: var(--text3); }
-  .bank-chip-amt { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); margin-top: 2px; }
-  .bank-chip-upd { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  /* bank cards expandibles */
+  .bcard { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; transition: border-color 0.15s; }
+  .bcard.open { border-color: var(--border2); }
+  .bcard-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
+  .bcard-head:active { background: var(--bg3); }
+  .bcard-logo { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .bcard-info { flex: 1; }
+  .bcard-name { font-size: 11px; color: var(--text3); }
+  .bcard-total { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); margin-top: 1px; }
+  .bcard-chevron { font-size: 14px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
+  .bcard.open .bcard-chevron { transform: rotate(90deg); }
+  .bcard-sub { display: none; border-top: 1px solid var(--border); padding: 6px 12px 8px; background: var(--bg2); }
+  .bcard.open .bcard-sub { display: block; }
+  .sub-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+  .sub-row:last-child { border-bottom: none; }
+  .sub-tag { font-size: 8px; padding: 1px 6px; border-radius: 4px; font-weight: 500; width: 24px; text-align: center; flex-shrink: 0; }
+  .sub-tag-cc { background: rgba(96,165,250,0.15); color: var(--blue); }
+  .sub-tag-lc { background: rgba(251,191,36,0.15); color: var(--amber); }
+  .sub-tag-tc { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .sub-sep { font-size: 9px; color: var(--text3); flex-shrink: 0; }
+  .sub-vals { display: flex; align-items: baseline; gap: 4px; }
+  .sub-disp { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--text); }
+  .sub-aprobado { font-family: 'DM Mono', monospace; font-size: 9px; color: var(--text3); }
+  .bank-add { border: 1px dashed var(--border); border-radius: var(--radius); padding: 10px 12px; text-align: center; font-size: 12px; color: var(--text3); cursor: pointer; margin-bottom: 8px; }
 
   /* ALERTS */
   .alert-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid transparent; }
@@ -254,7 +269,7 @@
     </div>
     <div class="section">
       <div class="section-label">Por banco</div>
-      <div class="banks-scroll" id="bank-grid"></div>
+      <div id="bank-grid"></div>
     </div>
     <div class="divider"></div>
     <div class="section">
@@ -414,6 +429,20 @@ const PRESUPUESTOS = {
   'Tecnología':      100000,
   'Ropa y hogar':    150000,
   'Otros':           200000,
+};
+
+
+// Productos por banco: LC, CC, TC (null = no tiene)
+const BANK_PRODUCTS = {
+  'Security':         ['LC','CC','TC'],
+  'Banco Security':   ['LC','CC','TC'],
+  'BCI':              ['LC','CC','TC'],
+  'Itaú':             ['LC','CC','TC'],
+  'Consorcio':        ['LC','CC','TC'],
+  'Mercado Pago':     ['CC'],
+  'BICE':             ['CC'],
+  'BICE Hipotecaria': ['CC'],
+  'Banco Falabella':  ['CC'],
 };
 
 // Propiedades (datos fijos — actualiza con tus datos reales)
@@ -651,18 +680,46 @@ function renderHome() {
     const saldoInicial = toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
     const saldoReal    = saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
     totalSaldoInicial += saldoInicial;
-    const style   = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
-    const logoHtml = `<div style="width:36px;height:36px;border-radius:8px;background:${style.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:${style.text.length>2?'9':'11'}px;font-weight:700;color:${style.color};letter-spacing:-0.5px;">${style.text}</span></div>`;
+    const style    = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
+    const logoHtml = `<div class="bcard-logo" style="background:${style.bg};"><span style="font-size:${style.text.length>2?'8':'11'}px;font-weight:700;color:${style.color};">${style.text}</span></div>`;
+    const productos = BANK_PRODUCTS[banco] || ['CC'];
+
+    // Generar sub-filas de productos
+    const subRows = productos.map(prod => {
+      const key_disp = `${banco}_${prod}_disp`;
+      const key_apro = `${banco}_${prod}_apro`;
+      const disp = toNum(s[key_disp]) || (prod === 'CC' ? saldoReal : 0);
+      const apro = toNum(s[key_apro]) || 0;
+      const tagClass = prod === 'CC' ? 'sub-tag-cc' : prod === 'LC' ? 'sub-tag-lc' : 'sub-tag-tc';
+      const aprobadoHtml = apro > 0
+        ? `<span class="sub-aprobado">($${Math.round(apro).toLocaleString('es-CL')})</span>`
+        : '';
+      return `
+        <div class="sub-row">
+          <span class="sub-tag ${tagClass}">${prod}</span>
+          <span class="sub-sep">:</span>
+          <div class="sub-vals">
+            <span class="sub-disp">$${Math.round(disp).toLocaleString('es-CL')}</span>
+            ${aprobadoHtml}
+          </div>
+        </div>`;
+    }).join('');
+
+    const cardId = 'bcard-' + banco.replace(/[^a-zA-Z0-9]/g,'_');
     bankGrid.innerHTML += `
-      <div class="bank-chip" onclick="abrirModalSaldo()">
-        ${logoHtml}
-        <div class="bank-chip-info">
-          <div class="bank-chip-name">${banco}</div>
-          <div class="bank-chip-amt">$${Math.round(saldoReal).toLocaleString('es-CL')}</div>
+      <div class="bcard" id="${cardId}">
+        <div class="bcard-head" onclick="toggleBcard('${cardId}')">
+          ${logoHtml}
+          <div class="bcard-info">
+            <div class="bcard-name">${banco}</div>
+            <div class="bcard-total">$${Math.round(saldoReal).toLocaleString('es-CL')}</div>
+          </div>
+          <span class="bcard-chevron">›</span>
         </div>
+        <div class="bcard-sub">${subRows}</div>
       </div>`;
   });
-  bankGrid.innerHTML += `<div class="bank-chip add" onclick="abrirModalSaldo()">+ actualizar</div>`;
+  bankGrid.innerHTML += `<div class="bank-add" onclick="abrirModalSaldo()">+ actualizar saldos</div>`;
 
   // Total real
   const totalReal = totalSaldoInicial + ingMes - gasMes;
@@ -1116,16 +1173,58 @@ function abrirModalSaldo() {
     if (!banco) return '';
     const saldoActual = toNum(s[mesKey] || s['Saldo'] || 0);
     const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
+    const productos = BANK_PRODUCTS[banco] || ['CC'];
     const inputId = 'inp-' + banco.replace(/[^a-zA-Z0-9]/g,'_');
-    const valorMostrar = saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '';
+    const valorCC = saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '';
+
+    // Generar inputs por producto
+    let inputsHtml = '';
+    productos.forEach(prod => {
+      const pid = `inp_${banco.replace(/[^a-zA-Z0-9]/g,'_')}_${prod}`;
+      const keyDisp = `${banco}_${prod}_disp`;
+      const keyApro = `${banco}_${prod}_apro`;
+      const tagClass = prod === 'CC' ? '#185FA5' : prod === 'LC' ? '#BA7517' : '#7F77DD';
+      const dispVal = prod === 'CC'
+        ? (saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '')
+        : (toNum(s[keyDisp]) > 0 ? Math.round(toNum(s[keyDisp])).toLocaleString('es-CL') : '');
+      const aproVal = toNum(s[keyApro]) > 0 ? Math.round(toNum(s[keyApro])).toLocaleString('es-CL') : '';
+
+      if (prod === 'CC') {
+        inputsHtml += `
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">
+            <span style="font-size:8px;padding:1px 5px;border-radius:4px;font-weight:500;background:rgba(96,165,250,0.15);color:var(--blue);width:24px;text-align:center;">CC</span>
+            <span style="font-size:11px;color:var(--text2);flex:1;">Saldo</span>
+            <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_disp"
+              placeholder="0" value="${dispVal}" oninput="formatSaldoInput(this)" style="width:100px;">
+          </div>`;
+      } else {
+        inputsHtml += `
+          <div style="border-bottom:1px solid var(--border);padding:5px 0;">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+              <span style="font-size:8px;padding:1px 5px;border-radius:4px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);width:24px;text-align:center;${prod==='TC'?'background:rgba(167,139,250,0.15);color:var(--purple);':''}">${prod}</span>
+              <span style="font-size:11px;color:var(--text2);flex:1;">Disponible</span>
+              <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_disp"
+                placeholder="0" value="${dispVal}" oninput="formatSaldoInput(this)" style="width:100px;">
+            </div>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <span style="width:24px;"></span>
+              <span style="font-size:11px;color:var(--text3);flex:1;">Aprobado</span>
+              <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_apro"
+                placeholder="0" value="${aproVal}" oninput="formatSaldoInput(this)" style="width:100px;">
+            </div>
+          </div>`;
+      }
+    });
+
     return `
-      <div class="saldo-input-row">
-        <div class="saldo-bank-badge" style="background:${style.bg};">
-          <span style="font-size:${style.text.length>2?'8':'10'}px;font-weight:700;color:${style.color};">${style.text}</span>
+      <div class="saldo-input-row" style="flex-direction:column;align-items:stretch;gap:0;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+          <div class="saldo-bank-badge" style="background:${style.bg};">
+            <span style="font-size:${style.text.length>2?'8':'10'}px;font-weight:700;color:${style.color};">${style.text}</span>
+          </div>
+          <span class="saldo-bank-name">${banco}</span>
         </div>
-        <span class="saldo-bank-name">${banco}</span>
-        <input class="saldo-bank-input" type="text" inputmode="numeric" id="${inputId}"
-          placeholder="0" value="${valorMostrar}" oninput="formatSaldoInput(this)">
+        ${inputsHtml}
       </div>`;
   }).join('');
 
@@ -1152,14 +1251,26 @@ async function guardarSaldos() {
   DATA.saldos.forEach(s => {
     const banco = (s['Banco'] || '').trim();
     if (!banco) return;
-    const inp = document.getElementById('inp-' + banco.replace(/[^a-zA-Z0-9]/g,'_'));
-    if (!inp) return;
-    const val = parseInt(inp.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
-    if (val > 0) {
-      s[mesKey] = val;
-      s['Saldo'] = val;
-      s['Fecha actualización'] = hoyFmt;  // siempre formato dd/MM/yyyy
-    }
+    const productos = BANK_PRODUCTS[banco] || ['CC'];
+    productos.forEach(prod => {
+      const pid = `inp_${banco.replace(/[^a-zA-Z0-9]/g,'_')}_${prod}`;
+      const inpDisp = document.getElementById(pid + '_disp');
+      if (inpDisp) {
+        const val = parseInt(inpDisp.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
+        if (val > 0) {
+          s[`${banco}_${prod}_disp`] = val;
+          if (prod === 'CC') { s[mesKey] = val; s['Saldo'] = val; }
+        }
+      }
+      if (prod !== 'CC') {
+        const inpApro = document.getElementById(pid + '_apro');
+        if (inpApro) {
+          const val = parseInt(inpApro.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
+          if (val > 0) s[`${banco}_${prod}_apro`] = val;
+        }
+      }
+    });
+    s['Fecha actualización'] = hoyFmt;
   });
 
   // Guardar en Sheets via API
@@ -1187,6 +1298,11 @@ async function guardarSaldos() {
 document.getElementById('modal-saldo').addEventListener('click', function(e) {
   if (e.target === this) cerrarModal();
 });
+
+function toggleBcard(id) {
+  const card = document.getElementById(id);
+  if (card) card.classList.toggle('open');
+}
 
 // ── PIN LOCK ─────────────────────────────────────────────────
 const PIN_KEY      = 'fp_pin_hash';
