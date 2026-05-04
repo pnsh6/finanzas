@@ -463,19 +463,26 @@ function renderTodo() {
 }
 
 // ── HELPERS ──────────────────────────────────────────────────
+function parseFecha(str) {
+  // Soporta: "dd/MM/yyyy", "Thu Mar 05 2026 ...", objeto Date serializado
+  if (!str) return null;
+  const s = str.trim();
+  // formato dd/MM/yyyy
+  const m1 = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (m1) return new Date(+m1[3], +m1[2]-1, +m1[1]);
+  // formato largo JS o ISO
+  const d = new Date(s);
+  return isNaN(d) ? null : d;
+}
+
 function movsMes() {
   const now  = new Date();
-  const mm   = String(now.getMonth()+1).padStart(2,'0');
-  const yyyy = String(now.getFullYear());
+  const mm   = now.getMonth();   // 0-indexed
+  const yyyy = now.getFullYear();
   return DATA.movimientos.filter(m => {
-    const f = String(m['Fecha'] || '').trim();
-    if (!f) return false;
-    // formato dd/MM/yyyy  →  partes[1] = MM, partes[2] = yyyy
-    const partes = f.split('/');
-    if (partes.length === 3) {
-      return partes[1].padStart(2,'0') === mm && partes[2] === yyyy;
-    }
-    return false;
+    const d = parseFecha(m['Fecha']);
+    if (!d) return false;
+    return d.getMonth() === mm && d.getFullYear() === yyyy;
   });
 }
 
