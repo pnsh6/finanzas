@@ -464,19 +464,28 @@ function renderTodo() {
 
 // ── HELPERS ──────────────────────────────────────────────────
 function movsMes() {
-  const now = new Date();
-  const mm = String(now.getMonth()+1).padStart(2,'0');
-  const yyyy = now.getFullYear();
+  const now  = new Date();
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const yyyy = String(now.getFullYear());
   return DATA.movimientos.filter(m => {
-    const f = m['Fecha'] || '';
-    // formato dd/MM/yyyy
-    return f.endsWith(`/${mm}/${yyyy}`) || f.slice(3,10) === `${mm}/${yyyy}`;
+    const f = String(m['Fecha'] || '').trim();
+    if (!f) return false;
+    // formato dd/MM/yyyy  →  partes[1] = MM, partes[2] = yyyy
+    const partes = f.split('/');
+    if (partes.length === 3) {
+      return partes[1].padStart(2,'0') === mm && partes[2] === yyyy;
+    }
+    return false;
   });
 }
 
 function toNum(str) {
-  if (!str) return 0;
-  return parseFloat(str.toString().replace(/[^\d,.-]/g,'').replace(',','.')) || 0;
+  if (!str || str === '#ERROR!' || str === '#N/A') return 0;
+  const limpio = str.toString().trim()
+    .replace(/\./g,'')      // quitar puntos de miles
+    .replace(',','.')        // coma decimal → punto
+    .replace(/[^\d.-]/g,''); // dejar solo dígitos, punto y guión
+  return parseFloat(limpio) || 0;
 }
 
 function fmt(n) {
@@ -670,6 +679,7 @@ function txnRow(m) {
   const [cbg, cfg] = colorCat(cat);
   const esIngreso = m['Tipo'] === 'ingreso';
   const monto = toNum(m['Monto']);
+  // Usar Tipo para signo — ignora columna Signo que puede tener #ERROR!
   const signo = esIngreso ? '+' : '-';
   const color = esIngreso ? 'var(--green)' : 'var(--red)';
   const cuotas = (m['Subtipo'] || '').includes('cuotas');
@@ -892,6 +902,67 @@ function mostrarError(errId, loadId, titulo, msg) {
       <div class="error-msg">${msg}</div>
       <div class="retry-btn" onclick="location.reload()">↺ Reintentar</div>
     </div>`;
+}
+
+function toggleDebug() {
+  const panel = document.getElementById('debug-panel');
+  if (panel.style.display === 'none') {
+    panel.style.display = 'block';
+    runDebug();
+  } else {
+    panel.style.display = 'none';
+  }
+}
+
+function runDebug() {
+  const panel = document.getElementById('debug-panel');
+  const now = new Date();
+  const mm = String(now.getMonth()+1).padStart(2,'0');
+  const yyyy = String(now.getFullYear());
+
+  let html = '';
+  html += `<b>Fecha hoy:</b> ${now.toLocaleDateString('es-CL')} → filtro: ${mm}/${yyyy}<br>`;
+  html += `<b>Total movimientos en DATA:</b> ${DATA.movimientos.length}<br>`;
+  html += `<b>Total saldos en DATA:</b> ${DATA.saldos.length}<br><br>`;
+
+  if (DATA.movimientos.length === 0) {
+    html += '<span style="color:var(--red)">⚠ DATA.movimientos está vacío — problema en la carga</span><br>';
+  } else {
+    // Mostrar primeras 3 filas raw
+    html += '<b>Primeras 3 filas (raw):</b><br>';
+    DATA.movimientos.slice(0,3).forEach((m,i) => {
+      const f = String(m['Fecha']||'').trim();
+      const partes = f.split('/');
+      const mesOk = partes.length===3 && partes[1].padStart(2,'0')===mm && partes[2]===yyyy;
+      html += `[${i+1}] Fecha:"${f}" Banco:"${m['Banco']}" Tipo:"${m['Tipo']}" Monto:"${m['Monto']}" → mes ok: ${mesOk}<br>`;
+    });
+
+    const delMes = movsMes();
+    html += `<br><b>Movimientos del mes (${mm}/${yyyy}):</b> ${delMes.length}<br>`;
+
+    if (delMes.length === 0) {
+      html += '<span style="color:var(--amber)">⚠ No hay movimientos para este mes — revisar fechas</span><br>';
+      // Mostrar todas las fechas distintas
+      const fechas = [...new Set(DATA.movimientos.map(m => m['Fecha']))];
+      html += `<br><b>Fechas disponibles:</b> ${fechas.join(', ')}<br>`;
+    } else {
+      let ing=0, gas=0;
+      delMes.forEach(m => {
+        if(m['Tipo']==='ingreso') ing += toNum(m['Monto']);
+        else gas += toNum(m['Monto']);
+      });
+      html += `Ingresos: ${fmt(ing)} | Gastos: ${fmt(gas)}<br>`;
+    }
+  }
+
+  if (DATA.saldos.length > 0) {
+    html += '<br><b>Saldos:</b><br>';
+    DATA.saldos.forEach(s => {
+      html += `${s['Banco']}: "${s['Saldo']}" → ${toNum(s['Saldo'])}<br>`;
+    });
+  }
+
+  panel.innerHTML = html;
 }
 
 // ── PIN LOCK ─────────────────────────────────────────────────
