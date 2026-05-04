@@ -3,7 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Finanzas">
+<meta name="theme-color" content="#0f0f0f">
 <title>Finanzas</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f0f0f'/><text x='32' y='40' text-anchor='middle' font-family='system-ui' font-size='32' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230f0f0f'/><text x='90' y='115' text-anchor='middle' font-family='system-ui' font-size='90' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -41,10 +48,47 @@
   .retry-btn { margin-top: 12px; font-size: 12px; color: var(--blue); cursor: pointer; }
 
   /* HERO */
-  .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin: 0 16px 8px; }
+  .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 0 16px 8px; }
   .hero-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
   .hero-amount { font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 500; color: var(--text); letter-spacing: -1px; line-height: 1; }
-  .hero-sub { font-size: 12px; color: var(--text3); margin-top: 6px; }
+  .hero-sub { font-size: 12px; color: var(--text3); margin-top: 6px; display: flex; justify-content: space-between; }
+  .hero-health { display: flex; align-items: center; gap: 5px; margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); }
+  .health-dot { width: 7px; height: 7px; border-radius: 50%; }
+  .health-txt { font-size: 11px; }
+  .hero-updated { font-size: 10px; color: var(--text3); margin-top: 4px; }
+  .hero-edit-btn { position: absolute; top: 14px; right: 16px; width: 28px; height: 28px; border-radius: 7px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+  /* PRESUPUESTO BAR */
+  .pres-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin: 0 16px 8px; }
+  .pres-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .pres-lbl { font-size: 12px; color: var(--text2); }
+  .pres-vals { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); }
+  .pres-vals strong { color: var(--text); }
+  .pres-track { height: 5px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+  .pres-fill { height: 5px; border-radius: 3px; transition: width 0.5s ease; }
+  .pres-cats { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+  .cat-pip { display: flex; align-items: center; gap: 4px; font-size: 10px; color: var(--text3); }
+  .pip { width: 5px; height: 5px; border-radius: 50%; }
+  /* ALERT STRIP */
+  .alert-strip { border-radius: var(--radius-sm); margin: 0 16px 8px; overflow: hidden; }
+  .alert-strip.ok { background: var(--green-bg); border: 1px solid rgba(74,222,128,0.2); }
+  .alert-strip.warn { background: var(--red-bg); border: 1px solid rgba(248,113,113,0.2); }
+  .alert-strip.blue { background: var(--blue-bg); border: 1px solid rgba(96,165,250,0.2); }
+  .alert-strip-head { display: flex; align-items: center; gap: 8px; padding: 9px 12px; cursor: pointer; }
+  .alert-strip-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .alert-strip.ok .alert-strip-dot { background: var(--green); }
+  .alert-strip.warn .alert-strip-dot { background: var(--red); }
+  .alert-strip.blue .alert-strip-dot { background: var(--blue); }
+  .alert-strip-txt { font-size: 13px; font-weight: 500; flex: 1; }
+  .alert-strip.ok .alert-strip-txt { color: var(--green); }
+  .alert-strip.warn .alert-strip-txt { color: var(--red); }
+  .alert-strip.blue .alert-strip-txt { color: var(--blue); }
+  .alert-strip-chev { font-size: 13px; transition: transform 0.2s; }
+  .alert-strip.expanded .alert-strip-chev { transform: rotate(90deg); }
+  .alert-items { display: none; padding: 0 12px 10px; }
+  .alert-strip.expanded .alert-items { display: block; }
+  .alert-item-row { font-size: 12px; color: var(--red); padding: 4px 0; border-bottom: 1px solid rgba(248,113,113,0.15); }
+  .alert-item-row:last-child { border-bottom: none; }
+  .alert-item-row.blue { color: var(--blue); border-bottom-color: rgba(96,165,250,0.15); }
 
   /* BANKS SCROLL */
   .banks-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -724,32 +768,90 @@ function renderHome() {
   // Total real
   const totalReal = totalSaldoInicial + ingMes - gasMes;
   document.getElementById('total-disponible').textContent = fmt(totalReal);
-  const deltaStr = ingMes - gasMes >= 0
-    ? `+${fmt(ingMes - gasMes)} este mes`
-    : `-${fmt(gasMes - ingMes)} este mes`;
-  document.getElementById('total-sub').textContent = `Inicial ${fmt(totalSaldoInicial)} · ${deltaStr}`;
+  document.getElementById('total-inicial').textContent = `Inicial ${fmt(totalSaldoInicial)}`;
+  const delta = ingMes - gasMes;
+  const deltaEl = document.getElementById('total-delta');
+  deltaEl.textContent = (delta >= 0 ? '+' : '') + fmt(delta) + ' este mes';
+  deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // Proyección
-  const ingresos = ingMes, gastos = gasMes;
-  document.getElementById('proj-ingresos').textContent = fmt(ingresos);
-  document.getElementById('proj-gastos').textContent   = fmt(gastos);
-  const balance = ingresos - gastos;
-  const balEl   = document.getElementById('proj-balance');
-  balEl.textContent  = (balance >= 0 ? '+' : '') + fmt(balance);
-  balEl.style.color  = balance >= 0 ? 'var(--green)' : 'var(--red)';
+  // Indicador de salud — basado en % presupuesto usado
+  const totalPres = Object.values(PRESUPUESTOS).reduce((a,b) => a+b, 0);
+  const pct = totalPres > 0 ? gasMes / totalPres : 0;
+  const healthDot = document.getElementById('health-dot');
+  const healthTxt = document.getElementById('health-txt');
+  if (pct > 1) {
+    healthDot.style.background = 'var(--red)';
+    healthTxt.style.color = 'var(--red)';
+    healthTxt.textContent = 'Sobre el presupuesto';
+  } else if (pct > 0.85) {
+    healthDot.style.background = 'var(--amber)';
+    healthTxt.style.color = 'var(--amber)';
+    healthTxt.textContent = 'Cerca del límite';
+  } else {
+    healthDot.style.background = 'var(--green)';
+    healthTxt.style.color = 'var(--green)';
+    healthTxt.textContent = 'Dentro del presupuesto';
+  }
 
-  // Alertas
+  // Frescura
+  const updEl = document.getElementById('hero-updated');
+  if (updEl) updEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+
+  // Presupuesto bar
+  const now2 = new Date();
+  const mesNombre = now2.toLocaleString('es-CL', {month:'long'});
+  const presMesEl = document.getElementById('pres-mes-lbl');
+  if (presMesEl) presMesEl.textContent = mesNombre;
+  const presGastEl = document.getElementById('pres-gastado');
+  const presTotEl  = document.getElementById('pres-total');
+  const presFill   = document.getElementById('pres-fill');
+  const presCats   = document.getElementById('pres-cats');
+  if (presGastEl) presGastEl.textContent = fmtK(gasMes);
+  if (presTotEl)  presTotEl.textContent  = fmtK(totalPres);
+  if (presFill) {
+    const pctBar = Math.min(100, Math.round(pct * 100));
+    presFill.style.width = pctBar + '%';
+    presFill.style.background = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)';
+  }
+  if (presCats) {
+    const porCatBar = {};
+    movsMesActual.filter(m => m['Tipo'] === 'gasto').forEach(m => {
+      const cat = m['Categoría'] || 'Otros';
+      porCatBar[cat] = (porCatBar[cat]||0) + toNum(m['Monto']);
+    });
+    const coloresBar = { 'Supermercado':'var(--blue)','Restaurante':'var(--purple)','Transporte':'var(--green)','Salud':'var(--amber)','Suscripción':'var(--blue)' };
+    const topCats = Object.entries(porCatBar).sort((a,b) => b[1]-a[1]).slice(0,4);
+    presCats.innerHTML = topCats.map(([cat, v]) => {
+      const lim = PRESUPUESTOS[cat] || 1;
+      const sobre = v > lim;
+      const color = sobre ? 'var(--red)' : (coloresBar[cat] || 'var(--text3)');
+      return `<div class="cat-pip"><div class="pip" style="background:${color};${sobre?'outline:1.5px solid var(--red);outline-offset:1px;':''}"></div><span style="${sobre?'color:var(--red);':''}">${cat}</span></div>`;
+    }).join('');
+  }
+
+  // Alertas — nuevo strip colapsable
   const alertas = generarAlertas(movsMesActual);
   const cont = document.getElementById('alertas-container');
-  document.getElementById('alertas-label').textContent = `Alertas activas — ${alertas.length}`;
   if (alertas.length === 0) {
-    cont.innerHTML = `<div class="alert-card green"><div class="alert-dot green"></div><div><div class="alert-title">Todo al día</div><div class="alert-sub">Sin alertas este mes</div></div></div>`;
+    cont.innerHTML = `<div class="alert-strip ok">
+      <div class="alert-strip-head">
+        <div class="alert-strip-dot"></div>
+        <span class="alert-strip-txt">Todo al día</span>
+      </div>
+    </div>`;
   } else {
-    cont.innerHTML = alertas.map(a => `
-      <div class="alert-card ${a.tipo}" ${a.accion ? `onclick="${a.accion}" style="cursor:pointer"` : ''}>
-        <div class="alert-dot ${a.tipo}"></div>
-        <div><div class="alert-title">${a.titulo}</div><div class="alert-sub">${a.sub}</div></div>
-      </div>`).join('');
+    const tipo = alertas.some(a => a.tipo === 'red') ? 'warn' : alertas.some(a => a.tipo === 'blue') ? 'blue' : 'warn';
+    const stripId = 'alert-strip-main';
+    cont.innerHTML = `<div class="alert-strip ${tipo} expanded" id="${stripId}">
+      <div class="alert-strip-head" onclick="document.getElementById('${stripId}').classList.toggle('expanded')">
+        <div class="alert-strip-dot"></div>
+        <span class="alert-strip-txt">${alertas.length} alerta${alertas.length > 1 ? 's' : ''} activa${alertas.length > 1 ? 's' : ''}</span>
+        <span class="alert-strip-chev">›</span>
+      </div>
+      <div class="alert-items">
+        ${alertas.map(a => `<div class="alert-item-row ${a.tipo === 'blue' ? 'blue' : ''}" ${a.accion ? `onclick="${a.accion}" style="cursor:pointer"` : ''}>${a.titulo} · ${a.sub}</div>`).join('')}
+      </div>
+    </div>`;
   }
 }
 
