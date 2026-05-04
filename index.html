@@ -53,7 +53,7 @@
   .bank-chip:active { border-color: var(--border2); }
   .bank-chip.add { border-style: dashed; min-width: 80px; justify-content: center; color: var(--text3); font-size: 12px; }
   .bank-logo-wrap { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
-  .bank-logo-wrap img { width: 32px; height: 32px; object-fit: contain; }
+  .bank-logo-wrap img { width: 36px; height: 36px; object-fit: cover; display: block; }
   .bank-chip-info { flex: 1; min-width: 0; }
   .bank-chip-name { font-size: 11px; color: var(--text3); }
   .bank-chip-amt { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); margin-top: 2px; }
@@ -471,18 +471,18 @@ function renderHome() {
   const bankGrid = document.getElementById('bank-grid');
   bankGrid.innerHTML = '';
 
-  // Logos reales de bancos chilenos (favicons / logos públicos)
-  const BANK_LOGOS = {
-    'Security':         'https://www.bancosecurity.cl/favicon.ico',
-    'Banco Security':   'https://www.bancosecurity.cl/favicon.ico',
-    'BCI':              'https://www.bci.cl/favicon.ico',
-    'Itaú':             'https://www.itau.cl/favicon.ico',
-    'Banco Falabella':  'https://www.bancofalabella.cl/favicon.ico',
-    'Mercado Pago':     'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.75/mercadopago/favicon.svg',
-    'BICE':             'https://www.bicehipotecaria.cl/favicon.ico',
-    'BICE Hipotecaria': 'https://www.bicehipotecaria.cl/favicon.ico',
-    'Consorcio':        'https://www.consorcio.cl/favicon.ico',
-    'Santander':        'https://www.santander.cl/favicon.ico',
+  // Colores e iniciales por banco (sin depender de logos externos que mezclan texto)
+  const BANK_STYLE = {
+    'Security':         { bg: '#6B21A8', color: '#fff', text: 'S' },
+    'Banco Security':   { bg: '#6B21A8', color: '#fff', text: 'S' },
+    'BCI':              { bg: '#E63329', color: '#fff', text: 'BCI' },
+    'Itaú':             { bg: '#EC6608', color: '#fff', text: 'itaú' },
+    'Banco Falabella':  { bg: '#007A3E', color: '#fff', text: 'F' },
+    'Mercado Pago':     { bg: '#009EE3', color: '#fff', text: 'MP' },
+    'BICE':             { bg: '#003865', color: '#fff', text: 'BICE' },
+    'BICE Hipotecaria': { bg: '#003865', color: '#fff', text: 'BICE' },
+    'Consorcio':        { bg: '#1A1A6E', color: '#fff', text: 'C' },
+    'Santander':        { bg: '#EC0000', color: '#fff', text: 'SAN' },
   };
 
   DATA.saldos.forEach(s => {
@@ -492,12 +492,11 @@ function renderHome() {
     if (!banco) return;
     const updated = s['Fecha actualización'] || '—';
     const logo = BANK_LOGOS[banco] || '';
-    const logoHtml = logo
-      ? `<img src="${logo}" onerror="this.parentElement.innerHTML='<span style=\"font-size:11px;font-weight:500;color:#888\">${banco.slice(0,3).toUpperCase()}</span>'">`
-      : `<span style="font-size:11px;font-weight:500;color:#888">${banco.slice(0,3).toUpperCase()}</span>`;
+    const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
+    const logoHtml = `<div style="width:36px;height:36px;border-radius:8px;background:${style.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:${style.text.length>2?'9':'11'}px;font-weight:700;color:${style.color};letter-spacing:-0.5px;">${style.text}</span></div>`;
     bankGrid.innerHTML += `
       <div class="bank-chip">
-        <div class="bank-logo-wrap">${logoHtml}</div>
+        ${logoHtml}
         <div class="bank-chip-info">
           <div class="bank-chip-name">${banco}</div>
           <div class="bank-chip-amt">$${Math.round(saldo).toLocaleString('es-CL')}</div>
