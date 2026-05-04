@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Debug</title>
+<style>
+  body { font-family: monospace; background: #0f0f0f; color: #f0ede8; padding: 16px; font-size: 12px; line-height: 1.7; }
+  .ok  { color: #4ade80; } .err { color: #f87171; } .warn { color: #fbbf24; }
+  h3   { color: #60a5fa; margin: 16px 0 6px; font-size: 13px; }
+  pre  { background: #1a1a1a; border: 1px solid #333; padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; margin-bottom: 8px; }
+  button { background: #1a1a1a; border: 1px solid #444; color: #60a5fa; padding: 8px 14px; border-radius: 6px; margin: 4px 4px 4px 0; font-size: 12px; cursor: pointer; }
+</style>
+</head>
+<body>
+<h3>🔍 Debug Finanzas — sube esto a GitHub como debug.html</h3>
+<button onclick="test('Movimientos')">Movimientos</button>
+<button onclick="test('Saldos')">Saldos</button>
+<button onclick="test('Config')">Config</button>
+<button onclick="testFecha()">Filtro fecha</button>
+<div id="out"></div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbyCBZZc7LirMW7ce7P8G3Drn7uoIl-Fes_NZtDvIDBelUHa-oQ53_-Tu8cdH6--Tbw/exec';
+
+async function test(sheet) {
+  add(`<h3>📋 ${sheet}</h3>`);
+  try {
+    const r = await fetch(`${API}?sheet=${sheet}`);
+    const j = await r.json();
+    if (j.error) { add(`<pre class="err">ERROR: ${j.error}</pre>`); return; }
+    add(`<pre class="ok">✅ Filas: ${j.total}\nHeaders: ${j.rows[0] ? Object.keys(j.rows[0]).join(' | ') : 'sin datos'}</pre>`);
+    j.rows.slice(0,3).forEach((row,i) => {
+      add(`<pre><b>Fila ${i+1}:</b>\n${JSON.stringify(row,null,2)}</pre>`);
+    });
+  } catch(e) {
+    add(`<pre class="err">FETCH ERROR: ${e.message}\n\nSi ves este error, sube debug.html a GitHub y ábrelo desde pnsh6.github.io/debug.html</pre>`);
+  }
+}
+
+function testFecha() {
+  const now  = new Date();
+  const mm   = String(now.getMonth()+1).padStart(2,'0');
+  const yyyy = String(now.getFullYear());
+  add(`<h3>📅 Filtro fecha</h3>`);
+  add(`<pre>Hoy: ${now.toLocaleDateString('es-CL')}\nFiltro mes: ${mm}/${yyyy}\n\nUna fecha "28/04/2026" tiene partes[1]="04" → ¿pasa filtro mayo? ${['28','04','2026'][1]===mm}</pre>`);
+}
+
+function add(html) {
+  document.getElementById('out').innerHTML += html;
+}
+
+test('Movimientos');
+</script>
+</body>
+</html>
