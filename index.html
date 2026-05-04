@@ -49,7 +49,7 @@
   /* BANKS SCROLL */
   .banks-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .banks-scroll::-webkit-scrollbar { display: none; }
-  .bank-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; min-width: 172px; cursor: pointer; transition: border-color 0.15s; }
+  .bank-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; min-width: 150px; cursor: pointer; transition: border-color 0.15s; }
   .bank-chip:active { border-color: var(--border2); }
   .bank-chip.add { border-style: dashed; min-width: 80px; justify-content: center; color: var(--text3); font-size: 12px; }
   .bank-logo-wrap { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
@@ -237,13 +237,12 @@
 
 <!-- HOME -->
 <div class="screen active" id="screen-home">
-  <div class="status-bar"><span id="clock">9:41</span><span>Mayo 2026</span></div>
-  <div class="header">
-    <div class="header-title">Buenos días</div>
-    <div style="display:flex;align-items:center;gap:6px;">
-      <div style="cursor:pointer;font-size:18px;color:var(--text2);padding:0 4px;" onclick="cambiarMes(-1)">‹</div>
+  <div class="header" style="align-items:center;">
+    <div class="header-title">Hola <strong style="color:var(--text);font-weight:600;">Francisco</strong></div>
+    <div style="display:flex;align-items:center;gap:2px;">
+      <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(-1)">‹</div>
       <div class="header-month" id="mes-label">cargando...</div>
-      <div style="cursor:pointer;font-size:18px;color:var(--text2);padding:0 4px;" onclick="cambiarMes(1)">›</div>
+      <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(1)">›</div>
     </div>
   </div>
   <div id="home-loading" class="loading"><div class="spinner"></div><div class="loading-text">Cargando datos...</div></div>
@@ -389,7 +388,7 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbygMTXgjdhZssXFurP6c4QObfz7eZVt2pseBF_9qKsPsbUNUyCk0jRzwoRfZSe2JF72/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyrS2i8OPTcEbOc1sZmq_SmkTx5PfEVyv2Evq9tcUoSDf4IQ-wVwLtp8D7AXfWGrbku/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -539,6 +538,24 @@ function renderTodo() {
 }
 
 // ── HELPERS ──────────────────────────────────────────────────
+function formatFechaCorta(str) {
+  if (!str || str === '—') return '—';
+  const s = str.trim();
+  // Ya está en dd/MM/yyyy — devolver tal cual
+  if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(s)) return s;
+  // Formato largo JS: "Sun Apr 05 2026 00:00:00 GMT..."
+  // o ISO: "2026-04-05T..."
+  const d = new Date(s);
+  if (!isNaN(d)) {
+    const dia  = String(d.getDate()).padStart(2,'0');
+    const mes  = String(d.getMonth()+1).padStart(2,'0');
+    const anio = d.getFullYear();
+    return `${dia}/${mes}/${anio}`;
+  }
+  // Fallback: tomar solo la parte de fecha si hay espacios
+  return s.split(' ')[0] || '—';
+}
+
 function parseFecha(str) {
   // Soporta: "dd/MM/yyyy", "Thu Mar 05 2026 ...", objeto Date serializado
   if (!str) return null;
@@ -610,46 +627,62 @@ function renderHome() {
   const bankGrid = document.getElementById('bank-grid');
   bankGrid.innerHTML = '';
 
+  // Saldo real por banco = saldo inicial del mes + ingresos - gastos de ese banco
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
+  const movsMesActual = movsMes();
+  let ingMes = 0, gasMes = 0;
+
+  // Calcular ingresos y gastos por banco
+  const ingresosPorBanco = {};
+  const gastosPorBanco   = {};
+  movsMesActual.forEach(m => {
+    const b     = m['Banco'] || 'Otro';
+    const monto = toNum(m['Monto']);
+    if (m['Tipo'] === 'ingreso') { ingresosPorBanco[b] = (ingresosPorBanco[b]||0) + monto; ingMes += monto; }
+    else                         { gastosPorBanco[b]   = (gastosPorBanco[b]  ||0) + monto; gasMes += monto; }
+  });
+
+  let totalSaldoInicial = 0;
+
   DATA.saldos.forEach(s => {
-    const saldo = toNum(s['Saldo']);
-    totalSaldo += saldo;
-    const banco = s['Banco'] || '';
+    const banco = (s['Banco'] || '').trim();
     if (!banco) return;
-    const updated = s['Fecha actualización'] || '—';
-    const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
+    const saldoInicial = toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
+    const saldoReal    = saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
+    totalSaldoInicial += saldoInicial;
+    const style   = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
     const logoHtml = `<div style="width:36px;height:36px;border-radius:8px;background:${style.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:${style.text.length>2?'9':'11'}px;font-weight:700;color:${style.color};letter-spacing:-0.5px;">${style.text}</span></div>`;
     bankGrid.innerHTML += `
-      <div class="bank-chip">
+      <div class="bank-chip" onclick="abrirModalSaldo()">
         ${logoHtml}
         <div class="bank-chip-info">
           <div class="bank-chip-name">${banco}</div>
-          <div class="bank-chip-amt">$${Math.round(saldo).toLocaleString('es-CL')}</div>
-          <div class="bank-chip-upd">${updated}</div>
+          <div class="bank-chip-amt">$${Math.round(saldoReal).toLocaleString('es-CL')}</div>
         </div>
       </div>`;
   });
-  bankGrid.innerHTML += `<div class="bank-chip add">+ agregar</div>`;
+  bankGrid.innerHTML += `<div class="bank-chip add" onclick="abrirModalSaldo()">+ actualizar</div>`;
 
-  document.getElementById('total-disponible').textContent = fmt(totalSaldo);
+  // Total real
+  const totalReal = totalSaldoInicial + ingMes - gasMes;
+  document.getElementById('total-disponible').textContent = fmt(totalReal);
+  const deltaStr = ingMes - gasMes >= 0
+    ? `+${fmt(ingMes - gasMes)} este mes`
+    : `-${fmt(gasMes - ingMes)} este mes`;
+  document.getElementById('total-sub').textContent = `Inicial ${fmt(totalSaldoInicial)} · ${deltaStr}`;
 
-  // Movimientos del mes
-  const movs = movsMes();
-  let ingresos = 0, gastos = 0;
-  movs.forEach(m => {
-    const monto = toNum(m['Monto']);
-    if (m['Tipo'] === 'ingreso') ingresos += monto;
-    else gastos += monto;
-  });
-
+  // Proyección
+  const ingresos = ingMes, gastos = gasMes;
   document.getElementById('proj-ingresos').textContent = fmt(ingresos);
   document.getElementById('proj-gastos').textContent   = fmt(gastos);
   const balance = ingresos - gastos;
-  const balEl = document.getElementById('proj-balance');
-  balEl.textContent = (balance >= 0 ? '+' : '') + fmt(balance);
-  balEl.style.color = balance >= 0 ? 'var(--green)' : 'var(--red)';
+  const balEl   = document.getElementById('proj-balance');
+  balEl.textContent  = (balance >= 0 ? '+' : '') + fmt(balance);
+  balEl.style.color  = balance >= 0 ? 'var(--green)' : 'var(--red)';
 
   // Alertas
-  const alertas = generarAlertas(movs);
+  const alertas = generarAlertas(movsMesActual);
   const cont = document.getElementById('alertas-container');
   document.getElementById('alertas-label').textContent = `Alertas activas — ${alertas.length}`;
   if (alertas.length === 0) {
@@ -668,10 +701,28 @@ function generarAlertas(movs) {
 
   // Alerta: saldo no ingresado este mes
   const { mm, yyyy } = getMesFiltro();
-  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
-  const saldoIngresado = DATA.saldos.some(s => toNum(s[mesKey] || 0) > 0);
-  if (!saldoIngresado) {
-    alertas.push({ tipo: 'blue', titulo: 'Saldo inicial pendiente', sub: `No has ingresado el saldo de ${mesKey} · toca para actualizar`, accion: 'abrirModalSaldo()' });
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`; // formato seguro para Sheets
+  // Solo alertar si es el mes actual (MES_OFFSET === 0) y no se ha ingresado
+  if (MES_OFFSET === 0) {
+    // Considerar saldo ingresado si: existe columna mesKey con valor > 0
+    // O si la fecha de actualización es de este mes
+    const mmStr = String(mm+1).padStart(2,'0');
+    const saldoIngresado = DATA.saldos.some(s => {
+      // Verificar columna "2026-05"
+      if (toNum(s[mesKey] || 0) > 0) return true;
+      // Verificar por fecha de actualización del mes
+      const upd = s['Fecha actualización'] || '';
+      const partes = upd.split('/');
+      if (partes.length >= 3) {
+        return partes[1].padStart(2,'0') === mmStr && partes[2].trim().startsWith(String(yyyy));
+      }
+      const d = new Date(upd);
+      if (!isNaN(d)) return d.getMonth() === mm && d.getFullYear() === yyyy;
+      return false;
+    });
+    if (!saldoIngresado) {
+      alertas.push({ tipo: 'blue', titulo: 'Saldo inicial pendiente', sub: `No has ingresado el saldo de ${mesKey} · toca para actualizar`, accion: 'abrirModalSaldo()' });
+    }
   }
 
   // Categorías sobre presupuesto
@@ -1042,11 +1093,19 @@ function runDebug() {
 }
 
 // ── MODAL SALDO MENSUAL ──────────────────────────────────────
+function formatSaldoInput(el) {
+  // Guardar posición del cursor
+  const raw = el.value.replace(/\./g,'').replace(/[^\d]/g,'');
+  if (!raw) { el.value = ''; return; }
+  const formatted = parseInt(raw).toLocaleString('es-CL');
+  el.value = formatted;
+}
+
 const BANCOS_LISTA = ['Security','BCI','Itaú','Banco Falabella','Mercado Pago','BICE Hipotecaria'];
 
 function abrirModalSaldo() {
   const { mm, yyyy } = getMesFiltro();
-  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`; // formato seguro para Sheets
   const mesLabel = new Date(yyyy, mm, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
   document.getElementById('modal-mes-label').textContent =
     `Saldo al inicio de ${mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1)}`;
@@ -1057,14 +1116,16 @@ function abrirModalSaldo() {
     if (!banco) return '';
     const saldoActual = toNum(s[mesKey] || s['Saldo'] || 0);
     const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
+    const inputId = 'inp-' + banco.replace(/[^a-zA-Z0-9]/g,'_');
+    const valorMostrar = saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '';
     return `
       <div class="saldo-input-row">
         <div class="saldo-bank-badge" style="background:${style.bg};">
           <span style="font-size:${style.text.length>2?'8':'10'}px;font-weight:700;color:${style.color};">${style.text}</span>
         </div>
         <span class="saldo-bank-name">${banco}</span>
-        <input class="saldo-bank-input" type="number" id="inp-${banco.replace(/\s/g,'_')}"
-          placeholder="0" value="${saldoActual > 0 ? saldoActual : ''}">
+        <input class="saldo-bank-input" type="text" inputmode="numeric" id="${inputId}"
+          placeholder="0" value="${valorMostrar}" oninput="formatSaldoInput(this)">
       </div>`;
   }).join('');
 
@@ -1077,23 +1138,27 @@ function cerrarModal() {
 
 async function guardarSaldos() {
   const { mm, yyyy } = getMesFiltro();
-  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`; // formato seguro para Sheets
   const hoy = new Date().toLocaleDateString('es-CL');
   const btn = document.querySelector('.modal-save-btn');
   btn.textContent = 'Guardando...';
   btn.disabled = true;
 
   // Actualizar DATA.saldos localmente
+  const now2 = new Date();
+  const hoyFmt = String(now2.getDate()).padStart(2,'0') + '/' +
+                 String(now2.getMonth()+1).padStart(2,'0') + '/' +
+                 now2.getFullYear();
   DATA.saldos.forEach(s => {
     const banco = (s['Banco'] || '').trim();
     if (!banco) return;
-    const inp = document.getElementById('inp-' + banco.replace(/\s/g,'_'));
+    const inp = document.getElementById('inp-' + banco.replace(/[^a-zA-Z0-9]/g,'_'));
     if (!inp) return;
-    const val = parseFloat(inp.value) || 0;
+    const val = parseInt(inp.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
     if (val > 0) {
       s[mesKey] = val;
       s['Saldo'] = val;
-      s['Fecha actualización'] = hoy;
+      s['Fecha actualización'] = hoyFmt;  // siempre formato dd/MM/yyyy
     }
   });
 
@@ -1101,7 +1166,7 @@ async function guardarSaldos() {
   try {
     const payload = {
       action: 'setSaldos',
-      mesKey,
+      mesKey,  // ya viene en formato "2026-05" desde getMesFiltro
       fecha: hoy,
       saldos: DATA.saldos.map(s => ({
         banco: s['Banco'],
