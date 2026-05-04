@@ -194,6 +194,24 @@
   .screen { display: none; }
   .screen.active { display: block; animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  /* MODAL SALDO */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; }
+  .modal-overlay.hidden { display: none; }
+  .modal-sheet { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 430px; margin: 0 auto; }
+  .modal-handle { width: 36px; height: 4px; background: var(--bg4); border-radius: 2px; margin: 0 auto 20px; }
+  .modal-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
+  .modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
+  .saldo-input-row { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .saldo-input-row:last-of-type { border-bottom: none; }
+  .saldo-bank-badge { width: 32px; height: 32px; border-radius: 7px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 9px; font-weight: 700; }
+  .saldo-bank-name { flex: 1; font-size: 13px; color: var(--text); }
+  .saldo-bank-input { width: 130px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 7px 10px; font-family: 'DM Mono', monospace; font-size: 13px; color: var(--text); text-align: right; }
+  .saldo-bank-input:focus { outline: none; border-color: var(--blue); }
+  .modal-save-btn { width: 100%; margin-top: 20px; padding: 14px; background: var(--blue); border: none; border-radius: var(--radius-sm); color: #fff; font-size: 15px; font-weight: 500; cursor: pointer; }
+  .modal-save-btn:active { opacity: 0.85; }
+  .alert-card.blue { background: var(--blue-bg); border-color: rgba(96,165,250,0.2); }
+  .alert-card.blue .alert-dot { background: var(--blue); }
+  .alert-card.blue .alert-title { color: var(--blue); }
   /* PIN LOCK */
   .pin-overlay { position: fixed; inset: 0; background: #0f0f0f; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
   .pin-overlay.hidden { display: none; }
@@ -220,7 +238,14 @@
 <!-- HOME -->
 <div class="screen active" id="screen-home">
   <div class="status-bar"><span id="clock">9:41</span><span>Mayo 2026</span></div>
-  <div class="header"><div class="header-title">Buenos días</div><div class="header-month" id="mes-label">cargando...</div></div>
+  <div class="header">
+    <div class="header-title">Buenos días</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <div style="cursor:pointer;font-size:18px;color:var(--text2);padding:0 4px;" onclick="cambiarMes(-1)">‹</div>
+      <div class="header-month" id="mes-label">cargando...</div>
+      <div style="cursor:pointer;font-size:18px;color:var(--text2);padding:0 4px;" onclick="cambiarMes(1)">›</div>
+    </div>
+  </div>
   <div id="home-loading" class="loading"><div class="spinner"></div><div class="loading-text">Cargando datos...</div></div>
   <div id="home-content" style="display:none">
     <div class="hero-card">
@@ -343,6 +368,17 @@
   </div>
   <div class="pin-error-msg" id="pin-error"></div>
 </div>
+
+<!-- MODAL SALDO MENSUAL -->
+<div class="modal-overlay hidden" id="modal-saldo">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Saldo inicial del mes</div>
+    <div class="modal-sub" id="modal-mes-label">Ingresa el saldo real de cada cuenta</div>
+    <div id="saldo-inputs"></div>
+    <button class="modal-save-btn" onclick="guardarSaldos()">Guardar saldos</button>
+  </div>
+</div>
 <!-- NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-dot"></div><span class="nav-label">Inicio</span></div>
@@ -353,7 +389,21 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbyCBZZc7LirMW7ce7P8G3Drn7uoIl-Fes_NZtDvIDBelUHa-oQ53_-Tu8cdH6--Tbw/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbygMTXgjdhZssXFurP6c4QObfz7eZVt2pseBF_9qKsPsbUNUyCk0jRzwoRfZSe2JF72/exec';
+
+// Colores e iniciales por banco
+const BANK_STYLE = {
+  'Security':         { bg: '#6B21A8', color: '#fff', text: 'S' },
+  'Banco Security':   { bg: '#6B21A8', color: '#fff', text: 'S' },
+  'BCI':              { bg: '#E63329', color: '#fff', text: 'BCI' },
+  'Itaú':             { bg: '#EC6608', color: '#fff', text: 'itaú' },
+  'Banco Falabella':  { bg: '#007A3E', color: '#fff', text: 'F' },
+  'Mercado Pago':     { bg: '#009EE3', color: '#fff', text: 'MP' },
+  'BICE':             { bg: '#003865', color: '#fff', text: 'BICE' },
+  'BICE Hipotecaria': { bg: '#003865', color: '#fff', text: 'BICE' },
+  'Consorcio':        { bg: '#1A1A6E', color: '#fff', text: 'C' },
+  'Santander':        { bg: '#EC0000', color: '#fff', text: 'SAN' },
+};
 
 // Presupuestos mensuales (edita según tu realidad)
 const PRESUPUESTOS = {
@@ -377,6 +427,34 @@ const PROPIEDADES = [
 
 // ── ESTADO ──────────────────────────────────────────────────
 let DATA = { movimientos: [], saldos: [], loaded: false };
+let MES_OFFSET = 0; // 0 = mes actual, -1 = mes anterior, etc.
+
+function cambiarMes(delta) {
+  MES_OFFSET += delta;
+  // No permitir ir al futuro
+  if (MES_OFFSET > 0) { MES_OFFSET = 0; return; }
+  actualizarLabelMes();
+  renderHome();
+  renderGastos();
+  renderPresupuesto();
+}
+
+function getMesFiltro() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + MES_OFFSET);
+  return { mm: d.getMonth(), yyyy: d.getFullYear() };
+}
+
+function actualizarLabelMes() {
+  const d = new Date();
+  d.setMonth(d.getMonth() + MES_OFFSET);
+  const label = d.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
+  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
+  ['mes-label','gastos-mes','gastos-status-mes'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = labelCap;
+  });
+}
 
 // ── INIT ────────────────────────────────────────────────────
 
@@ -446,9 +524,7 @@ function parseCSVLine(line) {
 // ── RENDER PRINCIPAL ─────────────────────────────────────────
 function renderTodo() {
   const now = new Date();
-  const mes = now.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
-  document.getElementById('mes-label').textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
-  document.getElementById('gastos-mes').textContent = mes.charAt(0).toUpperCase() + mes.slice(1);
+  actualizarLabelMes();
 
   const diasRestantes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate() - now.getDate();
   document.getElementById('bud-dias').textContent = `${diasRestantes} días restantes`;
@@ -476,9 +552,7 @@ function parseFecha(str) {
 }
 
 function movsMes() {
-  const now  = new Date();
-  const mm   = now.getMonth();   // 0-indexed
-  const yyyy = now.getFullYear();
+  const { mm, yyyy } = getMesFiltro();
   return DATA.movimientos.filter(m => {
     const d = parseFecha(m['Fecha']);
     if (!d) return false;
@@ -536,20 +610,6 @@ function renderHome() {
   const bankGrid = document.getElementById('bank-grid');
   bankGrid.innerHTML = '';
 
-  // Colores e iniciales por banco (sin depender de logos externos que mezclan texto)
-  const BANK_STYLE = {
-    'Security':         { bg: '#6B21A8', color: '#fff', text: 'S' },
-    'Banco Security':   { bg: '#6B21A8', color: '#fff', text: 'S' },
-    'BCI':              { bg: '#E63329', color: '#fff', text: 'BCI' },
-    'Itaú':             { bg: '#EC6608', color: '#fff', text: 'itaú' },
-    'Banco Falabella':  { bg: '#007A3E', color: '#fff', text: 'F' },
-    'Mercado Pago':     { bg: '#009EE3', color: '#fff', text: 'MP' },
-    'BICE':             { bg: '#003865', color: '#fff', text: 'BICE' },
-    'BICE Hipotecaria': { bg: '#003865', color: '#fff', text: 'BICE' },
-    'Consorcio':        { bg: '#1A1A6E', color: '#fff', text: 'C' },
-    'Santander':        { bg: '#EC0000', color: '#fff', text: 'SAN' },
-  };
-
   DATA.saldos.forEach(s => {
     const saldo = toNum(s['Saldo']);
     totalSaldo += saldo;
@@ -596,7 +656,7 @@ function renderHome() {
     cont.innerHTML = `<div class="alert-card green"><div class="alert-dot green"></div><div><div class="alert-title">Todo al día</div><div class="alert-sub">Sin alertas este mes</div></div></div>`;
   } else {
     cont.innerHTML = alertas.map(a => `
-      <div class="alert-card ${a.tipo}">
+      <div class="alert-card ${a.tipo}" ${a.accion ? `onclick="${a.accion}" style="cursor:pointer"` : ''}>
         <div class="alert-dot ${a.tipo}"></div>
         <div><div class="alert-title">${a.titulo}</div><div class="alert-sub">${a.sub}</div></div>
       </div>`).join('');
@@ -605,6 +665,15 @@ function renderHome() {
 
 function generarAlertas(movs) {
   const alertas = [];
+
+  // Alerta: saldo no ingresado este mes
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
+  const saldoIngresado = DATA.saldos.some(s => toNum(s[mesKey] || 0) > 0);
+  if (!saldoIngresado) {
+    alertas.push({ tipo: 'blue', titulo: 'Saldo inicial pendiente', sub: `No has ingresado el saldo de ${mesKey} · toca para actualizar`, accion: 'abrirModalSaldo()' });
+  }
+
   // Categorías sobre presupuesto
   const porCat = {};
   movs.filter(m => m['Tipo'] === 'gasto').forEach(m => {
@@ -971,6 +1040,88 @@ function runDebug() {
 
   panel.innerHTML = html;
 }
+
+// ── MODAL SALDO MENSUAL ──────────────────────────────────────
+const BANCOS_LISTA = ['Security','BCI','Itaú','Banco Falabella','Mercado Pago','BICE Hipotecaria'];
+
+function abrirModalSaldo() {
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
+  const mesLabel = new Date(yyyy, mm, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
+  document.getElementById('modal-mes-label').textContent =
+    `Saldo al inicio de ${mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1)}`;
+
+  const inputsDiv = document.getElementById('saldo-inputs');
+  inputsDiv.innerHTML = DATA.saldos.map(s => {
+    const banco = (s['Banco'] || '').trim();
+    if (!banco) return '';
+    const saldoActual = toNum(s[mesKey] || s['Saldo'] || 0);
+    const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
+    return `
+      <div class="saldo-input-row">
+        <div class="saldo-bank-badge" style="background:${style.bg};">
+          <span style="font-size:${style.text.length>2?'8':'10'}px;font-weight:700;color:${style.color};">${style.text}</span>
+        </div>
+        <span class="saldo-bank-name">${banco}</span>
+        <input class="saldo-bank-input" type="number" id="inp-${banco.replace(/\s/g,'_')}"
+          placeholder="0" value="${saldoActual > 0 ? saldoActual : ''}">
+      </div>`;
+  }).join('');
+
+  document.getElementById('modal-saldo').classList.remove('hidden');
+}
+
+function cerrarModal() {
+  document.getElementById('modal-saldo').classList.add('hidden');
+}
+
+async function guardarSaldos() {
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = `${String(mm+1).padStart(2,'0')}/${yyyy}`;
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const btn = document.querySelector('.modal-save-btn');
+  btn.textContent = 'Guardando...';
+  btn.disabled = true;
+
+  // Actualizar DATA.saldos localmente
+  DATA.saldos.forEach(s => {
+    const banco = (s['Banco'] || '').trim();
+    if (!banco) return;
+    const inp = document.getElementById('inp-' + banco.replace(/\s/g,'_'));
+    if (!inp) return;
+    const val = parseFloat(inp.value) || 0;
+    if (val > 0) {
+      s[mesKey] = val;
+      s['Saldo'] = val;
+      s['Fecha actualización'] = hoy;
+    }
+  });
+
+  // Guardar en Sheets via API
+  try {
+    const payload = {
+      action: 'setSaldos',
+      mesKey,
+      fecha: hoy,
+      saldos: DATA.saldos.map(s => ({
+        banco: s['Banco'],
+        saldo: toNum(s[mesKey] || s['Saldo'] || 0)
+      }))
+    };
+    await fetch(API_URL, { method: 'POST', body: JSON.stringify(payload) });
+  } catch(e) { /* guardado local igual */ }
+
+  btn.textContent = 'Guardar saldos';
+  btn.disabled = false;
+  cerrarModal();
+  renderHome();
+  renderPresupuesto();
+}
+
+// Cerrar modal al tocar fuera
+document.getElementById('modal-saldo').addEventListener('click', function(e) {
+  if (e.target === this) cerrarModal();
+});
 
 // ── PIN LOCK ─────────────────────────────────────────────────
 const PIN_KEY      = 'fp_pin_hash';
