@@ -46,14 +46,18 @@
   .hero-amount { font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 500; color: var(--text); letter-spacing: -1px; line-height: 1; }
   .hero-sub { font-size: 12px; color: var(--text3); margin-top: 6px; }
 
-  /* BANKS */
-  .bank-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .bank-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; cursor: pointer; transition: border-color 0.15s; }
-  .bank-card:active { border-color: var(--border2); }
-  .bank-card.dashed { border-style: dashed; display: flex; align-items: center; justify-content: center; color: var(--text3); font-size: 13px; }
-  .bank-name { font-size: 11px; color: var(--text3); margin-bottom: 3px; }
-  .bank-amount { font-family: 'DM Mono', monospace; font-size: 16px; font-weight: 500; color: var(--text); }
-  .bank-updated { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  /* BANKS SCROLL */
+  .banks-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .banks-scroll::-webkit-scrollbar { display: none; }
+  .bank-chip { flex-shrink: 0; display: flex; align-items: center; gap: 10px; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; min-width: 172px; cursor: pointer; transition: border-color 0.15s; }
+  .bank-chip:active { border-color: var(--border2); }
+  .bank-chip.add { border-style: dashed; min-width: 80px; justify-content: center; color: var(--text3); font-size: 12px; }
+  .bank-logo-wrap { width: 36px; height: 36px; border-radius: 8px; overflow: hidden; flex-shrink: 0; display: flex; align-items: center; justify-content: center; background: #fff; }
+  .bank-logo-wrap img { width: 32px; height: 32px; object-fit: contain; }
+  .bank-chip-info { flex: 1; min-width: 0; }
+  .bank-chip-name { font-size: 11px; color: var(--text3); }
+  .bank-chip-amt { font-family: 'DM Mono', monospace; font-size: 14px; font-weight: 500; color: var(--text); margin-top: 2px; }
+  .bank-chip-upd { font-size: 10px; color: var(--text3); margin-top: 1px; }
 
   /* ALERTS */
   .alert-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border-radius: var(--radius-sm); margin-bottom: 6px; border: 1px solid transparent; }
@@ -207,7 +211,7 @@
     </div>
     <div class="section">
       <div class="section-label">Por banco</div>
-      <div class="bank-grid" id="bank-grid"></div>
+      <div class="banks-scroll" id="bank-grid"></div>
     </div>
     <div class="divider"></div>
     <div class="section">
@@ -467,20 +471,41 @@ function renderHome() {
   const bankGrid = document.getElementById('bank-grid');
   bankGrid.innerHTML = '';
 
+  // Logos reales de bancos chilenos (favicons / logos públicos)
+  const BANK_LOGOS = {
+    'Security':         'https://www.bancosecurity.cl/favicon.ico',
+    'Banco Security':   'https://www.bancosecurity.cl/favicon.ico',
+    'BCI':              'https://www.bci.cl/favicon.ico',
+    'Itaú':             'https://www.itau.cl/favicon.ico',
+    'Banco Falabella':  'https://www.bancofalabella.cl/favicon.ico',
+    'Mercado Pago':     'https://http2.mlstatic.com/frontend-assets/mp-web-navigation/ui-navigation/6.6.75/mercadopago/favicon.svg',
+    'BICE':             'https://www.bicehipotecaria.cl/favicon.ico',
+    'BICE Hipotecaria': 'https://www.bicehipotecaria.cl/favicon.ico',
+    'Consorcio':        'https://www.consorcio.cl/favicon.ico',
+    'Santander':        'https://www.santander.cl/favicon.ico',
+  };
+
   DATA.saldos.forEach(s => {
     const saldo = toNum(s['Saldo']);
     totalSaldo += saldo;
     const banco = s['Banco'] || '';
     if (!banco) return;
     const updated = s['Fecha actualización'] || '—';
+    const logo = BANK_LOGOS[banco] || '';
+    const logoHtml = logo
+      ? `<img src="${logo}" onerror="this.parentElement.innerHTML='<span style=\"font-size:11px;font-weight:500;color:#888\">${banco.slice(0,3).toUpperCase()}</span>'">`
+      : `<span style="font-size:11px;font-weight:500;color:#888">${banco.slice(0,3).toUpperCase()}</span>`;
     bankGrid.innerHTML += `
-      <div class="bank-card">
-        <div class="bank-name">${banco}</div>
-        <div class="bank-amount">${fmtK(saldo)}</div>
-        <div class="bank-updated">${updated}</div>
+      <div class="bank-chip">
+        <div class="bank-logo-wrap">${logoHtml}</div>
+        <div class="bank-chip-info">
+          <div class="bank-chip-name">${banco}</div>
+          <div class="bank-chip-amt">$${Math.round(saldo).toLocaleString('es-CL')}</div>
+          <div class="bank-chip-upd">${updated}</div>
+        </div>
       </div>`;
   });
-  bankGrid.innerHTML += `<div class="bank-card dashed">+ agregar</div>`;
+  bankGrid.innerHTML += `<div class="bank-chip add">+ agregar</div>`;
 
   document.getElementById('total-disponible').textContent = fmt(totalSaldo);
 
