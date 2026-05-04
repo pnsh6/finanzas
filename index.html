@@ -194,6 +194,25 @@
   .screen { display: none; }
   .screen.active { display: block; animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  /* PIN LOCK */
+  .pin-overlay { position: fixed; inset: 0; background: #0f0f0f; z-index: 999; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+  .pin-overlay.hidden { display: none; }
+  .pin-logo { width: 56px; height: 56px; border-radius: 16px; background: var(--blue-bg); display: flex; align-items: center; justify-content: center; margin-bottom: 24px; }
+  .pin-title { font-size: 20px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .pin-subtitle { font-size: 13px; color: var(--text3); margin-bottom: 36px; text-align: center; }
+  .pin-dots { display: flex; gap: 14px; margin-bottom: 36px; }
+  .pin-dot { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--text3); background: transparent; transition: background 0.15s, border-color 0.15s; }
+  .pin-dot.filled { background: var(--blue); border-color: var(--blue); }
+  .pin-dot.error { background: var(--red); border-color: var(--red); }
+  .pin-keypad { display: grid; grid-template-columns: repeat(3, 72px); gap: 12px; }
+  .pin-key { width: 72px; height: 72px; border-radius: 50%; border: 1px solid var(--border); background: var(--bg2); color: var(--text); font-size: 22px; font-weight: 400; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: background 0.1s, transform 0.1s; user-select: none; }
+  .pin-key:active { background: var(--bg4); transform: scale(0.94); }
+  .pin-key.del { font-size: 16px; color: var(--text2); }
+  .pin-key.empty { border: none; background: transparent; pointer-events: none; }
+  .pin-error-msg { font-size: 12px; color: var(--red); margin-top: 16px; min-height: 18px; text-align: center; }
+  .pin-locked { font-size: 13px; color: var(--amber); margin-top: 12px; text-align: center; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }
+  .pin-dots.shake { animation: shake 0.4s ease; }
 </style>
 </head>
 <body>
@@ -290,6 +309,40 @@
   </div>
 </div>
 
+
+<!-- PIN OVERLAY -->
+<div class="pin-overlay" id="pin-overlay">
+  <div class="pin-logo">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+    </svg>
+  </div>
+  <div class="pin-title">Finanzas</div>
+  <div class="pin-subtitle" id="pin-subtitle">Ingresa tu PIN para continuar</div>
+  <div class="pin-dots" id="pin-dots">
+    <div class="pin-dot" id="d0"></div>
+    <div class="pin-dot" id="d1"></div>
+    <div class="pin-dot" id="d2"></div>
+    <div class="pin-dot" id="d3"></div>
+    <div class="pin-dot" id="d4"></div>
+    <div class="pin-dot" id="d5"></div>
+  </div>
+  <div class="pin-keypad">
+    <div class="pin-key" onclick="pinPress('1')">1</div>
+    <div class="pin-key" onclick="pinPress('2')">2</div>
+    <div class="pin-key" onclick="pinPress('3')">3</div>
+    <div class="pin-key" onclick="pinPress('4')">4</div>
+    <div class="pin-key" onclick="pinPress('5')">5</div>
+    <div class="pin-key" onclick="pinPress('6')">6</div>
+    <div class="pin-key" onclick="pinPress('7')">7</div>
+    <div class="pin-key" onclick="pinPress('8')">8</div>
+    <div class="pin-key" onclick="pinPress('9')">9</div>
+    <div class="pin-key empty"></div>
+    <div class="pin-key" onclick="pinPress('0')">0</div>
+    <div class="pin-key del" onclick="pinDel()">⌫</div>
+  </div>
+  <div class="pin-error-msg" id="pin-error"></div>
+</div>
 <!-- NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-dot"></div><span class="nav-label">Inicio</span></div>
@@ -300,7 +353,7 @@
 
 <script>
 // ── CONFIG ──────────────────────────────────────────────────
-const API_URL = 'https://script.google.com/macros/s/AKfycbzVHfWJIRvmK9Ev6XilRHrfmrC7NBr3x-WgbjPxsF6T5Z-WMgLbP9t631P8ivM8NQcp/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyCBZZc7LirMW7ce7P8G3Drn7uoIl-Fes_NZtDvIDBelUHa-oQ53_-Tu8cdH6--Tbw/exec';
 
 // Presupuestos mensuales (edita según tu realidad)
 const PRESUPUESTOS = {
@@ -326,11 +379,7 @@ const PROPIEDADES = [
 let DATA = { movimientos: [], saldos: [], loaded: false };
 
 // ── INIT ────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  updateClock();
-  setInterval(updateClock, 10000);
-  cargarDatos();
-});
+
 
 function updateClock() {
   const now = new Date();
@@ -491,7 +540,6 @@ function renderHome() {
     const banco = s['Banco'] || '';
     if (!banco) return;
     const updated = s['Fecha actualización'] || '—';
-    const logo = BANK_LOGOS[banco] || '';
     const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
     const logoHtml = `<div style="width:36px;height:36px;border-radius:8px;background:${style.bg};display:flex;align-items:center;justify-content:center;flex-shrink:0;"><span style="font-size:${style.text.length>2?'9':'11'}px;font-weight:700;color:${style.color};letter-spacing:-0.5px;">${style.text}</span></div>`;
     bankGrid.innerHTML += `
@@ -845,6 +893,154 @@ function mostrarError(errId, loadId, titulo, msg) {
       <div class="retry-btn" onclick="location.reload()">↺ Reintentar</div>
     </div>`;
 }
+
+// ── PIN LOCK ─────────────────────────────────────────────────
+const PIN_KEY      = 'fp_pin_hash';
+const ATTEMPTS_KEY = 'fp_attempts';
+const LOCK_KEY     = 'fp_locked_until';
+const MAX_ATTEMPTS = 5;
+const LOCK_MINUTES = 5;
+
+let pinBuffer = '';
+let pinLength  = 6;
+let settingPin = false;
+let pinConfirm = '';
+
+function hashPin(pin) {
+  // Hash simple deterministico (no criptográfico pero suficiente para uso personal)
+  let h = 0;
+  for (let i = 0; i < pin.length; i++) {
+    h = Math.imul(31, h) + pin.charCodeAt(i) | 0;
+  }
+  return 'fp_' + Math.abs(h).toString(36) + pin.length;
+}
+
+function initPin() {
+  const stored = localStorage.getItem(PIN_KEY);
+  if (!stored) {
+    // Primera vez — crear PIN
+    settingPin = true;
+    document.getElementById('pin-subtitle').textContent = 'Crea tu PIN de 6 dígitos';
+    pinLength = 6;
+    updateDots();
+    return;
+  }
+  // Verificar bloqueo
+  const lockedUntil = parseInt(localStorage.getItem(LOCK_KEY) || '0');
+  if (Date.now() < lockedUntil) {
+    const mins = Math.ceil((lockedUntil - Date.now()) / 60000);
+    document.getElementById('pin-error').textContent = '';
+    document.getElementById('pin-subtitle').textContent = `Bloqueado por ${mins} min`;
+    return;
+  }
+  document.getElementById('pin-subtitle').textContent = 'Ingresa tu PIN';
+  pinLength = stored.slice(-1) === '6' ? 6 : 4;
+  updateDots();
+}
+
+function updateDots() {
+  for (let i = 0; i < 6; i++) {
+    const d = document.getElementById('d' + i);
+    if (i < pinLength) {
+      d.style.display = 'block';
+      d.className = 'pin-dot' + (i < pinBuffer.length ? ' filled' : '');
+    } else {
+      d.style.display = 'none';
+    }
+  }
+}
+
+function pinPress(digit) {
+  const lockedUntil = parseInt(localStorage.getItem(LOCK_KEY) || '0');
+  if (Date.now() < lockedUntil) return;
+
+  if (pinBuffer.length >= pinLength) return;
+  pinBuffer += digit;
+  updateDots();
+
+  if (pinBuffer.length === pinLength) {
+    setTimeout(() => handlePinComplete(), 120);
+  }
+}
+
+function pinDel() {
+  if (pinBuffer.length === 0) return;
+  pinBuffer = pinBuffer.slice(0, -1);
+  updateDots();
+}
+
+function handlePinComplete() {
+  if (settingPin) {
+    if (!pinConfirm) {
+      pinConfirm = pinBuffer;
+      pinBuffer = '';
+      document.getElementById('pin-subtitle').textContent = 'Confirma tu PIN';
+      updateDots();
+      return;
+    }
+    // Confirmar PIN
+    if (pinBuffer === pinConfirm) {
+      localStorage.setItem(PIN_KEY, hashPin(pinBuffer));
+      localStorage.removeItem(LOCK_KEY);
+      localStorage.removeItem(ATTEMPTS_KEY);
+      unlockApp();
+    } else {
+      pinConfirm = '';
+      pinBuffer = '';
+      document.getElementById('pin-subtitle').textContent = 'Crea tu PIN de 6 dígitos';
+      document.getElementById('pin-error').textContent = 'Los PINs no coinciden. Intenta de nuevo.';
+      shakeDots();
+      updateDots();
+    }
+    return;
+  }
+
+  // Verificar PIN
+  const stored = localStorage.getItem(PIN_KEY);
+  if (hashPin(pinBuffer) === stored) {
+    localStorage.removeItem(ATTEMPTS_KEY);
+    localStorage.removeItem(LOCK_KEY);
+    unlockApp();
+  } else {
+    pinBuffer = '';
+    const attempts = parseInt(localStorage.getItem(ATTEMPTS_KEY) || '0') + 1;
+    localStorage.setItem(ATTEMPTS_KEY, attempts);
+    shakeDots();
+    updateDots();
+    if (attempts >= MAX_ATTEMPTS) {
+      const lockUntil = Date.now() + LOCK_MINUTES * 60 * 1000;
+      localStorage.setItem(LOCK_KEY, lockUntil);
+      localStorage.removeItem(ATTEMPTS_KEY);
+      document.getElementById('pin-subtitle').textContent = `Bloqueado ${LOCK_MINUTES} min`;
+      document.getElementById('pin-error').textContent = `${MAX_ATTEMPTS} intentos fallidos.`;
+    } else {
+      document.getElementById('pin-error').textContent = `PIN incorrecto. ${MAX_ATTEMPTS - attempts} intentos restantes.`;
+    }
+  }
+}
+
+function shakeDots() {
+  const dots = document.getElementById('pin-dots');
+  dots.classList.remove('shake');
+  void dots.offsetWidth;
+  dots.classList.add('shake');
+  // Poner dots en rojo brevemente
+  for (let i = 0; i < pinLength; i++) {
+    document.getElementById('d' + i).className = 'pin-dot error';
+  }
+  setTimeout(() => updateDots(), 500);
+}
+
+function unlockApp() {
+  document.getElementById('pin-overlay').classList.add('hidden');
+  cargarDatos();
+}
+
+// Iniciar PIN al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  initPin();
+});
+
 </script>
 </body>
 </html>
