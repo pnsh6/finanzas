@@ -7,36 +7,37 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finanzas">
-<meta name="theme-color" content="#0f0f0f">
+<meta name="theme-color" content="#F2F2F7">
 <title>Finanzas</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%230f0f0f'/><text x='32' y='40' text-anchor='middle' font-family='system-ui' font-size='32' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
-<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%230f0f0f'/><text x='90' y='115' text-anchor='middle' font-family='system-ui' font-size='90' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23185FA5'/><text x='32' y='40' text-anchor='middle' font-family='system-ui' font-size='32' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23185FA5'/><text x='90' y='115' text-anchor='middle' font-family='system-ui' font-size='90' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>  :root {
-    --bg: #0f0f0f; --bg2: #1a1a1a; --bg3: #242424; --bg4: #2e2e2e;
-    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.14);
-    --text: #f0ede8; --text2: #9a9690; --text3: #5c5a57;
-    --green: #4ade80; --green-bg: rgba(74,222,128,0.1);
-    --red: #f87171; --red-bg: rgba(248,113,113,0.1);
-    --amber: #fbbf24; --amber-bg: rgba(251,191,36,0.1);
-    --blue: #60a5fa; --blue-bg: rgba(96,165,250,0.1);
-    --purple: #a78bfa; --purple-bg: rgba(167,139,250,0.1);
-    --radius: 14px; --radius-sm: 8px;
+    --bg:  #F2F2F7; --bg2: #FFFFFF; --bg3: #F2F2F7; --bg4: #E5E5EA;
+    --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.18);
+    --text: #1C1C1E; --text2: #48484A; --text3: #8E8E93;
+    --green:  #1A7F4B; --green-bg:  #D4F1E4;
+    --red:    #D93025; --red-bg:    #FDECEA;
+    --amber:  #B45309; --amber-bg:  #FEF3C7;
+    --blue:   #185FA5; --blue-bg:   #DBEAFE;
+    --purple: #6D28D9; --purple-bg: #EDE9FE;
+    --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.04);
+    --radius: 16px; --radius-sm: 10px;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; padding-bottom: 80px; font-size: 15px; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; padding-bottom: 80px; font-size: 15px; -webkit-font-smoothing: antialiased; }
 
   .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px 4px; font-size: 12px; color: var(--text3); font-family: 'DM Mono', monospace; }
-  .header { padding: 8px 20px 16px; display: flex; justify-content: space-between; align-items: flex-end; }
+  .header { padding: 16px 20px 12px; display: flex; justify-content: space-between; align-items: center; }
   .header-title { font-size: 13px; color: var(--text2); }
   .header-month { font-size: 13px; color: var(--text2); background: var(--bg3); border: 1px solid var(--border); padding: 4px 10px; border-radius: 20px; }
   .section { padding: 0 16px; margin-bottom: 8px; }
-  .section-label { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding: 0 4px; }
+  .section-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; padding: 0 4px; }
   .divider { height: 1px; background: var(--border); margin: 12px 16px; }
 
   /* LOADING */
   .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; }
-  .spinner { width: 28px; height: 28px; border: 2px solid var(--bg3); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  .spinner { width: 28px; height: 28px; border: 2px solid var(--bg4); border-top-color: var(--blue); border-radius: 50%; animation: spin 0.8s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .loading-text { font-size: 13px; color: var(--text3); }
 
@@ -47,7 +48,7 @@
   .retry-btn { margin-top: 12px; font-size: 12px; color: var(--blue); cursor: pointer; }
 
   /* HERO */
-  .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 0 16px 8px; }
+  .hero-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; margin: 0 16px 8px; box-shadow: var(--shadow); }
   .hero-label { font-size: 12px; color: var(--text3); margin-bottom: 4px; }
   .hero-amount { font-family: 'DM Mono', monospace; font-size: 36px; font-weight: 500; color: var(--text); letter-spacing: -1px; line-height: 1; }
   .hero-sub { font-size: 12px; color: var(--text3); margin-top: 6px; display: flex; justify-content: space-between; }
@@ -57,7 +58,7 @@
   .hero-updated { font-size: 10px; color: var(--text3); margin-top: 4px; }
   .hero-edit-btn { position: absolute; top: 14px; right: 16px; width: 28px; height: 28px; border-radius: 7px; background: var(--bg3); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; }
   /* PRESUPUESTO BAR */
-  .pres-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin: 0 16px 8px; }
+  .pres-bar { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin: 0 16px 8px; box-shadow: var(--shadow); }
   .pres-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
   .pres-lbl { font-size: 12px; color: var(--text2); }
   .pres-vals { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text3); }
@@ -93,7 +94,7 @@
   .banks-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 0 16px 6px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .banks-scroll::-webkit-scrollbar { display: none; }
   /* bank cards expandibles */
-  .bcard { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; transition: border-color 0.15s; }
+  .bcard { border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; transition: border-color 0.15s; background: var(--bg2); box-shadow: var(--shadow); }
   .bcard.open { border-color: var(--border2); }
   .bcard-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; cursor: pointer; }
   .bcard-head:active { background: var(--bg3); }
@@ -103,14 +104,14 @@
   .bcard-total { font-family: 'DM Mono', monospace; font-size: 15px; font-weight: 500; color: var(--text); margin-top: 1px; }
   .bcard-chevron { font-size: 14px; color: var(--text3); transition: transform 0.2s; flex-shrink: 0; }
   .bcard.open .bcard-chevron { transform: rotate(90deg); }
-  .bcard-sub { display: none; border-top: 1px solid var(--border); padding: 6px 12px 8px; background: var(--bg2); }
+  .bcard-sub { display: none; border-top: 1px solid var(--border); padding: 6px 12px 8px; background: var(--bg3); }
   .bcard.open .bcard-sub { display: block; }
   .sub-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; border-bottom: 1px solid var(--border); }
   .sub-row:last-child { border-bottom: none; }
   .sub-tag { font-size: 8px; padding: 1px 6px; border-radius: 4px; font-weight: 500; width: 24px; text-align: center; flex-shrink: 0; }
-  .sub-tag-cc { background: rgba(96,165,250,0.15); color: var(--blue); }
-  .sub-tag-lc { background: rgba(251,191,36,0.15); color: var(--amber); }
-  .sub-tag-tc { background: rgba(167,139,250,0.15); color: var(--purple); }
+  .sub-tag-cc { background: var(--blue-bg); color: var(--blue); }
+  .sub-tag-lc { background: var(--amber-bg); color: var(--amber); }
+  .sub-tag-tc { background: var(--purple-bg); color: var(--purple); }
   .sub-sep { font-size: 9px; color: var(--text3); flex-shrink: 0; }
   .sub-vals { display: flex; align-items: baseline; gap: 4px; }
   .sub-disp { font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; color: var(--text); }
@@ -137,9 +138,9 @@
   .proj-val { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
 
   /* GASTOS */
-  .type-toggle { display: flex; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 12px; }
-  .type-btn { flex: 1; text-align: center; font-size: 12px; font-weight: 500; padding: 6px; border-radius: 6px; cursor: pointer; color: var(--text3); transition: all 0.15s; }
-  .type-btn.active { background: var(--bg4); color: var(--text); }
+  .type-toggle { display: flex; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 3px; margin-bottom: 12px; }
+  .type-btn { flex: 1; text-align: center; font-size: 12px; font-weight: 500; padding: 7px; border-radius: 7px; cursor: pointer; color: var(--text2); transition: all 0.15s; }
+  .type-btn.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
   .bank-section { margin-bottom: 10px; }
   .bank-section-head { display: flex; justify-content: space-between; align-items: center; background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm) var(--radius-sm) 0 0; padding: 10px 14px; }
   .bank-section-name { font-size: 13px; font-weight: 500; }
@@ -176,29 +177,29 @@
 
   /* INVERSIONES */
   .inv-strip { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px; margin-bottom: 12px; }
-  .inv-strip-c { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; }
+  .inv-strip-c { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px; text-align: center; box-shadow: var(--shadow); }
   .inv-strip-l { font-size: 10px; color: var(--text3); }
   .inv-strip-v { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; margin-top: 2px; }
-  .prop-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; }
+  .prop-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; cursor: pointer; transition: border-color 0.15s; box-shadow: var(--shadow); }
   .prop-card:active { border-color: var(--border2); }
   .prop-head { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px 14px; }
   .prop-name { font-size: 14px; font-weight: 500; }
   .prop-loc { font-size: 10px; color: var(--text3); margin-top: 2px; }
   .prop-since { font-size: 10px; color: var(--text3); margin-top: 1px; }
   .badge { font-size: 10px; padding: 3px 9px; border-radius: 20px; font-weight: 500; white-space: nowrap; flex-shrink: 0; margin-left: 8px; }
-  .badge.ok { background: rgba(74,222,128,0.12); color: var(--green); }
-  .badge.pend { background: var(--amber-bg); color: var(--amber); }
+  .badge.ok { background: var(--green-bg); color: var(--green); }
+  .badge.pend { background: var(--amber-bg); color: var(--amber); font-weight: 600; }
   .badge.late { background: var(--red-bg); color: var(--red); }
-  .prop-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg); }
+  .prop-foot { display: flex; justify-content: space-between; align-items: center; padding: 8px 14px; border-top: 1px solid var(--border); background: var(--bg3); }
   .prop-foot-l { font-size: 11px; color: var(--text3); }
   .prop-foot-v { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; }
 
   /* DETALLE PROP */
   .back-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--blue); padding: 12px 20px 8px; cursor: pointer; }
-  .contrato-banner { background: var(--purple-bg); border: 1px solid rgba(167,139,250,0.2); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .contrato-title { font-size: 12px; font-weight: 500; color: var(--purple); }
+  .contrato-banner { background: var(--blue-bg); border: 1px solid rgba(24,95,165,0.15); border-radius: var(--radius-sm); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .contrato-title { font-size: 12px; font-weight: 600; color: var(--blue); }
   .contrato-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
-  .contrato-meses { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--purple); text-align: right; }
+  .contrato-meses { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 600; color: var(--blue); text-align: right; }
   .contrato-meses-l { font-size: 10px; color: var(--text3); text-align: right; }
   .item-row { display: flex; align-items: center; gap: 8px; padding: 9px 0; border-bottom: 1px solid var(--border); }
   .item-row:last-child { border-bottom: none; }
@@ -243,19 +244,21 @@
   .refresh-btn { font-size: 11px; color: var(--blue); cursor: pointer; }
 
   /* NAV */
-  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(15,15,15,0.95); backdrop-filter: blur(12px); border-top: 1px solid var(--border); display: flex; padding: 8px 0 20px; z-index: 100; }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; cursor: pointer; padding: 4px 0; }
-  .nav-label { font-size: 10px; color: var(--text3); font-weight: 400; }
-  .nav-item.active .nav-label { color: var(--blue); font-weight: 500; }
-  .nav-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--bg3); }
-  .nav-item.active .nav-dot { background: var(--blue-bg); }
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; padding: 6px 0 24px; z-index: 100; box-shadow: 0 -1px 0 rgba(0,0,0,0.06); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; position: relative; }
+  .nav-icon { font-size: 22px; line-height: 1.2; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
+  .nav-item.active .nav-icon { transform: scale(1.2); }
+  .nav-label { font-size: 10px; color: var(--text3); font-weight: 400; transition: color 0.15s; }
+  .nav-item.active .nav-label { color: var(--blue); font-weight: 600; }
+  .nav-item.active::after { content:''; position:absolute; bottom:-2px; left:50%; transform:translateX(-50%); width:20px; height:3px; background:var(--blue); border-radius:2px 2px 0 0; }
+  .nav-dot { display: none; }
   .screen { display: none; }
   .screen.active { display: block; animation: fadeIn 0.2s ease; }
   @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
   /* MODAL SALDO */
   .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: flex-end; }
   .modal-overlay.hidden { display: none; }
-  .modal-sheet { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 430px; margin: 0 auto; }
+  .modal-sheet { background: var(--bg2); border-radius: 20px 20px 0 0; padding: 20px 20px 40px; width: 100%; max-width: 430px; margin: 0 auto; box-shadow: 0 -4px 24px rgba(0,0,0,0.12); }
   .modal-handle { width: 36px; height: 4px; background: var(--bg4); border-radius: 2px; margin: 0 auto 20px; }
   .modal-title { font-size: 16px; font-weight: 500; color: var(--text); margin-bottom: 4px; }
   .modal-sub { font-size: 12px; color: var(--text3); margin-bottom: 20px; }
@@ -450,6 +453,11 @@
     <button class="modal-save-btn" onclick="ejecutarPago()">
       <span id="cp-btn-text">Marcar como pagado</span>
     </button>
+    <div id="cp-btn-desmarcar" style="display:none;margin-top:8px;">
+      <button onclick="desmarcarPago()" style="width:100%;padding:11px;background:var(--red-bg);border:1px solid rgba(220,38,38,0.2);border-radius:8px;color:var(--red);font-size:14px;font-weight:500;cursor:pointer;">
+        Desmarcar como pagado
+      </button>
+    </div>
     <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarConfirmPago()">Cancelar</div>
   </div>
 </div>
@@ -492,10 +500,22 @@
 </div>
 <!-- NAV -->
 <nav class="bottom-nav">
-  <div class="nav-item active" id="nav-home" onclick="goTo('home')"><div class="nav-dot"></div><span class="nav-label">Inicio</span></div>
-  <div class="nav-item" id="nav-gastos" onclick="goTo('gastos')"><div class="nav-dot"></div><span class="nav-label">Gastos</span></div>
-  <div class="nav-item" id="nav-inversiones" onclick="goTo('inversiones')"><div class="nav-dot"></div><span class="nav-label">Inversiones</span></div>
-  <div class="nav-item" id="nav-presupuesto" onclick="goTo('presupuesto')"><div class="nav-dot"></div><span class="nav-label">Presupuesto</span></div>
+  <div class="nav-item active" id="nav-home" onclick="goTo('home')">
+    <span class="nav-icon">🏠</span>
+    <span class="nav-label">Inicio</span>
+  </div>
+  <div class="nav-item" id="nav-gastos" onclick="goTo('gastos')">
+    <span class="nav-icon">💳</span>
+    <span class="nav-label">Gastos</span>
+  </div>
+  <div class="nav-item" id="nav-inversiones" onclick="goTo('inversiones')">
+    <span class="nav-icon">🏢</span>
+    <span class="nav-label">Inversiones</span>
+  </div>
+  <div class="nav-item" id="nav-presupuesto" onclick="goTo('presupuesto')">
+    <span class="nav-icon">📊</span>
+    <span class="nav-label">Presupuesto</span>
+  </div>
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
@@ -1018,7 +1038,7 @@ function txnRow(m) {
   const esIngreso = m['Tipo'] === 'ingreso';
   const monto = toNum(m['Monto']);
   // Usar Tipo para signo — ignora columna Signo que puede tener #ERROR!
-  const signo = esIngreso ? '+' : '-';
+  const signo = esIngreso ? '+' : '';
   const color = esIngreso ? 'var(--green)' : 'var(--red)';
   const cuotas = (m['Subtipo'] || '').includes('cuotas');
   return `
@@ -1065,15 +1085,45 @@ function renderInversiones() {
         </div>`;
     }
 
-    // Propiedad en arriendo
-    const neto = p.arriendo - egreso;
+    // Propiedad en arriendo — incluir gastos adicionales propios
+    const extrasMios = GASTOS_PROPIEDAD
+      .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
+      .reduce((s, g) => {
+        const pago = PAGOS_PROPIEDAD.find(pg =>
+          (pg['Gasto ID']||'').trim() === g.id &&
+          (pg['Mes']||'').trim() === getMesKeyActual()
+        );
+        const montoReal = pago && pago['Pagado'] === 'true' ? toNum(pago['Monto real']) : 0;
+        return s + (montoReal > 0 ? montoReal : g.montoEstimado);
+      }, 0);
+    const egresoTotal = egreso + extrasMios;
+    const neto = p.arriendo - egresoTotal;
     totalIngresos += p.arriendo;
-    totalEgresos  += egreso;
+    totalEgresos  += egresoTotal;
+    // Estado: al día si arriendo recibido Y todos los gastos propios pagados
     const arrendoPagado = movs.some(m =>
       (m['Categoría'] === 'Arriendo recibido' || (m['Descripción']||'').toLowerCase().includes('arriendo')) &&
       toNum(m['Monto']) > p.arriendo * 0.7
     );
-    const estado = arrendoPagado ? 'ok' : 'pend';
+
+    // Verificar si todos los gastos propios de esta propiedad están pagados
+    const mesKey = getMesKeyActual();
+    const gastosYo = GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo');
+    const baseIds  = [p.id+'_hip', p.id+'_gc'];
+    const todosIds = [...baseIds, ...gastosYo.map(g => g.id)];
+
+    const gastosPendientes = todosIds.filter(gid => {
+      const pago = PAGOS_PROPIEDAD.find(pg =>
+        (pg['Gasto ID']||'').trim() === gid &&
+        (pg['Mes']||'').trim() === mesKey &&
+        pg['Pagado'] === 'true'
+      );
+      return !pago; // sin pago = pendiente
+    });
+
+    const todoAlDia  = p.arriendo > 0 ? (arrendoPagado && gastosPendientes.length === 0) : gastosPendientes.length === 0;
+    const estadoStr  = todoAlDia ? 'ok' : 'pend';
+    const estadoTxt  = todoAlDia ? 'Al día' : `${gastosPendientes.length} pendiente${gastosPendientes.length > 1 ? 's' : ''}`;
 
     return `
       <div class="prop-card" onclick="showProp('${p.id}')">
@@ -1083,11 +1133,11 @@ function renderInversiones() {
             <div class="prop-loc">${p.dir}</div>
             <div class="prop-since">Arriendo desde ${inicioFmt} · ${meses} meses</div>
           </div>
-          <span class="badge ${estado}">${arrendoPagado ? 'Al día' : 'Pendiente'}</span>
+          <span class="badge ${estadoStr}">${estadoTxt}</span>
         </div>
         <div class="prop-foot">
           <span class="prop-foot-l">Resultado neto</span>
-          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${neto>=0?'+':''}${fmt(neto)}</span>
+          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${fmt(Math.abs(neto))}</span>
         </div>
       </div>`;
   };
@@ -1118,9 +1168,27 @@ function renderInversiones() {
 function showProp(id) {
   const p = PROPIEDADES.find(x => x.id === id);
   if (!p) return;
-  const meses = Math.floor((new Date() - new Date(p.inicio)) / (1000*60*60*24*30.5));
-  const inicioFmt = new Date(p.inicio).toLocaleDateString('es-CL');
-  const egreso = p.hipoteca + p.gcComunes;
+  const inicioDate = p.inicio ? new Date(p.inicio) : null;
+  const meses = inicioDate && !isNaN(inicioDate)
+    ? Math.floor((new Date() - inicioDate) / (1000*60*60*24*30.5)) : 0;
+  const inicioFmt = inicioDate && !isNaN(inicioDate)
+    ? inicioDate.toLocaleDateString('es-CL') : 'sin fecha';
+
+  // Calcular egreso real usando montos pagados
+  const getReal = (gastoId, estimado) => {
+    const pago = getPagoPropiedad(gastoId);
+    if (pago && pago['Pagado'] === 'true') {
+      const real = toNum(pago['Monto real']);
+      return real > 0 ? real : estimado;
+    }
+    return estimado;
+  };
+  const montoHip = getReal(p.id+'_hip', p.hipoteca);
+  const montoGC  = getReal(p.id+'_gc',  p.gcComunes);
+  const extrasEgreso = GASTOS_PROPIEDAD
+    .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
+    .reduce((s, g) => s + getReal(g.id, g.montoEstimado), 0);
+  const egreso = montoHip + montoGC + extrasEgreso;
   const neto = p.arriendo - egreso;
 
   document.getElementById('det-nombre').textContent = p.nombre;
@@ -1161,10 +1229,12 @@ function showProp(id) {
   document.getElementById('det-meses').textContent = meses;
   document.getElementById('det-ingreso').textContent = esHab ? '—' : fmtK(p.arriendo);
   document.getElementById('det-ingreso').style.color = esHab ? 'var(--text3)' : 'var(--green)';
-  document.getElementById('det-egreso').textContent  = fmtK(egreso);
+  document.getElementById('det-egreso').textContent  = fmtK(egreso); // ya incluye extras
   document.getElementById('det-egreso').style.color  = 'var(--red)';
-  document.getElementById('det-neto').textContent    = esHab ? '-'+fmtK(egreso) : (neto>=0?'+':'') + fmtK(neto);
-  document.getElementById('det-neto').style.color    = esHab ? 'var(--red)' : (neto>=0 ? 'var(--green)' : 'var(--red)');
+  document.getElementById('det-neto').textContent    = esHab
+    ? fmtK(egreso)
+    : fmtK(Math.abs(neto));
+  document.getElementById('det-neto').style.color    = esHab ? 'var(--red)' : (neto >= 0 ? 'var(--green)' : 'var(--red)');
 
   document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, esHab);
 
@@ -1192,11 +1262,33 @@ function renderGastosPropiedad(p, esHab) {
   const misGastos  = gastosProp.filter(g => (g.quienPaga||'yo').toLowerCase() === 'yo');
   const gastoArr   = gastosProp.filter(g => (g.quienPaga||'yo').toLowerCase() !== 'yo');
 
-  // Calcular egreso total (mis gastos fijos + variables pagados)
-  const hipEgreso = p.hipoteca + p.gcComunes;
-  const extrasEgreso = misGastos.reduce((s, g) => s + (g.montoTipo === 'fijo' ? g.montoEstimado : 0), 0);
+  // Calcular egreso total usando montos reales si están pagados, estimados si no
+  const getMontoEfectivo = (gastoId, estimado) => {
+    const pago = getPagoPropiedad(gastoId);
+    if (pago && pago['Pagado'] === 'true') {
+      const realStr = String(pago['Monto real'] || '');
+      // Si se registró un monto (incluyendo 0), usarlo
+      if (realStr !== '' && realStr !== 'undefined') {
+        const real = toNum(realStr);
+        return real; // puede ser 0
+      }
+      return estimado;
+    }
+    return estimado;
+  };
+
+  // Gastos base (hipoteca + GC) con IDs virtuales
+  const montoHip = getMontoEfectivo(p.id+'_hip', p.hipoteca);
+  const montoGC  = getMontoEfectivo(p.id+'_gc',  p.gcComunes);
+  const hipEgreso = montoHip + montoGC;
+
+  // Gastos adicionales míos
+  const extrasEgreso = misGastos.reduce((s, g) => {
+    return s + getMontoEfectivo(g.id, g.montoEstimado);
+  }, 0);
+
   const totalEgreso = hipEgreso + extrasEgreso;
-  const neto = p.arriendo - totalEgreso;
+  const neto = p.arriendo - totalEgreso; // negativo si egreso > ingreso
 
   const hoy = new Date().toLocaleDateString('es-CL');
 
@@ -1210,16 +1302,16 @@ function renderGastosPropiedad(p, esHab) {
     const atrasado = !pagado && diaHoy > g.diaVencimiento;
 
     let estadoClass = pagado ? 'chk-ok' : (atrasado ? 'chk-late' : 'chk-pend');
-    const montoMostrar = pagado && montoReal > 0 ? montoReal : g.montoEstimado;
+    const montoMostrar = (pagado && pago) ? (montoReal > 0 ? montoReal : g.montoEstimado) : g.montoEstimado;
     const diferencia = pagado && montoReal > 0 && g.montoTipo !== 'fijo' && montoReal !== g.montoEstimado
       ? ` (${montoReal > g.montoEstimado ? '+' : ''}${fmt(montoReal - g.montoEstimado)} vs estimado)`
       : '';
     let sub = pagado
-      ? `Pagado ${fechaPago}${montoReal > 0 ? ' · ' + fmt(montoReal) + diferencia : ''}`
+      ? `Pagado ${fechaPago}${pago ? ' · ' + fmt(montoReal) + diferencia : ''}`
       : (atrasado ? `Vencido día ${g.diaVencimiento}` : `Vence día ${g.diaVencimiento}`);
     let montoColor = pagado ? 'var(--green)' : (atrasado ? 'var(--red)' : 'var(--text3)');
     const montoDisplay = (pagado && montoReal > 0) ? fmt(montoReal) : (g.montoTipo === 'fijo' ? fmt(g.montoEstimado) : `~${fmt(g.montoEstimado)}`);
-    let montoStr = esArrend ? montoDisplay : '-' + montoDisplay;
+    let montoStr = montoDisplay;
 
     const tagArr = esArrend ? `<span style="font-size:7px;padding:1px 4px;border-radius:3px;background:var(--blue-bg);color:var(--blue);font-weight:500;margin-left:3px;">Arr.</span>` : '';
     const tagTipo = g.montoTipo === 'variable'
@@ -1239,14 +1331,15 @@ function renderGastosPropiedad(p, esHab) {
         </div>
         <div style="flex:1;">
           <div style="font-size:10px;font-weight:500;color:var(--text);">${g.nombre}${tagArr}${tagTipo}</div>
-          <div style="font-size:8px;color:${atrasado && !pagado ? 'var(--red)' : 'var(--text3)'};margin-top:1px;">${sub}</div>
+          <div style="font-size:8px;color:${atrasado && !pagado ? 'var(--red)' : 'var(--text3)'};margin-top:1px;">${pagado ? 'Pagado '+fechaPago : (atrasado ? 'Vencido día '+g.diaVencimiento : 'Vence día '+g.diaVencimiento)}</div>
         </div>
         <div style="text-align:right;">
-          <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:${montoColor};">${montoStr}</div>
-          <div style="font-size:8px;color:var(--text3);margin-top:1px;">día ${g.diaVencimiento}</div>
+          <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:${pagado ? 'var(--green)' : montoColor};">${pagado ? fmt(montoReal) : montoStr}</div>
+          ${pagado ? '<div style="font-size:9px;color:var(--text3);font-family:\'DM Mono\',monospace;margin-top:1px;">Pres. '+(g.montoTipo==='fijo' ? fmt(g.montoEstimado) : '~'+fmt(g.montoEstimado))+'</div>' : '<div style="font-size:9px;color:var(--text3);margin-top:1px;">día '+g.diaVencimiento+'</div>'}
         </div>
       </div>`;
   };
+
 
   // Gastos base (hipoteca + GC)
   const now3 = new Date();
@@ -1293,7 +1386,7 @@ function renderGastosPropiedad(p, esHab) {
   // Resultado neto
   html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;">
     <span style="font-size:11px;color:var(--text3);">${esHab ? 'Total egresos' : 'Resultado neto'}</span>
-    <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${esHab ? 'var(--red)' : (neto >= 0 ? 'var(--green)' : 'var(--red)')}">${esHab ? '-'+fmt(totalEgreso) : (neto >= 0 ? '+' : '') + fmt(neto)}</span>
+    <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${esHab ? 'var(--red)' : (neto >= 0 ? 'var(--green)' : 'var(--red)')}">${fmt(esHab ? totalEgreso : Math.abs(neto))}</span>
   </div>`;
 
   // Gastos arrendatario
@@ -1338,23 +1431,34 @@ function abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo, yaPagado) {
   const modal = document.getElementById('modal-confirm-pago');
   if (!modal) return;
 
-  const titulo = document.getElementById('cp-titulo');
+  const titulo   = document.getElementById('cp-titulo');
   const montoInp = document.getElementById('cp-monto');
   const montoWrap = document.getElementById('cp-monto-wrap');
-  const btnText = document.getElementById('cp-btn-text');
+  const btnText  = document.getElementById('cp-btn-text');
+  const btnDes   = document.getElementById('cp-btn-desmarcar');
+
+  // Siempre mostrar el input de monto — permite editar aunque ya esté pagado
+  montoWrap.style.display = 'block';
 
   if (yaPagado) {
-    titulo.textContent = '¿Desmarcar como pagado?';
-    montoWrap.style.display = 'none';
-    btnText.textContent = 'Sí, desmarcar';
+    // Cargar monto real ya registrado
+    const pagoExist = getPagoPropiedad(gastoId);
+    const montoActual = pagoExist ? toNum(pagoExist['Monto real']) : toNum(montoEst);
+    titulo.textContent = 'Actualizar pago';
+    montoInp.value = montoActual > 0 ? Math.round(montoActual).toLocaleString('es-CL') : Math.round(toNum(montoEst)).toLocaleString('es-CL');
+    btnText.textContent = 'Actualizar monto';
+    if (btnDes) btnDes.style.display = 'block';
   } else {
     titulo.textContent = esFijo ? 'Confirmar pago' : 'Registrar monto real';
-    montoWrap.style.display = 'block';
-    montoInp.value = montoEst ? Math.round(toNum(montoEst)).toLocaleString('es-CL') : '';
+    const montoNum = toNum(montoEst);
+    montoInp.value = montoNum > 0 ? Math.round(montoNum).toLocaleString('es-CL') : '0';
     btnText.textContent = 'Marcar como pagado';
+    if (btnDes) btnDes.style.display = 'none';
   }
 
   modal.classList.remove('hidden');
+  // Foco y seleccionar todo el texto para edición rápida
+  setTimeout(() => { montoInp.focus(); montoInp.select(); }, 100);
 }
 
 function cerrarConfirmPago() {
@@ -1362,31 +1466,79 @@ function cerrarConfirmPago() {
   if (modal) modal.classList.add('hidden');
 }
 
+async function desmarcarPago() {
+  const mesKey = getMesKeyActual();
+  const nuevoPago = {
+    gastoId:    _confirmGastoId,
+    propiedadId: _confirmPropId,
+    mes:        mesKey,
+    pagado:     false,
+    fechaPago:  '',
+    montoReal:  0,
+  };
+
+  const pagoId = _confirmGastoId + '_' + mesKey;
+  const pagoRow = {
+    'ID': pagoId, 'Gasto ID': _confirmGastoId, 'Propiedad ID': _confirmPropId,
+    'Mes': mesKey, 'Pagado': 'false', 'Fecha pago': '', 'Monto real': '0', 'Notas': ''
+  };
+  const idx = PAGOS_PROPIEDAD.findIndex(p =>
+    (p['Gasto ID']||'').trim() === _confirmGastoId &&
+    (p['Mes']||'').trim() === mesKey
+  );
+  if (idx > -1) PAGOS_PROPIEDAD[idx] = pagoRow;
+  else PAGOS_PROPIEDAD.push(pagoRow);
+
+  cerrarConfirmPago();
+
+  try {
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+  } catch(e) {}
+
+  const p = PROPIEDADES.find(x => x.id === _confirmPropId);
+  if (p) document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+}
+
 async function ejecutarPago() {
   const mesKey = getMesKeyActual();
   const hoy = new Date().toLocaleDateString('es-CL');
   const montoInp = document.getElementById('cp-monto');
-  const montoReal = _confirmYaPagado ? 0 : (parseInt((montoInp.value||'0').replace(/\./g,'').replace(/[^\d]/g,'')) || 0);
+  const rawMonto = (montoInp.value||'').replace(/\./g,'').replace(/[^\d]/g,'');
+  const montoReal = rawMonto !== '' ? parseInt(rawMonto) : 0;
+  // montoReal puede ser 0 — es válido (pago sin cargo)
 
   const nuevoPago = {
     gastoId:    _confirmGastoId,
     propiedadId: _confirmPropId,
     mes:        mesKey,
-    pagado:     !_confirmYaPagado,
-    fechaPago:  !_confirmYaPagado ? hoy : '',
+    pagado:     true, // siempre true al confirmar (desmarcar usa botón separado)
+    fechaPago:  hoy,
     montoReal,
   };
 
-  // Actualizar local
+  // Actualizar local — buscar por GastoID + Mes (más robusto que por ID)
   const pagoId = _confirmGastoId + '_' + mesKey;
   const pagoRow = {
-    'ID': pagoId, 'Gasto ID': _confirmGastoId, 'Propiedad ID': _confirmPropId,
-    'Mes': mesKey, 'Pagado': String(!_confirmYaPagado),
-    'Fecha pago': nuevoPago.fechaPago, 'Monto real': String(montoReal), 'Notas': ''
+    'ID': pagoId,
+    'Gasto ID': _confirmGastoId,
+    'Propiedad ID': _confirmPropId,
+    'Mes': mesKey,
+    'Pagado': 'true',
+    'Fecha pago': hoy,
+    'Monto real': String(montoReal),  // guardar siempre, incluso si es "0"
+    'Notas': ''
   };
-  const idx = PAGOS_PROPIEDAD.findIndex(p => p['ID'] === pagoId);
-  if (idx > -1) PAGOS_PROPIEDAD[idx] = pagoRow;
-  else PAGOS_PROPIEDAD.push(pagoRow);
+  // Buscar por Gasto ID + Mes (no por ID compuesto)
+  const idx = PAGOS_PROPIEDAD.findIndex(p =>
+    (p['Gasto ID']||'').trim() === _confirmGastoId &&
+    (p['Mes']||'').trim() === mesKey
+  );
+  if (idx > -1) {
+    PAGOS_PROPIEDAD[idx] = pagoRow;
+  } else {
+    PAGOS_PROPIEDAD.push(pagoRow);
+  }
 
   cerrarConfirmPago();
 
@@ -1507,10 +1659,12 @@ function renderPresupuesto() {
     porCat[cat] = (porCat[cat] || 0) + toNum(m['Monto']);
   });
 
-  // Proyección
+  // Proyección — solo aplicar si es el mes actual
   const now = new Date();
-  const diasMes = new Date(now.getFullYear(), now.getMonth()+1, 0).getDate();
-  const diaHoy  = now.getDate();
+  const { mm: mmFilt, yyyy: yyyyFilt } = getMesFiltro();
+  const esMesActual = mmFilt === now.getMonth() && yyyyFilt === now.getFullYear();
+  const diasMes = new Date(yyyyFilt, mmFilt+1, 0).getDate();
+  const diaHoy  = esMesActual ? now.getDate() : diasMes; // mes pasado = mes completo
   const totalGastado = Object.values(porCat).reduce((a,b) => a+b, 0);
   const proyeccion = diaHoy > 0 ? (totalGastado / diaHoy) * diasMes : 0;
   const totalPres = Object.values(getPRESUPUESTOS()).reduce((a,b) => a+b, 0);
