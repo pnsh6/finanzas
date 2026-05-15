@@ -369,10 +369,40 @@
         <div><div class="contrato-title">Contrato</div><div class="contrato-sub" id="det-contrato-sub"></div></div>
         <div><div class="contrato-meses" id="det-meses"></div><div class="contrato-meses-l">meses</div></div>
       </div>
-      <div class="inv-strip" style="margin-bottom:16px">
+      <div class="inv-strip" style="margin-bottom:10px">
         <div class="inv-strip-c"><div class="inv-strip-l">Ingreso</div><div class="inv-strip-v" id="det-ingreso"></div></div>
         <div class="inv-strip-c"><div class="inv-strip-l">Egreso</div><div class="inv-strip-v" id="det-egreso"></div></div>
         <div class="inv-strip-c"><div class="inv-strip-l">Neto</div><div class="inv-strip-v" id="det-neto"></div></div>
+      </div>
+      <!-- Datos hipoteca -->
+      <div id="det-hipoteca-wrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;">
+        <div style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Crédito hipotecario</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--text3);">Monto préstamo</div>
+            <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:9px;color:var(--text3);">UF</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--text3);">N° dividendos</div>
+            <div id="det-numdiv" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:9px;color:var(--text3);">cuotas</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;color:var(--text3);">Tasa</div>
+            <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:9px;color:var(--text3);">% anual</div>
+          </div>
+        </div>
+        <div id="det-div-pagados-wrap" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:10px;color:var(--text3);">Dividendos pagados</span>
+            <span id="det-div-pagados" style="font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text);">—</span>
+          </div>
+          <div style="height:4px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:5px;">
+            <div id="det-div-bar" style="height:4px;background:var(--blue);border-radius:3px;width:0%;transition:width 0.5s;"></div>
+          </div>
+        </div>
       </div>
       <div id="det-items"></div>
     </div>
@@ -725,6 +755,9 @@ async function cargarDatos() {
         banco_hip: r['Banco hipoteca'] || '',
         estado:    (r['Estado arriendo'] || r['Estado'] || 'activa').trim().toLowerCase(),
         tipo:      (r['Tipo'] || '').trim().toLowerCase() || 'arriendo',
+        prestamouF: toNum(r['Monto Prestamo (uf)'] || r['Monto Prestamo'] || 0),
+        numDiv:     parseInt(r['Num. Div.Total'] || r['NumDiv'] || 0),
+        tasa:       toNum(r['Tasa'] || 0),
       }));
 
     // Cargar gastos de propiedad
@@ -1093,6 +1126,35 @@ function showProp(id) {
   document.getElementById('det-nombre').textContent = p.nombre;
   document.getElementById('det-dir').textContent = p.dir;
   const esHab = p.tipo === 'habitada';
+
+  // Mostrar datos de hipoteca si existen
+  const hipWrap = document.getElementById('det-hipoteca-wrap');
+  if (hipWrap) {
+    const tieneHipoteca = p.prestamouF > 0 || p.numDiv > 0 || p.tasa > 0;
+    hipWrap.style.display = tieneHipoteca ? 'block' : 'none';
+    if (tieneHipoteca) {
+      document.getElementById('det-prestamo').textContent = p.prestamouF > 0 ? p.prestamouF.toLocaleString('es-CL') : '—';
+      document.getElementById('det-numdiv').textContent   = p.numDiv > 0 ? p.numDiv : '—';
+      document.getElementById('det-tasa').textContent     = p.tasa > 0 ? p.tasa.toFixed(2) : '—';
+
+      // Calcular dividendos pagados desde la fecha de inicio
+      if (p.numDiv > 0 && p.inicio) {
+        const inicioD = new Date(p.inicio);
+        const divPagados = !isNaN(inicioD)
+          ? Math.min(p.numDiv, Math.floor((new Date() - inicioD) / (1000*60*60*24*30.5)))
+          : 0;
+        const pct = Math.round(divPagados / p.numDiv * 100);
+        const divWrap = document.getElementById('det-div-pagados-wrap');
+        if (divWrap) {
+          divWrap.style.display = 'block';
+          document.getElementById('det-div-pagados').textContent = divPagados + ' de ' + p.numDiv;
+          const bar = document.getElementById('det-div-bar');
+          if (bar) { bar.style.width = pct + '%'; }
+        }
+      }
+    }
+  }
+
   document.getElementById('det-contrato-sub').textContent = esHab
     ? `Hipoteca desde ${inicioFmt} · ${meses} meses`
     : `Arriendo desde ${inicioFmt} · renovación anual`;
