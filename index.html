@@ -574,7 +574,7 @@ let MES_OFFSET = 0; // 0 = mes actual, -1 = mes anterior, etc.
 function cambiarMes(delta) {
   MES_OFFSET += delta;
   // No permitir ir al futuro
-  if (MES_OFFSET > 0) { MES_OFFSET = 0; return; }
+  if (MES_OFFSET > 12) { MES_OFFSET = 12; return; }
   actualizarLabelMes();
   renderHome();
   renderGastos();
@@ -922,7 +922,15 @@ function renderHome() {
   }
 
   const updEl = document.getElementById('hero-updated');
-  if (updEl) updEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+  if (updEl) {
+    if (MES_OFFSET > 0) {
+      updEl.textContent = 'Proyección basada en gastos recurrentes';
+      updEl.style.color = 'var(--amber)';
+    } else {
+      updEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
+      updEl.style.color = 'var(--text3)';
+    }
+  }
 
   const now2 = new Date();
   const mesNombre = now2.toLocaleString('es-CL', {month:'long'});
@@ -942,6 +950,11 @@ function renderHome() {
       const cat = m['Categoría'] || 'Otros';
       porCatBar[cat] = (porCatBar[cat]||0) + toNum(m['Monto']);
     });
+    // Para meses futuros sin movimientos, mostrar "sin datos aún"
+    if (MES_OFFSET > 0 && Object.keys(porCatBar).length === 0) {
+      presCats.innerHTML = '<span style="font-size:10px;color:var(--amber);">Sin movimientos aún · basado en presupuesto</span>';
+      // Saltar el resto del render de categorías
+    } else {
     const coloresBar = {'Supermercado':'var(--blue)','Restaurante':'var(--purple)','Transporte':'var(--green)','Salud':'var(--amber)'};
     const topCats = Object.entries(porCatBar).sort((a,b) => b[1]-a[1]).slice(0,4);
     presCats.innerHTML = topCats.map(([cat, v]) => {
@@ -950,6 +963,7 @@ function renderHome() {
       const color = sobre ? 'var(--red)' : (coloresBar[cat] || 'var(--text3)');
       return `<div class="cat-pip"><div class="pip" style="background:${color};"></div><span style="${sobre?'color:var(--red);':''}">${cat}</span></div>`;
     }).join('');
+    } // cierra else mes futuro
   }
 
   const alertas = generarAlertas(movsMesActual);
@@ -1161,8 +1175,10 @@ function renderInversiones() {
   const resEl = document.getElementById('inv-resultado');
   resEl.textContent = (resultado>=0?'+':'') + fmtK(resultado);
   resEl.style.color = resultado >= 0 ? 'var(--green)' : 'var(--red)';
-  document.getElementById('inv-count').textContent =
-    `${propsArriendo.length} arriendo · ${propsHabitada.length} hogar`;
+  const invLabel = MES_OFFSET > 0
+    ? `${propsArriendo.length} arriendo · Planificado`
+    : `${propsArriendo.length} arriendo · ${propsHabitada.length} hogar`;
+  document.getElementById('inv-count').textContent = invLabel;
 }
 
 function showProp(id) {
