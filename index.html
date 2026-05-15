@@ -350,7 +350,14 @@
   <div id="inv-lista">
     <div class="header">
       <div class="header-title">Inversiones</div>
-      <div class="header-month" id="inv-count">cargando...</div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <div style="display:flex;align-items:center;gap:2px;">
+          <div onclick="cambiarMes(-1)" style="font-size:18px;color:var(--text2);padding:2px 5px;cursor:pointer;">&#8249;</div>
+          <div id="inv-mes-label" class="header-month" style="font-size:11px;padding:3px 8px;">cargando...</div>
+          <div onclick="cambiarMes(1)" style="font-size:18px;color:var(--text2);padding:2px 5px;cursor:pointer;">&#8250;</div>
+        </div>
+        <div id="inv-count" style="font-size:11px;color:var(--text3);"></div>
+      </div>
     </div>
     <div class="section">
       <div class="inv-strip">
@@ -865,11 +872,32 @@ function renderHome() {
   if (!bankGrid) return;
   bankGrid.innerHTML = '';
 
+  // Para meses futuros: proyectar saldo desde el mes actual
+  const mesKeyBase = (() => {
+    const now2 = new Date();
+    return `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}`;
+  })();
+
+  // Estimar egresos recurrentes mensuales de propiedades
+  const egresoRecurrenteMensual = GASTOS_PROPIEDAD
+    .filter(g => (g.quienPaga||'yo').toLowerCase() === 'yo')
+    .reduce((s, g) => s + g.montoEstimado, 0)
+    + PROPIEDADES.reduce((s, p) => s + p.hipoteca + p.gcComunes, 0);
+
+  // Estimar ingresos mensuales de arriendos
+  const ingresoArriendoMensual = PROPIEDADES
+    .filter(p => p.tipo !== 'habitada')
+    .reduce((s, p) => s + p.arriendo, 0);
+
   DATA.saldos.forEach(s => {
     const banco = (s['Banco'] || '').trim();
     if (!banco) return;
-    const saldoInicial = toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
-    const saldoReal    = saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
+    // Saldo base: usar mes actual como punto de partida para proyecciones
+    const saldoBase = toNum(s[mesKeyBase]) || toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
+    const saldoInicial = MES_OFFSET > 0 ? saldoBase : (toNum(s[mesKey]) || toNum(s['Saldo']) || 0);
+    const saldoReal = MES_OFFSET > 0
+      ? saldoBase + (ingresoArriendoMensual - egresoRecurrenteMensual) * MES_OFFSET
+      : saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
     totalSaldoInicial += saldoInicial;
     const style    = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
     const logoHtml = `<div class="bcard-logo" style="background:${style.bg};"><span style="font-size:${style.text.length>2?'8':'11'}px;font-weight:700;color:${style.color};">${style.text}</span></div>`;
@@ -907,8 +935,14 @@ function renderHome() {
   const delta = ingMes - gasMes;
   const deltaEl = document.getElementById('total-delta');
   if (deltaEl) {
-    deltaEl.textContent = (delta >= 0 ? '+' : '') + fmt(delta) + ' este mes';
-    deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+    if (MES_OFFSET > 0) {
+      const proyDelta = ingresoArriendoMensual - egresoRecurrenteMensual;
+      deltaEl.textContent = (proyDelta >= 0 ? '+' : '') + fmt(proyDelta) + '/mes estimado';
+      deltaEl.style.color = proyDelta >= 0 ? 'var(--green)' : 'var(--red)';
+    } else {
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + fmt(delta) + ' este mes';
+      deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
+    }
   }
 
   const totalPres = Object.values(getPRESUPUESTOS()).reduce((a,b) => a+b, 0);
@@ -1103,6 +1137,7 @@ function renderInversiones() {
     const extrasMios = GASTOS_PROPIEDAD
       .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
       .reduce((s, g) => {
+        if (MES_OFFSET > 0) return s + g.montoEstimado; // futuro: siempre estimado
         const pago = PAGOS_PROPIEDAD.find(pg =>
           (pg['Gasto ID']||'').trim() === g.id &&
           (pg['Mes']||'').trim() === getMesKeyActual()
@@ -1115,10 +1150,22 @@ function renderInversiones() {
     totalIngresos += p.arriendo;
     totalEgresos  += egresoTotal;
     // Estado: al día si arriendo recibido Y todos los gastos propios pagados
-    const arrendoPagado = movs.some(m =>
-      (m['Categoría'] === 'Arriendo recibido' || (m['Descripción']||'').toLowerCase().includes('arriendo')) &&
-      toNum(m['Monto']) > p.arriendo * 0.7
-    );
+    // Arriendo pagado: mes actual = buscar en movimientos bancarios
+    // Mes futuro = buscar en PagosPropiedad con ID virtual "propId_arriendo"
+    const arrendoId = p.id + '_arriendo';
+    let arrendoPagado = false;
+    if (MES_OFFSET > 0) {
+      const pagoArr = PAGOS_PROPIEDAD.find(pg =>
+        (pg['Gasto ID']||'').trim() === arrendoId &&
+        (pg['Mes']||'').trim() === getMesKeyActual()
+      );
+      arrendoPagado = pagoArr && pagoArr['Pagado'] === 'true';
+    } else {
+      arrendoPagado = movs.some(m =>
+        (m['Categoría'] === 'Arriendo recibido' || (m['Descripción']||'').toLowerCase().includes('arriendo')) &&
+        toNum(m['Monto']) > p.arriendo * 0.7
+      );
+    }
 
     // Verificar si todos los gastos propios de esta propiedad están pagados
     const mesKey = getMesKeyActual();
@@ -1132,12 +1179,19 @@ function renderInversiones() {
         (pg['Mes']||'').trim() === mesKey &&
         pg['Pagado'] === 'true'
       );
-      return !pago; // sin pago = pendiente
+      return !pago;
     });
 
-    const todoAlDia  = p.arriendo > 0 ? (arrendoPagado && gastosPendientes.length === 0) : gastosPendientes.length === 0;
+    // Para mes futuro: contar también el arriendo como pendiente si no está marcado
+    const arrendoPendiente = p.arriendo > 0 && !arrendoPagado ? 1 : 0;
+    const totalPendientes = gastosPendientes.length + arrendoPendiente;
+
+    const todoAlDia  = totalPendientes === 0;
     const estadoStr  = todoAlDia ? 'ok' : 'pend';
-    const estadoTxt  = todoAlDia ? 'Al día' : `${gastosPendientes.length} pendiente${gastosPendientes.length > 1 ? 's' : ''}`;
+    const estadoTxt  = todoAlDia ? 'Al día'
+      : MES_OFFSET > 0
+        ? `${totalPendientes} por cobrar/pagar`
+        : `${totalPendientes} pendiente${totalPendientes > 1 ? 's' : ''}`;
 
     return `
       <div class="prop-card" onclick="showProp('${p.id}')">
@@ -1175,8 +1229,15 @@ function renderInversiones() {
   const resEl = document.getElementById('inv-resultado');
   resEl.textContent = (resultado>=0?'+':'') + fmtK(resultado);
   resEl.style.color = resultado >= 0 ? 'var(--green)' : 'var(--red)';
+  // Actualizar label del mes
+  const invMesEl = document.getElementById('inv-mes-label');
+  if (invMesEl) {
+    const { mm: mmI, yyyy: yyyyI } = getMesFiltro();
+    const mesLabelI = new Date(yyyyI, mmI, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
+    invMesEl.textContent = mesLabelI.charAt(0).toUpperCase() + mesLabelI.slice(1);
+  }
   const invLabel = MES_OFFSET > 0
-    ? `${propsArriendo.length} arriendo · Planificado`
+    ? `${propsArriendo.length} prop.`
     : `${propsArriendo.length} arriendo · ${propsHabitada.length} hogar`;
   document.getElementById('inv-count').textContent = invLabel;
 }
@@ -1365,16 +1426,35 @@ function renderGastosPropiedad(p, esHab) {
   let html = '';
 
   if (!esHab) {
-    html += `<div style="font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;display:flex;justify-content:space-between;align-items:center;">
-      Ingresos
-    </div>`;
+    // Verificar si el arriendo fue marcado como recibido
+    const arrendoId2 = p.id + '_arriendo';
+    const pagoArriendo = MES_OFFSET > 0
+      ? PAGOS_PROPIEDAD.find(pg => (pg['Gasto ID']||'').trim() === arrendoId2 && (pg['Mes']||'').trim() === getMesKeyActual())
+      : null;
+    const arrendoRecibido = MES_OFFSET > 0
+      ? (pagoArriendo && pagoArriendo['Pagado'] === 'true')
+      : true; // mes actual/pasado: asumir recibido si llegó hasta aquí
+
+    const arrChkStyle = arrendoRecibido
+      ? 'background:var(--green-bg);border:1.5px solid var(--green);'
+      : 'border:1.5px solid var(--border2);';
+    const arrChkIcon = arrendoRecibido
+      ? `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/></svg>`
+      : '';
+    const arrOnclick = MES_OFFSET > 0
+      ? `onclick="toggleArriendoRecibido('${p.id}','${p.arriendo}')"`
+      : '';
+    const arrColor = arrendoRecibido ? 'var(--green)' : 'var(--text3)';
+    const arrLabel = arrendoRecibido ? 'Arriendo recibido' : 'Arriendo pendiente de cobro';
+
+    html += `<div style="font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;">Ingresos</div>`;
     html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:10px;">
       <div style="display:flex;align-items:center;gap:6px;padding:6px 0;">
-        <div style="width:18px;height:18px;border-radius:50%;background:var(--green-bg);border:1.5px solid var(--green);flex-shrink:0;display:flex;align-items:center;justify-content:center;">
-          <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <div style="width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;${arrChkStyle}" ${arrOnclick}>
+          ${arrChkIcon}
         </div>
-        <div style="flex:1;font-size:10px;font-weight:500;color:var(--text);">Arriendo mensual</div>
-        <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:var(--green);">+${fmt(p.arriendo)}</div>
+        <div style="flex:1;font-size:10px;font-weight:500;color:var(--text);">${arrLabel}</div>
+        <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:${arrColor};">+${fmt(p.arriendo)}</div>
       </div>
     </div>`;
   }
@@ -1657,6 +1737,47 @@ async function guardarGastoPropiedad() {
   cerrarFormGasto();
   const p = PROPIEDADES.find(x => x.id === _propIdActual);
   if (p) document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+}
+
+
+async function toggleArriendoRecibido(propiedadId, monto) {
+  const arrendoId = propiedadId + '_arriendo';
+  const mesKey = getMesKeyActual();
+  const pagoExist = PAGOS_PROPIEDAD.find(pg =>
+    (pg['Gasto ID']||'').trim() === arrendoId &&
+    (pg['Mes']||'').trim() === mesKey
+  );
+  const yaMarcado = pagoExist && pagoExist['Pagado'] === 'true';
+  const hoy = new Date().toLocaleDateString('es-CL');
+  const montoNum = toNum(monto);
+
+  const nuevoPago = {
+    gastoId: arrendoId, propiedadId, mes: mesKey,
+    pagado: !yaMarcado,
+    fechaPago: !yaMarcado ? hoy : '',
+    montoReal: !yaMarcado ? montoNum : 0,
+  };
+
+  const pagoId = arrendoId + '_' + mesKey;
+  const pagoRow = {
+    'ID': pagoId, 'Gasto ID': arrendoId, 'Propiedad ID': propiedadId,
+    'Mes': mesKey, 'Pagado': String(!yaMarcado),
+    'Fecha pago': nuevoPago.fechaPago, 'Monto real': String(nuevoPago.montoReal), 'Notas': 'arriendo'
+  };
+  const idx = PAGOS_PROPIEDAD.findIndex(p => p['ID'] === pagoId);
+  if (idx > -1) PAGOS_PROPIEDAD[idx] = pagoRow;
+  else PAGOS_PROPIEDAD.push(pagoRow);
+
+  try {
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+  } catch(e) {}
+
+  const p = PROPIEDADES.find(x => x.id === propiedadId);
+  if (p) {
+    document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+  }
+  renderInversiones();
 }
 
 
