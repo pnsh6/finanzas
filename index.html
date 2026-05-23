@@ -369,48 +369,56 @@
     </div>
   </div>
   <div id="inv-detalle" style="display:none">
-    <div class="back-btn" onclick="backToLista()">&#8249; Inversiones</div>
+    <!-- Header: back + selector mes -->
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px 8px;">
+      <div class="back-btn" onclick="backToLista()">&#8249; Inversiones</div>
+      <div style="display:flex;align-items:center;gap:2px;">
+        <div onclick="cambiarMes(-1)" style="font-size:18px;color:var(--text2);padding:2px 6px;cursor:pointer;">&#8249;</div>
+        <div id="det-mes-label" class="header-month" style="font-size:11px;padding:3px 8px;">—</div>
+        <div onclick="cambiarMes(1)" style="font-size:18px;color:var(--text2);padding:2px 6px;cursor:pointer;">&#8250;</div>
+      </div>
+    </div>
     <div class="section">
-      <div style="margin-bottom:6px">
-        <div style="font-size:18px;font-weight:500" id="det-nombre"></div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px" id="det-dir"></div>
-      </div>
-      <div class="contrato-banner">
-        <div><div class="contrato-title">Contrato</div><div class="contrato-sub" id="det-contrato-sub"></div></div>
-        <div><div class="contrato-meses" id="det-meses"></div><div class="contrato-meses-l">meses</div></div>
-      </div>
-      <div class="inv-strip" style="margin-bottom:10px">
-        <div class="inv-strip-c"><div class="inv-strip-l">Ingreso</div><div class="inv-strip-v" id="det-ingreso"></div></div>
-        <div class="inv-strip-c"><div class="inv-strip-l">Egreso</div><div class="inv-strip-v" id="det-egreso"></div></div>
-        <div class="inv-strip-c"><div class="inv-strip-l">Neto</div><div class="inv-strip-v" id="det-neto"></div></div>
-      </div>
-      <!-- Datos hipoteca -->
-      <div id="det-hipoteca-wrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:14px;">
-        <div style="font-size:10px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">Crédito hipotecario</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
-          <div style="text-align:center;">
-            <div style="font-size:9px;color:var(--text3);">Monto préstamo</div>
-            <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:9px;color:var(--text3);">UF</div>
+      <!-- Hero card unificado -->
+      <div id="det-hero" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;box-shadow:var(--shadow);">
+        <div style="font-size:20px;font-weight:600;color:var(--text);" id="det-nombre"></div>
+        <div style="font-size:12px;color:var(--text3);margin-top:2px;" id="det-dir"></div>
+        <div id="det-hero-stats" style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);"></div>
+        <div id="det-hero-bar" style="display:none;margin-top:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:3px;">
+            <span>Ejecución del mes</span><span id="det-bar-pct"></span>
           </div>
-          <div style="text-align:center;">
-            <div style="font-size:9px;color:var(--text3);">N° dividendos</div>
-            <div id="det-numdiv" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:9px;color:var(--text3);">cuotas</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:9px;color:var(--text3);">Tasa</div>
-            <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:9px;color:var(--text3);">% anual</div>
+          <div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;">
+            <div id="det-bar-fill" style="height:4px;border-radius:2px;width:0%;transition:width 0.5s;"></div>
           </div>
         </div>
-        <div id="det-div-pagados-wrap" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border);display:none;">
-          <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span style="font-size:10px;color:var(--text3);">Dividendos pagados</span>
-            <span id="det-div-pagados" style="font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--text);">—</span>
+      </div>
+      <!-- Crédito hipotecario compacto -->
+      <div id="det-hipoteca-wrap" style="display:none;margin-bottom:10px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
+            <div style="font-size:8px;color:var(--text3);">Préstamo</div>
+            <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:8px;color:var(--text3);">UF</div>
           </div>
-          <div style="height:4px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-top:5px;">
-            <div id="det-div-bar" style="height:4px;background:var(--blue);border-radius:3px;width:0%;transition:width 0.5s;"></div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
+            <div style="font-size:8px;color:var(--text3);">Dividendos</div>
+            <div id="det-numdiv" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:8px;color:var(--text3);" id="det-div-label">pagados</div>
+          </div>
+          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
+            <div style="font-size:8px;color:var(--text3);">Tasa</div>
+            <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
+            <div style="font-size:8px;color:var(--text3);">% anual</div>
+          </div>
+        </div>
+        <div id="det-div-pagados-wrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;box-shadow:var(--shadow);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+            <span style="font-size:10px;color:var(--text3);">Progreso del crédito</span>
+            <span id="det-div-pagados" style="font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);">—</span>
+          </div>
+          <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+            <div id="det-div-bar" style="height:5px;border-radius:3px;width:0%;transition:width 0.5s;"></div>
           </div>
         </div>
       </div>
@@ -457,6 +465,21 @@
         oninput="formatSaldoInput(this)"
         style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:16px;font-family:'DM Mono',monospace;color:var(--text);outline:none;text-align:right;">
     </div>
+    <!-- Toggle: Pago propio vs Seguimiento -->
+    <div id="cp-tipo-wrap" style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tipo de registro</div>
+      <div style="display:flex;gap:6px;">
+        <div id="cp-tipo-propio" onclick="setCpTipo('propio')"
+          style="flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:500;cursor:pointer;">
+          Pago propio
+        </div>
+        <div id="cp-tipo-seguimiento" onclick="setCpTipo('seguimiento')"
+          style="flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;">
+          Solo seguimiento
+        </div>
+      </div>
+      <div id="cp-seguimiento-hint" style="display:none;font-size:10px;color:var(--amber);margin-top:5px;">No suma al gasto real · solo registra que fue pagado</div>
+    </div>
     <button class="modal-save-btn" onclick="ejecutarPago()">
       <span id="cp-btn-text">Marcar como pagado</span>
     </button>
@@ -466,6 +489,65 @@
       </button>
     </div>
     <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarConfirmPago()">Cancelar</div>
+  </div>
+</div>
+<!-- MODAL CAMBIO RESPONSABLE -->
+<div class="modal-overlay hidden" id="modal-responsable">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Cambiar responsable</div>
+    <div class="modal-sub" id="modal-resp-nombre">Gasto</div>
+    <div style="margin-bottom:12px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">¿Quién paga a partir de esta fecha?</div>
+      <div style="display:flex;gap:6px;">
+        <div id="resp-btn-yo" onclick="setRespTipo('yo')"
+          style="flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:500;cursor:pointer;">
+          Yo
+        </div>
+        <div id="resp-btn-arr" onclick="setRespTipo('arrendatario')"
+          style="flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;">
+          Arrendatario
+        </div>
+      </div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">A partir de</div>
+      <input id="resp-fecha" type="date"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Notas (opcional)</div>
+      <input id="resp-notas" type="text" placeholder="Ej: Entra arrendatario junio 2026"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;">
+    </div>
+    <button class="modal-save-btn" onclick="guardarResponsable()">Guardar</button>
+    <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarModalResponsable()">Cancelar</div>
+  </div>
+</div>
+<!-- MODAL ARRIENDO HISTORIAL -->
+<div class="modal-overlay hidden" id="modal-arriendo">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar arriendo</div>
+    <div class="modal-sub" id="modal-arriendo-prop">Propiedad</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Monto mensual</div>
+      <input id="arr-monto" type="text" inputmode="numeric" placeholder="0"
+        oninput="formatSaldoInput(this)"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:16px;font-family:'DM Mono',monospace;color:var(--text);outline:none;text-align:right;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fecha de inicio</div>
+      <input id="arr-fecha" type="date"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;">
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Notas (opcional)</div>
+      <input id="arr-notas" type="text" placeholder="Ej: Reajuste IPC 2025"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text);outline:none;">
+    </div>
+    <button class="modal-save-btn" onclick="guardarArriendoHistorial()">Guardar</button>
+    <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarModalArriendo()">Cancelar</div>
   </div>
 </div>
 <!-- MODAL GASTO PROPIEDAD -->
@@ -526,7 +608,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycby92Gdwg0Jv1RM5xc1fkTlmbrqq7HpU6YfUrYv7MHOMUUPuNmPkEkBry8Coa22-3Unv/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxMOTpQKtOtZhL1pzauZainKLtEWf7gieNe0UXZx-hsduruzRQuuGlmBMeZZd93KaUB/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -571,8 +653,10 @@ const BANK_PRODUCTS = {
 // Propiedades y presupuestos — se cargan dinámicamente desde el Sheet
 let PROPIEDADES = [];
 let PRESUPUESTOS_DINAMICOS = {};
-let GASTOS_PROPIEDAD = [];   // gastos configurados por propiedad
-let PAGOS_PROPIEDAD  = [];   // registros de pago del mes
+let GASTOS_PROPIEDAD    = [];   // gastos configurados por propiedad
+let PAGOS_PROPIEDAD     = [];   // registros de pago del mes
+let ARRIENDO_HISTORIAL    = [];   // historial de montos de arriendo por propiedad
+let GASTOS_RESPONSABLE    = [];   // historial de quién paga cada gasto por fecha
 
 // ── ESTADO ──────────────────────────────────────────────────
 let DATA = { movimientos: [], saldos: [], loaded: false };
@@ -586,6 +670,11 @@ function cambiarMes(delta) {
   renderHome();
   renderGastos();
   renderPresupuesto();
+  renderInversiones();
+  // Si el detalle de propiedad está abierto, re-renderizarlo
+  const detalle = document.getElementById('inv-detalle');
+  const propId = detalle && detalle.style.display !== 'none' ? detalle.getAttribute('data-prop-id') : null;
+  if (propId) showProp(propId);
 }
 
 function getMesFiltro() {
@@ -627,10 +716,7 @@ function fmt(n) {
 }
 
 function fmtK(n) {
-  const abs = Math.abs(n);
-  if (abs >= 1000000) return '$' + (abs/1000000).toFixed(1).replace('.0','') + 'M';
-  if (abs >= 1000)    return '$' + Math.round(abs/1000) + 'k';
-  return '$' + Math.round(abs);
+  return fmt(Math.round(Math.abs(n)));
 }
 
 function parseFecha(str) {
@@ -756,13 +842,15 @@ async function fetchSheet(nombre) {
 
 async function cargarDatos() {
   try {
-    const [movs, saldos, propRows, configRows, gastosRows, pagosRows] = await Promise.all([
+    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows] = await Promise.all([
       fetchSheet('Movimientos'),
       fetchSheet('Saldos'),
       fetchSheet('Propiedades'),
       fetchSheet('Config'),
       fetchSheet('GastosPropiedad'),
       fetchSheet('PagosPropiedad'),
+      fetchSheet('ArriendoHistorial').catch(() => []),
+      fetchSheet('GastosResponsable').catch(() => []),
     ]);
     DATA.movimientos = movs;
     DATA.saldos      = saldos;
@@ -786,6 +874,33 @@ async function cargarDatos() {
         numDiv:     parseInt(r['Num. Div.Total'] || r['NumDiv'] || 0),
         tasa:       toNum(r['Tasa'] || 0),
       }));
+
+    // Cargar historial de responsables por gasto
+    GASTOS_RESPONSABLE = (responsableRows||[])
+      .filter(r => r['ID'] && r['Gasto ID'])
+      .map(r => ({
+        id:          r['ID'].trim(),
+        gastoId:     r['Gasto ID'].trim(),
+        propiedadId: r['Propiedad ID'] || '',
+        fechaInicio: r['Fecha inicio'] ? new Date(r['Fecha inicio']) : null,
+        quienPaga:   (r['Quien paga'] || 'yo').toLowerCase().trim(),
+        notas:       r['Notas'] || '',
+      }))
+      .filter(r => r.fechaInicio && !isNaN(r.fechaInicio))
+      .sort((a,b) => a.fechaInicio - b.fechaInicio);
+
+    // Cargar historial de arriendos
+    ARRIENDO_HISTORIAL = (arriendoRows||[])
+      .filter(r => r['ID'] && r['Propiedad ID'])
+      .map(r => ({
+        id:          r['ID'].trim(),
+        propiedadId: r['Propiedad ID'].trim(),
+        fechaInicio: r['Fecha inicio'] ? new Date(r['Fecha inicio']) : null,
+        monto:       toNum(r['Monto']),
+        notas:       r['Notas'] || '',
+      }))
+      .filter(r => r.fechaInicio && !isNaN(r.fechaInicio) && r.monto > 0)
+      .sort((a,b) => a.fechaInicio - b.fechaInicio); // ordenar por fecha asc
 
     // Cargar gastos de propiedad
     GASTOS_PROPIEDAD = gastosRows
@@ -895,8 +1010,12 @@ function renderHome() {
     // Saldo base: usar mes actual como punto de partida para proyecciones
     const saldoBase = toNum(s[mesKeyBase]) || toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
     const saldoInicial = MES_OFFSET > 0 ? saldoBase : (toNum(s[mesKey]) || toNum(s['Saldo']) || 0);
-    const saldoReal = MES_OFFSET > 0
+    // Para mes futuro: proyectar solo si hay saldo base > 0
+    const proyFuturo = saldoBase > 0
       ? saldoBase + (ingresoArriendoMensual - egresoRecurrenteMensual) * MES_OFFSET
+      : 0;
+    const saldoReal = MES_OFFSET > 0
+      ? proyFuturo
       : saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
     totalSaldoInicial += saldoInicial;
     const style    = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
@@ -1101,13 +1220,98 @@ function txnRow(m) {
 }
 
 // ── INVERSIONES ──────────────────────────────────────────────
+function calcBarraCard(p) {
+  const mesKey = getMesKeyActual();
+  const { mm: mmB, yyyy: yyyyB } = getMesFiltro();
+
+  // Solo gastos que son MÍOs en este mes (según historial responsable)
+  const esHabitadaB = p.tipo === 'habitada';
+  const misGastosIds = [
+    ...(esHabitadaB || getQuienPagaBase(p.id+'_hip', p.id, mmB, yyyyB) === 'yo' ? [p.id+'_hip'] : []),
+    ...(esHabitadaB || getQuienPagaBase(p.id+'_gc',  p.id, mmB, yyyyB) === 'yo' ? [p.id+'_gc']  : []),
+    ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
+      (esHabitadaB || getQuienPagaVigente(g.id, mmB, yyyyB) === 'yo')).map(g => g.id)
+  ];
+
+  const totalEst = misGastosIds.reduce((s, gid) => {
+    if (gid === p.id+'_hip') return s + p.hipoteca;
+    if (gid === p.id+'_gc')  return s + p.gcComunes;
+    return s + (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+  }, 0);
+
+  let pagados = 0, pendientes = 0;
+  misGastosIds.forEach(gid => {
+    const pg = PAGOS_PROPIEDAD.find(r =>
+      (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && r['Pagado']==='true');
+    if (pg) {
+      const est = gid===p.id+'_hip'?p.hipoteca:gid===p.id+'_gc'?p.gcComunes
+        :(GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+      pagados += toNum(pg['Monto real'])>0?toNum(pg['Monto real']):est;
+    } else {
+      pendientes++;
+    }
+  });
+
+  // Arriendo pendiente
+  let arrPendiente = 0;
+  if (p.tipo !== 'habitada') {
+    const arriendoV = getArriendoVigente(p.id, mmB, yyyyB);
+    if (arriendoV > 0) {
+      const arrPg = PAGOS_PROPIEDAD.find(r =>
+        (r['Gasto ID']||'').trim()===p.id+'_arriendo' &&
+        (r['Mes']||'').trim()===mesKey && r['Pagado']==='true');
+      const arrBanco = MES_OFFSET === 0 && DATA.movimientos && DATA.movimientos.some(m =>
+        (m['Categoría']==='Arriendo recibido' || (m['Descripción']||'').toLowerCase().includes('arriendo')) &&
+        toNum(m['Monto']) > arriendoV * 0.7
+      );
+      if (!arrPg && !arrBanco) arrPendiente = 1;
+    }
+  }
+
+  // Gastos del arrendatario pendientes — solo para propiedades en arriendo
+  let arrPendientesGastos = 0;
+  if (!esHabitadaB) {
+    const gastosArrIds = [
+      ...(getQuienPagaBase(p.id+'_gc', p.id, mmB, yyyyB) !== 'yo' ? [p.id+'_gc'] : []),
+      ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
+        getQuienPagaVigente(g.id, mmB, yyyyB) !== 'yo').map(g => g.id)
+    ];
+    arrPendientesGastos = gastosArrIds.filter(gid =>
+      !PAGOS_PROPIEDAD.find(r =>
+        (r['Gasto ID']||'').trim()===gid &&
+        (r['Mes']||'').trim()===mesKey && r['Pagado']==='true')
+    ).length;
+  }
+
+  const totalPend = pendientes + arrPendiente + arrPendientesGastos;
+  const pctBar = totalEst > 0 ? Math.min(100, Math.round(pagados/totalEst*100)) : 0;
+  const barCol = pctBar >= 100 ? 'var(--green)' : pctBar > 85 ? 'var(--amber)' : 'var(--blue)';
+  const efectivoPend = pctBar >= 100 ? 0 : totalPend;
+
+  return {
+    pctBar, barCol, efectivoPend,
+    html: '<div style="padding:8px 14px 10px;border-top:1px solid var(--border);">'
+      + '<div style="display:flex;justify-content:space-between;font-size:9px;color:var(--text3);margin-bottom:3px;">'
+      + '<span>Ejecución del mes</span>'
+      + '<span style="font-weight:500;">' + pctBar + '%</span>'
+      + '</div>'
+      + '<div style="height:4px;background:var(--bg4);border-radius:2px;overflow:hidden;">'
+      + '<div style="width:' + pctBar + '%;height:4px;background:' + barCol + ';border-radius:2px;transition:width 0.4s;"></div>'
+      + '</div></div>'
+  };
+}
+
 function renderInversiones() {
+  try {
   const movs = movsMes();
-  const propsArriendo = PROPIEDADES.filter(p => p.tipo !== 'habitada');
   const propsHabitada = PROPIEDADES.filter(p => p.tipo === 'habitada');
+  const propsArriendo = PROPIEDADES.filter(p => p.tipo !== 'habitada');
 
   let totalIngresos = 0, totalEgresos = 0;
   const lista = document.getElementById('props-lista');
+
+
+
 
   const renderPropCard = (p) => {
     const inicioDate = p.inicio ? new Date(p.inicio) : null;
@@ -1116,7 +1320,10 @@ function renderInversiones() {
     const egreso = p.hipoteca + p.gcComunes;
 
     if (p.tipo === 'habitada') {
-      // Solo egresos — no muestra resultado neto ni estado de arriendo
+      const bHab = calcBarraCard(p);
+      const pendHab = bHab.efectivoPend;
+      const badgeHabStr = pendHab === 0 ? 'ok' : 'pend';
+      const badgeHabTxt = pendHab === 0 ? 'Al día' : pendHab + ' pendiente' + (pendHab > 1 ? 's' : '');
       return `
         <div class="prop-card" onclick="showProp('${p.id}')">
           <div class="prop-head">
@@ -1125,11 +1332,13 @@ function renderInversiones() {
               <div class="prop-loc">${p.dir}</div>
               <div class="prop-since">Hipoteca desde ${inicioFmt} · ${meses} meses</div>
             </div>
+            <span class="badge ${badgeHabStr}">${badgeHabTxt}</span>
           </div>
           <div class="prop-foot">
-            <span class="prop-foot-l">Egresos del mes</span>
-            <span class="prop-foot-v" style="color:var(--red)">-${fmt(egreso)}</span>
+            <span class="prop-foot-l">Presupuesto del mes</span>
+            <span class="prop-foot-v" style="color:var(--text2)">${fmt(egreso)}</span>
           </div>
+          ${bHab.html}
         </div>`;
     }
 
@@ -1146,8 +1355,10 @@ function renderInversiones() {
         return s + (montoReal > 0 ? montoReal : g.montoEstimado);
       }, 0);
     const egresoTotal = egreso + extrasMios;
-    const neto = p.arriendo - egresoTotal;
-    totalIngresos += p.arriendo;
+    const { mm: mmIC, yyyy: yyyyIC } = getMesFiltro();
+    const arriendoCard = getArriendoVigente(p.id, mmIC, yyyyIC);
+    const neto = arriendoCard - egresoTotal;
+    totalIngresos += arriendoCard;
     totalEgresos  += egresoTotal;
     // Estado: al día si arriendo recibido Y todos los gastos propios pagados
     // Arriendo pagado: mes actual = buscar en movimientos bancarios
@@ -1173,25 +1384,13 @@ function renderInversiones() {
     const baseIds  = [p.id+'_hip', p.id+'_gc'];
     const todosIds = [...baseIds, ...gastosYo.map(g => g.id)];
 
-    const gastosPendientes = todosIds.filter(gid => {
-      const pago = PAGOS_PROPIEDAD.find(pg =>
-        (pg['Gasto ID']||'').trim() === gid &&
-        (pg['Mes']||'').trim() === mesKey &&
-        pg['Pagado'] === 'true'
-      );
-      return !pago;
-    });
-
-    // Para mes futuro: contar también el arriendo como pendiente si no está marcado
-    const arrendoPendiente = p.arriendo > 0 && !arrendoPagado ? 1 : 0;
-    const totalPendientes = gastosPendientes.length + arrendoPendiente;
-
+    // Usar calcBarraCard para coherencia total con la barra
+    const barraInfo = calcBarraCard(p);
+    const totalPendientes = barraInfo.efectivoPend;
     const todoAlDia  = totalPendientes === 0;
     const estadoStr  = todoAlDia ? 'ok' : 'pend';
     const estadoTxt  = todoAlDia ? 'Al día'
-      : MES_OFFSET > 0
-        ? `${totalPendientes} por cobrar/pagar`
-        : `${totalPendientes} pendiente${totalPendientes > 1 ? 's' : ''}`;
+      : totalPendientes + ' pendiente' + (totalPendientes > 1 ? 's' : '');
 
     return `
       <div class="prop-card" onclick="showProp('${p.id}')">
@@ -1204,121 +1403,381 @@ function renderInversiones() {
           <span class="badge ${estadoStr}">${estadoTxt}</span>
         </div>
         <div class="prop-foot">
-          <span class="prop-foot-l">Resultado neto</span>
-          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${fmt(Math.abs(neto))}</span>
+          <span class="prop-foot-l">Neto del mes</span>
+          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${(neto>=0?'+':'-')+fmt(Math.abs(neto))}</span>
         </div>
+        ${calcBarraCard(p).html}
       </div>`;
   };
 
-  // Construir HTML con secciones separadas
+  // Construir HTML — MI HOGAR primero, luego INVERSIONES
   let html = '';
-  if (propsArriendo.length > 0) {
-    html += `<div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;">Inversiones</div>`;
-    html += propsArriendo.map(renderPropCard).join('');
-  }
   if (propsHabitada.length > 0) {
-    html += `<div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px;">Mi hogar</div>`;
+    html += `<div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;">Mi hogar</div>`;
     html += propsHabitada.map(renderPropCard).join('');
+  }
+  if (propsArriendo.length > 0) {
+    html += `<div style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 5px;">Inversiones</div>`;
+    html += propsArriendo.map(renderPropCard).join('');
   }
   lista.innerHTML = html;
 
   // Totales solo de propiedades en arriendo
   const resultado = totalIngresos - totalEgresos;
-  document.getElementById('inv-ingresos').textContent = fmtK(totalIngresos);
-  document.getElementById('inv-egresos').textContent  = fmtK(totalEgresos);
+  document.getElementById('inv-ingresos').textContent = fmt(totalIngresos);
+  document.getElementById('inv-ingresos').style.color  = 'var(--green)';
+  document.getElementById('inv-egresos').textContent   = fmt(totalEgresos);
+  document.getElementById('inv-egresos').style.color   = 'var(--red)';
   const resEl = document.getElementById('inv-resultado');
-  resEl.textContent = (resultado>=0?'+':'') + fmtK(resultado);
+  resEl.textContent = (resultado>=0?'+':'-') + fmt(Math.abs(resultado));
   resEl.style.color = resultado >= 0 ? 'var(--green)' : 'var(--red)';
-  // Actualizar label del mes
+  // Actualizar label del mes — sincronizado con selector global
   const invMesEl = document.getElementById('inv-mes-label');
-  if (invMesEl) {
+  if (invMesEl) actualizarLabelMes();
+  const mesLabelInv = (() => {
     const { mm: mmI, yyyy: yyyyI } = getMesFiltro();
-    const mesLabelI = new Date(yyyyI, mmI, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
-    invMesEl.textContent = mesLabelI.charAt(0).toUpperCase() + mesLabelI.slice(1);
-  }
+    const s = new Date(yyyyI, mmI, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
+    return s.charAt(0).toUpperCase() + s.slice(1);
+  })();
+  if (invMesEl) invMesEl.textContent = mesLabelInv;
   const invLabel = MES_OFFSET > 0
     ? `${propsArriendo.length} prop.`
     : `${propsArriendo.length} arriendo · ${propsHabitada.length} hogar`;
   document.getElementById('inv-count').textContent = invLabel;
+  } catch(err) {
+    console.error('renderInversiones ERROR:', err.message, err.stack);
+    const lista = document.getElementById('props-lista');
+    if (lista) lista.innerHTML = '<div style="padding:16px;color:var(--red);font-size:12px;">Error: ' + err.message + '</div>';
+  }
 }
 
 function showProp(id) {
   const p = PROPIEDADES.find(x => x.id === id);
   if (!p) return;
   const inicioDate = p.inicio ? new Date(p.inicio) : null;
+  const { mm: mmV, yyyy: yyyyV } = getMesFiltro();
+  const fechaVista = new Date(yyyyV, mmV, 1);
   const meses = inicioDate && !isNaN(inicioDate)
-    ? Math.floor((new Date() - inicioDate) / (1000*60*60*24*30.5)) : 0;
+    ? Math.max(0, Math.floor((fechaVista - inicioDate) / (1000*60*60*24*30.5))) : 0;
   const inicioFmt = inicioDate && !isNaN(inicioDate)
     ? inicioDate.toLocaleDateString('es-CL') : 'sin fecha';
-
-  // Calcular egreso real usando montos pagados
-  const getReal = (gastoId, estimado) => {
-    const pago = getPagoPropiedad(gastoId);
-    if (pago && pago['Pagado'] === 'true') {
-      const real = toNum(pago['Monto real']);
-      return real > 0 ? real : estimado;
-    }
-    return estimado;
-  };
-  const montoHip = getReal(p.id+'_hip', p.hipoteca);
-  const montoGC  = getReal(p.id+'_gc',  p.gcComunes);
-  const extrasEgreso = GASTOS_PROPIEDAD
-    .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
-    .reduce((s, g) => s + getReal(g.id, g.montoEstimado), 0);
-  const egreso = montoHip + montoGC + extrasEgreso;
-  const neto = p.arriendo - egreso;
-
-  document.getElementById('det-nombre').textContent = p.nombre;
-  document.getElementById('det-dir').textContent = p.dir;
   const esHab = p.tipo === 'habitada';
 
-  // Mostrar datos de hipoteca si existen
+  // Actualizar header
+  document.getElementById('det-nombre').textContent = p.nombre;
+  document.getElementById('det-dir').textContent = p.dir;
+
+  // Actualizar label mes
+  const detMesEl = document.getElementById('det-mes-label');
+  if (detMesEl) {
+    const s = new Date(yyyyV, mmV, 1).toLocaleString('es-CL', {month:'long', year:'numeric'});
+    detMesEl.textContent = s.charAt(0).toUpperCase() + s.slice(1);
+  }
+
+  // Calcular montos
+  const montoHip = getMontoEfectivo(p.id+'_hip', p.hipoteca);
+  const montoGC  = getMontoEfectivo(p.id+'_gc',  p.gcComunes);
+  const extrasEgreso = GASTOS_PROPIEDAD
+    .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
+    .reduce((s, g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
+  const egreso = montoHip + montoGC + extrasEgreso;
+  const { mm: mmSP, yyyy: yyyySP } = getMesFiltro();
+  const arriendoVigenteShow = getArriendoVigente(p.id, mmSP, yyyySP);
+  const neto = arriendoVigenteShow - egreso;
+
+  // ── HERO 2x2 ──────────────────────────────────────────────
+  const statsEl = document.getElementById('det-hero-stats');
+  const barEl   = document.getElementById('det-hero-bar');
+
+  // Calcular costo total del depto (todos los gastos, independiente de quién paga)
+  const costoTotalDepto = (() => {
+    let total = p.hipoteca + p.gcComunes;
+    GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id)
+      .forEach(g => { total += g.montoEstimado; });
+    return total;
+  })();
+
+  // Aporta arrendatario (suma de gastoArr + GC si es del arrendatario)
+  const { mm: mmSP2, yyyy: yyyySP2 } = getMesFiltro();
+  const gcEsArrSP = getQuienPagaBase(p.id+'_gc', p.id, mmSP2, yyyySP2) !== 'yo';
+  const aportaArrendatario = (() => {
+    let total = gcEsArrSP ? p.gcComunes : 0;
+    GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id)
+      .filter(g => getQuienPagaVigente(g.id, mmSP2, yyyySP2) !== 'yo')
+      .forEach(g => { total += g.montoEstimado; });
+    return total;
+  })();
+
+  if (esHab) {
+    // Mi hogar: Presupuesto / Gastado / Diferencia / Costo total
+    const presupTotal = p.hipoteca + p.gcComunes +
+      GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
+        .reduce((s,g) => s + g.montoEstimado, 0);
+    const gastoReal = [p.id+'_hip', p.id+'_gc',
+      ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo').map(g=>g.id)]
+      .reduce((s, gid) => {
+        const pg = getPagoPropiedad(gid);
+        if (!pg || pg['Pagado'] !== 'true' || pg['Notas'] === 'seguimiento') return s;
+        const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+          : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+        return s + (toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est);
+      }, 0);
+    let gastoSeguimiento = 0;
+    [p.id+'_hip', p.id+'_gc',
+      ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id).map(g=>g.id)]
+      .forEach(gid => {
+        const pg = getPagoPropiedad(gid);
+        if (!pg || pg['Pagado'] !== 'true' || pg['Notas'] !== 'seguimiento') return;
+        const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+          : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+        gastoSeguimiento += toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est;
+      });
+    const diff = presupTotal - gastoReal;
+    const colReal = gastoReal === 0 ? 'var(--text3)' : gastoReal <= presupTotal ? 'var(--green)' : 'var(--red)';
+    const todosGastosPagados = gastoReal + gastoSeguimiento;
+    const pct = presupTotal > 0 ? Math.min(100, Math.round(todosGastosPagados/presupTotal*100)) : 0;
+
+    const colDiff  = diff >= 0 ? 'var(--green)' : 'var(--red)';
+    const bgDiff   = diff >= 0 ? '#F0FDF4' : '#FEF2F2';
+    const barColor = pct >= 100 ? 'var(--green)' : pct > 85 ? 'var(--amber)' : 'var(--green)';
+
+    statsEl.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);';
+    statsEl.innerHTML = `
+      <div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Presupuesto</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--blue);">${fmtK(presupTotal)}</div>
+        <div style="font-size:9px;color:var(--blue);margin-top:3px;">total del mes</div>
+      </div>
+      <div style="background:${gastoReal>0?'#F0FDF4':'var(--bg3)'};border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Gastado</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${gastoReal>0?'var(--green)':'var(--text3)'};">${gastoReal>0?fmtK(gastoReal):'—'}</div>
+        <div style="font-size:9px;color:${gastoReal>0?'var(--green)':'var(--text3)'};margin-top:3px;">pagos confirmados</div>
+      </div>
+      <div style="background:${gastoSeguimiento>0?'#FFFBEB':'var(--bg3)'};border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Seguimiento</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${gastoSeguimiento>0?'var(--amber)':'var(--text3)'};">${gastoSeguimiento>0?fmtK(gastoSeguimiento):'—'}</div>
+        <div style="font-size:9px;color:${gastoSeguimiento>0?'var(--amber)':'var(--text3)'};margin-top:3px;">no suma al gasto</div>
+      </div>
+      <div style="background:${gastoReal>0?bgDiff:'var(--bg3)'};border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Diferencia</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${gastoReal>0?colDiff:'var(--text3)'};">${gastoReal>0?((diff>=0?'+':'')+fmtK(diff)):'—'}</div>
+        <div style="font-size:9px;color:${gastoReal>0?colDiff:'var(--text3)'};margin-top:3px;">${gastoReal>0?(diff>=0?'bajo presupuesto':'sobre presupuesto'):'sin pagos aún'}</div>
+      </div>`;
+
+    // Barra ejecución — siempre visible
+    barEl.style.display = 'block';
+    document.getElementById('det-bar-pct').textContent = pct + '%';
+    const fill = document.getElementById('det-bar-fill');
+    fill.style.width = pct + '%';
+    fill.style.background = barColor;
+
+  } else {
+    // Arriendo: grid 2x2 — valores dinámicos basados en pagos reales
+    const colNeto = neto >= 0 ? 'var(--green)' : 'var(--red)';
+
+    // Función para calcular valores dinámicos según pagos registrados
+    const calcDinamico = () => {
+      // Ingresos recibidos = arriendos marcados como recibidos
+      const arrendoId = p.id + '_arriendo';
+      const pagoArr = getPagoPropiedad(arrendoId);
+      const arriendoRecibido = pagoArr && pagoArr['Pagado'] === 'true';
+      const ingresosReales = arriendoRecibido ? arriendoVigenteShow : 0;
+
+      // Mis gastos pagados (excluye arrendatario)
+      const misGastosIds = [p.id+'_hip', p.id+'_gc',
+        ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
+          getQuienPagaVigente(g.id, mmSP2, yyyySP2) === 'yo').map(g => g.id)
+      ].filter(gid => {
+        // Excluir GC si es del arrendatario
+        if (gid === p.id+'_gc' && gcEsArrSP) return false;
+        return true;
+      });
+      const misGastosPagados = misGastosIds.reduce((s, gid) => {
+        const pg = getPagoPropiedad(gid);
+        if (!pg || pg['Pagado'] !== 'true' || pg['Notas'] === 'seguimiento') return s;
+        const estimado = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+          : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+        return s + (toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : estimado);
+      }, 0);
+
+      // Aporta arrendatario = arriendo recibido + gastos arrendatario pagados
+      const gastoArrPagados = (gcEsArrSP ? (() => {
+        const pg = getPagoPropiedad(p.id+'_gc');
+        if (!pg || pg['Pagado'] !== 'true') return 0;
+        return toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : p.gcComunes;
+      })() : 0) +
+      GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
+        getQuienPagaVigente(g.id, mmSP2, yyyySP2) !== 'yo')
+        .reduce((s, g) => {
+          const pg = getPagoPropiedad(g.id);
+          if (!pg || pg['Pagado'] !== 'true') return s;
+          return s + (toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : g.montoEstimado);
+        }, 0);
+      const aportaTotal = ingresosReales + gastoArrPagados;
+
+      // Neto = ingresos recibidos - mis gastos pagados
+      const netoReal = ingresosReales - misGastosPagados;
+
+      return { ingresosReales, misGastosPagados, aportaTotal, netoReal, arriendoRecibido, gastoArrPagados };
+    };
+
+    const din = calcDinamico();
+    const colNetoD = din.netoReal >= 0 ? 'var(--green)' : 'var(--red)';
+    const bgNetoD  = din.netoReal >= 0 ? '#EDFAF3' : '#FEF2F2';
+    const netoLabelD = din.netoReal !== 0
+      ? (din.netoReal >= 0 ? '+' : '-') + fmtK(Math.abs(din.netoReal))
+      : '—';
+
+    // Sub de arriendo según estado
+    const arriendoSub = arriendoVigenteShow > 0
+      ? (din.arriendoRecibido ? 'recibido' : (MES_OFFSET > 0 ? 'programado' : 'pendiente'))
+      : 'sin arriendo aún';
+    const bgArriendo = din.arriendoRecibido ? '#EDFAF3' : (arriendoVigenteShow > 0 ? '#F0FDF4' : 'var(--bg3)');
+
+    statsEl.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);';
+    statsEl.innerHTML = `
+      <div style="background:${bgArriendo};border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Arriendo <span style="cursor:pointer;" onclick="abrirModalArriendo('${id}')">✏️</span></div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${arriendoVigenteShow>0?'var(--green)':'var(--text3)'};">${arriendoVigenteShow>0?fmtK(arriendoVigenteShow):'—'}</div>
+        <div style="font-size:9px;color:var(--green);margin-top:3px;">${arriendoSub}</div>
+      </div>
+      <div style="background:#FEF2F2;border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Costo total depto</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--red);">${fmtK(costoTotalDepto)}</div>
+        <div style="font-size:9px;color:var(--red);margin-top:3px;">hip. + todos los gastos</div>
+      </div>
+      <div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Aporta arrendatario</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--blue);">${din.aportaTotal>0?fmtK(din.aportaTotal):'—'}</div>
+        <div style="font-size:9px;color:var(--blue);margin-top:3px;">${din.arriendoRecibido?'arriendo':'sin arriendo'}${din.gastoArrPagados>0?' + gastos':''}</div>
+      </div>
+      <div style="background:${din.netoReal!==0?bgNetoD:'var(--bg3)'};border-radius:8px;padding:10px 12px;">
+        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Neto del mes</div>
+        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${din.netoReal!==0?colNetoD:'var(--text3)'};">${netoLabelD}</div>
+        <div style="font-size:9px;color:${din.netoReal!==0?colNetoD:'var(--text3)'};margin-top:3px;">${din.netoReal!==0?(din.netoReal>=0?'positivo':'negativo'):'sin movimientos'}</div>
+      </div>`;
+    // Barra ejecución para arriendo: mis gastos pagados vs costo total
+    // Todos los gastos pagados (propios + seguimiento + arrendatario)
+    const todosGastosArr = din.misGastosPagados + din.gastoArrPagados +
+      (() => {
+        // seguimiento
+        const ids = [p.id+'_hip', p.id+'_gc',
+          ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id).map(g=>g.id)];
+        return ids.reduce((s, gid) => {
+          const pg = getPagoPropiedad(gid);
+          if (!pg || pg['Pagado'] !== 'true' || pg['Notas'] !== 'seguimiento') return s;
+          const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+            : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+          return s + (toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est);
+        }, 0);
+      })();
+    const pctArr = costoTotalDepto > 0
+      ? Math.min(100, Math.round(todosGastosArr / costoTotalDepto * 100)) : 0;
+    // Barra ejecución — siempre visible
+    barEl.style.display = 'block';
+    document.getElementById('det-bar-pct').textContent = pctArr + '%';
+    const fillArr = document.getElementById('det-bar-fill');
+    fillArr.style.width = pctArr + '%';
+    fillArr.style.background = pctArr >= 100 ? 'var(--green)' : pctArr > 85 ? 'var(--amber)' : 'var(--blue)';
+  } // cierre else arriendo
+
+  // Crédito hipotecario
   const hipWrap = document.getElementById('det-hipoteca-wrap');
   if (hipWrap) {
     const tieneHipoteca = p.prestamouF > 0 || p.numDiv > 0 || p.tasa > 0;
     hipWrap.style.display = tieneHipoteca ? 'block' : 'none';
     if (tieneHipoteca) {
       document.getElementById('det-prestamo').textContent = p.prestamouF > 0 ? p.prestamouF.toLocaleString('es-CL') : '—';
-      document.getElementById('det-numdiv').textContent   = p.numDiv > 0 ? p.numDiv : '—';
-      document.getElementById('det-tasa').textContent     = p.tasa > 0 ? p.tasa.toFixed(2) : '—';
-
-      // Calcular dividendos pagados desde la fecha de inicio
-      if (p.numDiv > 0 && p.inicio) {
-        const inicioD = new Date(p.inicio);
-        const divPagados = !isNaN(inicioD)
-          ? Math.min(p.numDiv, Math.floor((new Date() - inicioD) / (1000*60*60*24*30.5)))
-          : 0;
-        const pct = Math.round(divPagados / p.numDiv * 100);
-        const divWrap = document.getElementById('det-div-pagados-wrap');
-        if (divWrap) {
-          divWrap.style.display = 'block';
-          document.getElementById('det-div-pagados').textContent = divPagados + ' de ' + p.numDiv;
-          const bar = document.getElementById('det-div-bar');
-          if (bar) { bar.style.width = pct + '%'; }
+      const divPagados = p.numDiv > 0 && inicioDate && !isNaN(inicioDate)
+        ? Math.min(p.numDiv, Math.max(0, Math.floor((fechaVista - inicioDate) / (1000*60*60*24*30.5)))) : 0;
+      document.getElementById('det-numdiv').textContent = p.numDiv > 0
+        ? divPagados + '/' + p.numDiv : '—';
+      const divLbl = document.getElementById('det-div-label');
+      if (divLbl) divLbl.textContent = p.numDiv > 0 ? `faltan ${p.numDiv - divPagados}` : 'pagados';
+      document.getElementById('det-tasa').textContent = p.tasa > 0 ? p.tasa.toFixed(2) : '—';
+      const divWrap = document.getElementById('det-div-pagados-wrap');
+      if (divWrap && p.numDiv > 0) {
+        divWrap.style.display = 'block';
+        const pctDiv = Math.round(divPagados / p.numDiv * 100);
+        document.getElementById('det-div-pagados').textContent = divPagados + ' de ' + p.numDiv + ' · faltan ' + (p.numDiv - divPagados);
+        const bar = document.getElementById('det-div-bar');
+        if (bar) {
+          bar.style.width = pctDiv + '%';
+          bar.style.background = pctDiv > 75 ? 'var(--green)' : pctDiv > 40 ? 'var(--blue)' : 'var(--amber)';
         }
       }
     }
   }
 
-  document.getElementById('det-contrato-sub').textContent = esHab
-    ? `Hipoteca desde ${inicioFmt} · ${meses} meses`
-    : `Arriendo desde ${inicioFmt} · renovación anual`;
-  document.getElementById('det-meses').textContent = meses;
-  document.getElementById('det-ingreso').textContent = esHab ? '—' : fmtK(p.arriendo);
-  document.getElementById('det-ingreso').style.color = esHab ? 'var(--text3)' : 'var(--green)';
-  document.getElementById('det-egreso').textContent  = fmtK(egreso); // ya incluye extras
-  document.getElementById('det-egreso').style.color  = 'var(--red)';
-  document.getElementById('det-neto').textContent    = esHab
-    ? fmtK(egreso)
-    : fmtK(Math.abs(neto));
-  document.getElementById('det-neto').style.color    = esHab ? 'var(--red)' : (neto >= 0 ? 'var(--green)' : 'var(--red)');
+  // Guardar propId y mostrar detalle
+  document.getElementById('inv-lista').style.display = 'none';
+  const _invDet = document.getElementById('inv-detalle');
+  _invDet.style.display = 'block';
+  _invDet.setAttribute('data-prop-id', id);
+  window.scrollTo(0,0);
 
   document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, esHab);
-
-  document.getElementById('inv-lista').style.display = 'none';
-  document.getElementById('inv-detalle').style.display = 'block';
-  window.scrollTo(0,0);
 }
+
+// ── HELPER GLOBAL — monto efectivo de un gasto (real si pagado, estimado si no) ──
+// Obtener quién paga un gasto en un mes/año dado
+function getQuienPagaVigente(gastoId, mm, yyyy) {
+  const fechaMes = new Date(yyyy, mm, 1);
+  const registros = GASTOS_RESPONSABLE.filter(r => r.gastoId === gastoId);
+  let vigente = null;
+  for (const r of registros) {
+    if (r.fechaInicio <= fechaMes) vigente = r;
+  }
+  // Si hay un registro vigente, usarlo
+  if (vigente) return vigente.quienPaga;
+  // Fallback: usar el valor del gasto original
+  const gasto = GASTOS_PROPIEDAD.find(g => g.id === gastoId);
+  return gasto ? (gasto.quienPaga || 'yo').toLowerCase() : 'yo';
+}
+
+// Igual pero para gastos base (hip, gc) — usan IDs virtuales
+function getQuienPagaBase(gastoVirtualId, propiedadId, mm, yyyy) {
+  const fechaMes = new Date(yyyy, mm, 1);
+  const registros = GASTOS_RESPONSABLE.filter(r => r.gastoId === gastoVirtualId);
+  let vigente = null;
+  for (const r of registros) {
+    if (r.fechaInicio <= fechaMes) vigente = r;
+  }
+  return vigente ? vigente.quienPaga : 'yo'; // por defecto: yo
+}
+
+// Obtener monto de arriendo vigente para una propiedad en un mes/año dado
+function getArriendoVigente(propiedadId, mm, yyyy) {
+  const fechaMes = new Date(yyyy, mm, 1);
+  // Buscar en historial — tomar el último registro cuya fechaInicio <= fechaMes
+  const registros = ARRIENDO_HISTORIAL.filter(r => r.propiedadId === propiedadId);
+  let vigente = null;
+  for (const r of registros) {
+    if (r.fechaInicio <= fechaMes) vigente = r;
+  }
+  if (vigente) return vigente.monto;
+  // Fallback: usar monto de Propiedades solo si la propiedad ya había comenzado
+  const prop = PROPIEDADES.find(p => p.id === propiedadId);
+  if (!prop) return 0;
+  // Si no hay historial, solo mostrar arriendo desde la fecha de inicio
+  const inicioDate = prop.inicio ? new Date(prop.inicio) : null;
+  if (inicioDate && !isNaN(inicioDate) && fechaMes >= inicioDate) {
+    return prop.arriendo;
+  }
+  return 0; // antes del inicio = sin arriendo
+}
+
+
+function getMontoEfectivo(gastoId, estimado) {
+  const pago = getPagoPropiedad(gastoId);
+  if (pago && pago['Pagado'] === 'true') {
+    const realStr = String(pago['Monto real'] || '');
+    if (realStr !== '' && realStr !== 'undefined') return toNum(realStr);
+    return estimado;
+  }
+  return estimado;
+}
+
 
 // ── GASTOS POR PROPIEDAD ──────────────────────────────────────
 function getMesKeyActual() {
@@ -1336,27 +1795,19 @@ function getPagoPropiedad(gastoId) {
 
 function renderGastosPropiedad(p, esHab) {
   const gastosProp = GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id);
-  const misGastos  = gastosProp.filter(g => (g.quienPaga||'yo').toLowerCase() === 'yo');
-  const gastoArr   = gastosProp.filter(g => (g.quienPaga||'yo').toLowerCase() !== 'yo');
+  const { mm: mmFG, yyyy: yyyyFG } = getMesFiltro();
+  // Arriendos vigente en este mes
+  const arriendoMes = getArriendoVigente(p.id, mmFG, yyyyFG);
+  // Usar historial de responsables para determinar quién paga en este mes
+  const misGastos  = gastosProp.filter(g => getQuienPagaVigente(g.id, mmFG, yyyyFG) === 'yo');
+  const gastoArr   = gastosProp.filter(g => getQuienPagaVigente(g.id, mmFG, yyyyFG) !== 'yo');
 
   // Calcular egreso total usando montos reales si están pagados, estimados si no
-  const getMontoEfectivo = (gastoId, estimado) => {
-    const pago = getPagoPropiedad(gastoId);
-    if (pago && pago['Pagado'] === 'true') {
-      const realStr = String(pago['Monto real'] || '');
-      // Si se registró un monto (incluyendo 0), usarlo
-      if (realStr !== '' && realStr !== 'undefined') {
-        const real = toNum(realStr);
-        return real; // puede ser 0
-      }
-      return estimado;
-    }
-    return estimado;
-  };
-
-  // Gastos base (hipoteca + GC) con IDs virtuales
-  const montoHip = getMontoEfectivo(p.id+'_hip', p.hipoteca);
-  const montoGC  = getMontoEfectivo(p.id+'_gc',  p.gcComunes);
+  // Gastos base — verificar si en este mes son del arrendatario
+  const hipEsMio = getQuienPagaBase(p.id+'_hip', p.id, mmFG, yyyyFG) === 'yo';
+  const gcEsMio  = getQuienPagaBase(p.id+'_gc',  p.id, mmFG, yyyyFG) === 'yo';
+  const montoHip = hipEsMio ? getMontoEfectivo(p.id+'_hip', p.hipoteca) : 0;
+  const montoGC  = gcEsMio  ? getMontoEfectivo(p.id+'_gc',  p.gcComunes) : 0;
   const hipEgreso = montoHip + montoGC;
 
   // Gastos adicionales míos
@@ -1376,16 +1827,21 @@ function renderGastosPropiedad(p, esHab) {
     const montoReal = pago ? toNum(pago['Monto real']) : 0;
     const now2 = new Date();
     const diaHoy = now2.getDate();
-    const atrasado = !pagado && diaHoy > g.diaVencimiento;
+    // Para meses futuros nada está vencido
+    const atrasado = !pagado && MES_OFFSET === 0 && diaHoy > g.diaVencimiento;
 
     let estadoClass = pagado ? 'chk-ok' : (atrasado ? 'chk-late' : 'chk-pend');
     const montoMostrar = (pagado && pago) ? (montoReal > 0 ? montoReal : g.montoEstimado) : g.montoEstimado;
     const diferencia = pagado && montoReal > 0 && g.montoTipo !== 'fijo' && montoReal !== g.montoEstimado
       ? ` (${montoReal > g.montoEstimado ? '+' : ''}${fmt(montoReal - g.montoEstimado)} vs estimado)`
       : '';
-    let sub = pagado
-      ? `Pagado ${fechaPago}${pago ? ' · ' + fmt(montoReal) + diferencia : ''}`
+    const esSeguimiento = pago && pago['Notas'] === 'seguimiento';
+    const subPendiente = MES_OFFSET > 0
+      ? `Programado · día ${g.diaVencimiento}`
       : (atrasado ? `Vencido día ${g.diaVencimiento}` : `Vence día ${g.diaVencimiento}`);
+    let sub = pagado
+      ? (esSeguimiento ? `Seguimiento ${fechaPago}` : `Pagado ${fechaPago}${pago ? ' · ' + fmt(montoReal) + diferencia : ''}`)
+      : subPendiente;
     let montoColor = pagado ? 'var(--green)' : (atrasado ? 'var(--red)' : 'var(--text3)');
     const montoDisplay = (pagado && montoReal > 0) ? fmt(montoReal) : (g.montoTipo === 'fijo' ? fmt(g.montoEstimado) : `~${fmt(g.montoEstimado)}`);
     let montoStr = montoDisplay;
@@ -1402,13 +1858,17 @@ function renderGastosPropiedad(p, esHab) {
     return `
       <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
         <div style="width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;
-          ${pagado ? 'background:var(--green-bg);border:1.5px solid var(--green);' : atrasado ? 'border:1.5px solid var(--red);' : 'border:1.5px solid var(--border2);'}"
+          ${pagado ? 'background:var(--green-bg);border:1.5px solid var(--green);' : (atrasado ? 'border:1.5px solid var(--red);' : 'border:1.5px solid var(--border2);')}"
           onclick="togglePagoPropiedad('${g.id}','${p.id}','${g.montoEstimado}','${g.montoTipo === 'fijo'}')">
           ${checkIcon}
         </div>
         <div style="flex:1;">
-          <div style="font-size:10px;font-weight:500;color:var(--text);">${g.nombre}${tagArr}${tagTipo}</div>
-          <div style="font-size:8px;color:${atrasado && !pagado ? 'var(--red)' : 'var(--text3)'};margin-top:1px;">${pagado ? 'Pagado '+fechaPago : (atrasado ? 'Vencido día '+g.diaVencimiento : 'Vence día '+g.diaVencimiento)}</div>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span style="font-size:10px;font-weight:500;color:var(--text);">${g.nombre}${tagArr}${tagTipo}</span>
+            <span onclick="event.stopPropagation();abrirModalResponsable('${g.id}','${p.id}','${g.nombre}',false)"
+              style="font-size:10px;color:var(--text3);cursor:pointer;padding:0 2px;" title="Cambiar responsable">⇄</span>
+          </div>
+          <div style="font-size:8px;color:${atrasado && !pagado ? 'var(--red)' : 'var(--text3)'};margin-top:1px;">${sub}</div>
         </div>
         <div style="text-align:right;">
           <div style="font-size:12px;font-weight:600;font-family:'DM Mono',monospace;color:${pagado ? 'var(--green)' : montoColor};">${pagado ? fmt(montoReal) : montoStr}</div>
@@ -1454,14 +1914,17 @@ function renderGastosPropiedad(p, esHab) {
           ${arrChkIcon}
         </div>
         <div style="flex:1;font-size:10px;font-weight:500;color:var(--text);">${arrLabel}</div>
-        <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:${arrColor};">+${fmt(p.arriendo)}</div>
+        <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:${arrColor};">${arriendoMes > 0 ? '+'+fmt(arriendoMes) : '—'}</div>
       </div>
     </div>`;
   }
 
-  html += `<div style="font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;display:flex;justify-content:space-between;align-items:center;">
-    <span>Mis gastos</span>
-    <div onclick="abrirFormGasto('${p.id}','yo')" style="width:18px;height:18px;border-radius:5px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+  // Calcular subtotal mis gastos
+  const subtotalMios = montoHip + montoGC +
+    misGastos.reduce((s,g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
+  html += `<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;display:flex;justify-content:space-between;align-items:center;">
+    <span>Mis gastos <span style="color:var(--red);font-weight:400;">${fmtK(subtotalMios)}</span></span>
+    <div onclick="abrirFormGasto('${p.id}','yo')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
   </div>`;
 
   // Convertir hipoteca y GC base a gastos virtuales con ID fijo
@@ -1470,31 +1933,66 @@ function renderGastosPropiedad(p, esHab) {
   const gastoGCBase  = { id: p.id+'_gc',  propiedadId: p.id, nombre: 'Gastos comunes',
     quienPaga: 'yo', montoTipo: 'fijo', montoEstimado: p.gcComunes,  diaVencimiento: 5 };
 
-  html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:8px;">`;
-  html += renderItem(gastoHipBase, false);
-  html += renderItem(gastoGCBase, false);
-  // Gastos adicionales míos
-  misGastos.forEach((g, i) => {
-    html += renderItem(g, false).replace('border-bottom:1px solid var(--border)', i < misGastos.length-1 ? 'border-bottom:1px solid var(--border)' : 'border-bottom:none');
-  });
-  html += `</div>`;
+  // Hipoteca siempre del dueño. GC y otros gastos según historial vigente
+  const gcEsDueno = getQuienPagaBase(p.id+'_gc', p.id, mmFG, yyyyFG) === 'yo';
+
+  // Bloque "Mis gastos" — hipoteca + GC si es mío + extras míos
+  const itemsMios = [];
+  itemsMios.push(renderItem(gastoHipBase, false));
+  if (gcEsDueno) itemsMios.push(renderItem(gastoGCBase, false));
+  misGastos.forEach(g => itemsMios.push(renderItem(g, false)));
+
+  if (itemsMios.length > 0) {
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:8px;">`;
+    html += itemsMios.join('');
+    html += `</div>`;
+  }
+
+  // GC del arrendatario — agregar a gastoArr si no es del dueño
+  const gastosArrConGC = gcEsDueno ? gastoArr : [gastoGCBase, ...gastoArr];
 
   // Resultado neto
-  html += `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:12px;">
-    <span style="font-size:11px;color:var(--text3);">${esHab ? 'Total egresos' : 'Resultado neto'}</span>
-    <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:500;color:${esHab ? 'var(--red)' : (neto >= 0 ? 'var(--green)' : 'var(--red)')}">${fmt(esHab ? totalEgreso : Math.abs(neto))}</span>
-  </div>`;
-
-  // Gastos arrendatario
-  if (gastoArr.length > 0 || true) {
-    html += `<div style="font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;display:flex;justify-content:space-between;align-items:center;">
-      <span>Arrendatario</span>
-      <div onclick="abrirFormGasto('${p.id}','arrendatario')" style="width:18px;height:18px;border-radius:5px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+  // Para habitada: mostrar Presupuestado vs Gasto real
+  if (esHab) {
+    const gastoRealHab = [p.id+'_hip', p.id+'_gc', ...misGastos.map(g=>g.id)]
+      .reduce((s, gid) => {
+        const pg = getPagoPropiedad(gid);
+        if (!pg || pg['Pagado'] !== 'true' || pg['Notas'] === 'seguimiento') return s;
+        const est = gid === p.id+'_hip' ? p.hipoteca : gid === p.id+'_gc' ? p.gcComunes
+          : (misGastos.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+        return s + (toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est);
+      }, 0);
+    const bajoPresHab = gastoRealHab > 0 && gastoRealHab <= totalEgreso;
+    const colorReal = gastoRealHab === 0 ? 'var(--text3)' : bajoPresHab ? 'var(--green)' : 'var(--red)';
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <span style="font-size:11px;color:var(--text3);">Presupuestado</span>
+        <span style="font-family:'DM Mono',monospace;font-size:13px;font-weight:500;color:var(--text2);">${fmt(totalEgreso)}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:11px;color:var(--text3);">Gasto real</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${colorReal};">${gastoRealHab > 0 ? fmt(gastoRealHab) : '—'}</span>
+      </div>
+      ${gastoRealHab > 0 ? `<div style="height:3px;background:var(--bg4);border-radius:2px;overflow:hidden;margin-top:8px;">
+        <div style="width:${Math.min(100, Math.round(gastoRealHab/totalEgreso*100))}%;height:3px;background:${colorReal};border-radius:2px;transition:width 0.4s;"></div>
+      </div>` : ''}
     </div>`;
-    html += `<div style="font-size:9px;color:var(--text3);margin-bottom:6px;">No afectan tu resultado — solo seguimiento</div>`;
-    if (gastoArr.length > 0) {
+  } else {
+    // Resultado neto ya está en el hero 2x2 — no repetir aquí
+  }
+
+  // Sección arrendatario — solo para propiedades en arriendo (no Mi hogar)
+  if (!esHab) {
+    const subtotalArr = (gcEsDueno ? 0 : p.gcComunes) +
+      gastoArr.reduce((s,g) => s + g.montoEstimado, 0);
+    html += `<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;display:flex;justify-content:space-between;align-items:center;">
+      <span>Arrendatario <span style="color:var(--amber);font-weight:400;">${subtotalArr>0?fmtK(subtotalArr):''}</span></span>
+      <div onclick="abrirFormGasto('${p.id}','arrendatario')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+    </div>`;
+    html += `<div style="font-size:10px;color:var(--text3);margin-bottom:6px;">No afectan tu resultado — solo seguimiento</div>`;
+    if (gastosArrConGC.length > 0) {
       html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;">`;
-      gastoArr.forEach(g => { html += renderItem(g, true); });
+      gastosArrConGC.forEach(g => { html += renderItem(g, true); });
       html += `</div>`;
     } else {
       html += `<div style="font-size:11px;color:var(--text3);padding:8px;text-align:center;">Sin gastos de arrendatario · toca + para agregar</div>`;
@@ -1557,9 +2055,29 @@ function abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo, yaPagado) {
   setTimeout(() => { montoInp.focus(); montoInp.select(); }, 100);
 }
 
+let _cpTipo = 'propio'; // 'propio' | 'seguimiento'
+
+function setCpTipo(tipo) {
+  _cpTipo = tipo;
+  const propio = document.getElementById('cp-tipo-propio');
+  const seg = document.getElementById('cp-tipo-seguimiento');
+  const hint = document.getElementById('cp-seguimiento-hint');
+  if (tipo === 'propio') {
+    propio.style.cssText = 'flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:500;cursor:pointer;';
+    seg.style.cssText = 'flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;';
+    if (hint) hint.style.display = 'none';
+  } else {
+    seg.style.cssText = 'flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);font-weight:500;cursor:pointer;';
+    propio.style.cssText = 'flex:1;text-align:center;font-size:12px;padding:7px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;';
+    if (hint) hint.style.display = 'block';
+  }
+}
+
 function cerrarConfirmPago() {
   const modal = document.getElementById('modal-confirm-pago');
   if (modal) modal.classList.add('hidden');
+  _cpTipo = 'propio'; // reset
+  setCpTipo('propio');
 }
 
 async function desmarcarPago() {
@@ -1592,8 +2110,8 @@ async function desmarcarPago() {
       body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
-  const p = PROPIEDADES.find(x => x.id === _confirmPropId);
-  if (p) document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+  const p2 = PROPIEDADES.find(x => x.id === _confirmPropId);
+  if (p2) showProp(p2.id);
 }
 
 async function ejecutarPago() {
@@ -1608,9 +2126,10 @@ async function ejecutarPago() {
     gastoId:    _confirmGastoId,
     propiedadId: _confirmPropId,
     mes:        mesKey,
-    pagado:     true, // siempre true al confirmar (desmarcar usa botón separado)
+    pagado:     true,
     fechaPago:  hoy,
-    montoReal,
+    montoReal:  _cpTipo === 'seguimiento' ? 0 : montoReal,
+    notas:      _cpTipo === 'seguimiento' ? 'seguimiento' : '',
   };
 
   // Actualizar local — buscar por GastoID + Mes (más robusto que por ID)
@@ -1622,8 +2141,8 @@ async function ejecutarPago() {
     'Mes': mesKey,
     'Pagado': 'true',
     'Fecha pago': hoy,
-    'Monto real': String(montoReal),  // guardar siempre, incluso si es "0"
-    'Notas': ''
+    'Monto real': String(_cpTipo === 'seguimiento' ? 0 : montoReal),
+    'Notas': _cpTipo === 'seguimiento' ? 'seguimiento' : ''
   };
   // Buscar por Gasto ID + Mes (no por ID compuesto)
   const idx = PAGOS_PROPIEDAD.findIndex(p =>
@@ -1645,7 +2164,7 @@ async function ejecutarPago() {
 
   // Re-render
   const p = PROPIEDADES.find(x => x.id === _confirmPropId);
-  if (p) document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+  if (p) showProp(p.id);
 }
 
 async function _ejecutarPagoOriginal(gastoId, propiedadId, montoEst, esFijo) {
@@ -1673,12 +2192,9 @@ async function _ejecutarPagoOriginal(gastoId, propiedadId, montoEst, esFijo) {
     await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
-  // Re-render solo el detalle
+  // Re-render completo — actualiza hero + lista
   const p = PROPIEDADES.find(x => x.id === propiedadId);
-  if (p) {
-    const esHab = p.tipo === 'habitada';
-    document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, esHab);
-  }
+  if (p) showProp(p.id);
 }
 
 // Modal para agregar gasto de propiedad
@@ -1736,7 +2252,7 @@ async function guardarGastoPropiedad() {
 
   cerrarFormGasto();
   const p = PROPIEDADES.find(x => x.id === _propIdActual);
-  if (p) document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+  if (p) showProp(p.id);
 }
 
 
@@ -1775,9 +2291,137 @@ async function toggleArriendoRecibido(propiedadId, monto) {
 
   const p = PROPIEDADES.find(x => x.id === propiedadId);
   if (p) {
-    document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, p.tipo === 'habitada');
+    showProp(p.id);
   }
   renderInversiones();
+}
+
+
+// ── GESTIÓN RESPONSABLES ──────────────────────────────────────
+let _respGastoId    = '';
+let _respPropId     = '';
+let _respTipo       = 'yo';
+let _respEsBase     = false;
+
+function abrirModalResponsable(gastoId, propId, nombreGasto, esBase) {
+  _respGastoId = gastoId;
+  _respPropId  = propId;
+  _respEsBase  = esBase || false;
+  const modal = document.getElementById('modal-responsable');
+  if (!modal) return;
+  document.getElementById('modal-resp-nombre').textContent = nombreGasto;
+  // Pre-rellenar con responsable actual
+  const { mm, yyyy } = getMesFiltro();
+  const actual = esBase
+    ? getQuienPagaBase(gastoId, propId, mm, yyyy)
+    : getQuienPagaVigente(gastoId, mm, yyyy);
+  setRespTipo(actual);
+  // Fecha por defecto: primer día del mes siguiente
+  const now = new Date();
+  const siguienteMes = new Date(now.getFullYear(), now.getMonth()+1, 1);
+  document.getElementById('resp-fecha').value = siguienteMes.toISOString().split('T')[0];
+  document.getElementById('resp-notas').value = '';
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalResponsable() {
+  document.getElementById('modal-responsable').classList.add('hidden');
+}
+
+function setRespTipo(tipo) {
+  _respTipo = tipo;
+  const yo  = document.getElementById('resp-btn-yo');
+  const arr = document.getElementById('resp-btn-arr');
+  if (tipo === 'yo') {
+    yo.style.cssText  = 'flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--blue);background:var(--blue-bg);color:var(--blue);font-weight:500;cursor:pointer;';
+    arr.style.cssText = 'flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;';
+  } else {
+    arr.style.cssText = 'flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--amber);background:var(--amber-bg);color:var(--amber);font-weight:500;cursor:pointer;';
+    yo.style.cssText  = 'flex:1;text-align:center;font-size:13px;padding:10px;border-radius:8px;border:1px solid var(--border);color:var(--text2);cursor:pointer;';
+  }
+}
+
+async function guardarResponsable() {
+  const fecha = document.getElementById('resp-fecha').value;
+  const notas = document.getElementById('resp-notas').value.trim();
+  if (!fecha) { alert('Selecciona una fecha'); return; }
+
+  const id = _respGastoId + '_' + fecha.replace(/-/g,'');
+  const item = { id, gastoId: _respGastoId, propiedadId: _respPropId,
+    fechaInicio: fecha, quienPaga: _respTipo, notas };
+
+  // Actualizar local
+  const newEntry = { ...item, fechaInicio: new Date(fecha) };
+  const idx = GASTOS_RESPONSABLE.findIndex(r => r.id === id);
+  if (idx > -1) GASTOS_RESPONSABLE[idx] = newEntry;
+  else GASTOS_RESPONSABLE.push(newEntry);
+  GASTOS_RESPONSABLE.sort((a,b) => a.fechaInicio - b.fechaInicio);
+
+  // Guardar en Sheet
+  try {
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setGastoResponsable', item }) });
+  } catch(e) {}
+
+  cerrarModalResponsable();
+  showProp(_respPropId);
+}
+
+
+// ── GESTIÓN ARRIENDOS ─────────────────────────────────────────
+let _arriendoPropId = '';
+
+function abrirModalArriendo(propId) {
+  _arriendoPropId = propId;
+  const prop = PROPIEDADES.find(p => p.id === propId);
+  const modal = document.getElementById('modal-arriendo');
+  if (!modal) return;
+  document.getElementById('modal-arriendo-prop').textContent = prop ? prop.nombre : propId;
+  // Pre-rellenar con último valor si existe
+  const ultimo = [...ARRIENDO_HISTORIAL].filter(r => r.propiedadId === propId).pop();
+  document.getElementById('arr-monto').value = ultimo ? Math.round(ultimo.monto).toLocaleString('es-CL') : '';
+  // Fecha = hoy por defecto
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('arr-fecha').value = hoy;
+  document.getElementById('arr-notas').value = '';
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalArriendo() {
+  const modal = document.getElementById('modal-arriendo');
+  if (modal) modal.classList.add('hidden');
+}
+
+async function guardarArriendoHistorial() {
+  const monto = parseInt((document.getElementById('arr-monto').value||'0').replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
+  const fecha = document.getElementById('arr-fecha').value;
+  const notas = document.getElementById('arr-notas').value.trim();
+
+  if (!monto || !fecha) { alert('Completa el monto y la fecha'); return; }
+
+  const id = _arriendoPropId + '_' + fecha.replace(/-/g,'');
+  const item = { id, propiedadId: _arriendoPropId, fechaInicio: fecha, monto, notas };
+
+  // Actualizar local
+  const idx = ARRIENDO_HISTORIAL.findIndex(r => r.id === id);
+  const newEntry = { id, propiedadId: _arriendoPropId, fechaInicio: new Date(fecha), monto, notas };
+  if (idx > -1) ARRIENDO_HISTORIAL[idx] = newEntry;
+  else ARRIENDO_HISTORIAL.push(newEntry);
+  ARRIENDO_HISTORIAL.sort((a,b) => a.fechaInicio - b.fechaInicio);
+
+  // Guardar en Sheet
+  try {
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setArriendoHistorial', item }) });
+  } catch(e) {}
+
+  cerrarModalArriendo();
+  renderInversiones();
+  const p = PROPIEDADES.find(x => x.id === _arriendoPropId);
+  if (p && document.getElementById('inv-detalle').style.display !== 'none') {
+    showProp(_arriendoPropId);
+  }
 }
 
 
@@ -1785,6 +2429,7 @@ function backToLista() {
   document.getElementById('inv-lista').style.display = 'block';
   document.getElementById('inv-detalle').style.display = 'none';
   window.scrollTo(0,0);
+  renderInversiones();
 }
 
 // ── PRESUPUESTO ──────────────────────────────────────────────
