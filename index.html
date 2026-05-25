@@ -393,35 +393,49 @@
           </div>
         </div>
       </div>
-      <!-- Crédito hipotecario compacto -->
+      <!-- Crédito hipotecario — opción A con hitos -->
       <div id="det-hipoteca-wrap" style="display:none;margin-bottom:10px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;">
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
-            <div style="font-size:8px;color:var(--text3);">Préstamo</div>
-            <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:8px;color:var(--text3);">UF</div>
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
+          <!-- Header -->
+          <div style="background:var(--bg3);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
+            <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Crédito hipotecario</span>
+            <span id="det-div-badge" style="font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--blue);background:var(--blue-bg);padding:2px 8px;border-radius:20px;">—/—</span>
           </div>
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
-            <div style="font-size:8px;color:var(--text3);">Dividendos</div>
-            <div id="det-numdiv" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:8px;color:var(--text3);" id="det-div-label">pagados</div>
+          <!-- Stats 3 columnas -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
+            <div style="text-align:center;padding:10px 6px;">
+              <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Préstamo</div>
+              <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div style="font-size:9px;color:var(--text3);">UF</div>
+            </div>
+            <div style="text-align:center;padding:10px 6px;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+              <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Tasa</div>
+              <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div style="font-size:9px;color:var(--text3);">% anual</div>
+            </div>
+            <div style="text-align:center;padding:10px 6px;">
+              <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Dividendo</div>
+              <div id="det-dividendo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div style="font-size:9px;color:var(--text3);">mensual</div>
+            </div>
           </div>
-          <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px;text-align:center;box-shadow:var(--shadow);">
-            <div style="font-size:8px;color:var(--text3);">Tasa</div>
-            <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);margin-top:2px;">—</div>
-            <div style="font-size:8px;color:var(--text3);">% anual</div>
-          </div>
-        </div>
-        <div id="det-div-pagados-wrap" style="display:none;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;box-shadow:var(--shadow);">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-            <span style="font-size:10px;color:var(--text3);">Progreso del crédito</span>
-            <span id="det-div-pagados" style="font-size:11px;font-weight:600;font-family:'DM Mono',monospace;color:var(--text);">—</span>
-          </div>
-          <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">
-            <div id="det-div-bar" style="height:5px;border-radius:3px;width:0%;transition:width 0.5s;"></div>
+          <!-- Barra de progreso con hitos -->
+          <div id="det-div-pagados-wrap" style="display:none;padding:10px 14px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+              <span id="det-div-pagados" style="font-size:11px;color:var(--text2);">—</span>
+              <span id="det-div-restantes" style="font-size:11px;font-weight:600;color:var(--blue);font-family:'DM Mono',monospace;">—</span>
+            </div>
+            <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+              <div id="det-div-bar" style="height:6px;border-radius:3px;width:0%;transition:width 0.5s;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:4px;">
+              <span id="det-hito-inicio" style="font-size:9px;color:var(--text3);">—</span>
+              <span id="det-hito-fin" style="font-size:9px;color:var(--text3);">—</span>
+            </div>
           </div>
         </div>
       </div>
+      <div id="det-arr-info" style="display:none;margin-bottom:12px;"></div>
       <div id="det-items"></div>
     </div>
   </div>
@@ -489,6 +503,43 @@
       </button>
     </div>
     <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarConfirmPago()">Cancelar</div>
+  </div>
+</div>
+<!-- MODAL DATOS ARRENDATARIO -->
+<div class="modal-overlay hidden" id="modal-arrendatario">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Datos del arrendatario</div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Nombre</div>
+      <input id="arr-nombre-inp" type="text" placeholder="Nombre completo"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Contacto</div>
+      <input id="arr-contacto-inp" type="text" placeholder="+56 9 1234 5678"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;color:var(--text);outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Garantía (referencial — no afecta cálculos)</div>
+      <input id="arr-garantia-inp" type="text" inputmode="numeric" placeholder="0"
+        oninput="formatSaldoInput(this)"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:16px;font-family:'DM Mono',monospace;color:var(--text);outline:none;text-align:right;">
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fecha inicio</div>
+        <input id="arr-inicio-inp" type="date"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;">
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fecha fin (opcional)</div>
+        <input id="arr-fin-inp" type="date"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:13px;color:var(--text);outline:none;">
+      </div>
+    </div>
+    <button class="modal-save-btn" onclick="guardarDatosArrendatario()">Guardar</button>
+    <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarModalArrendatario()">Cancelar</div>
   </div>
 </div>
 <!-- MODAL CAMBIO RESPONSABLE -->
@@ -608,7 +659,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbxMOTpQKtOtZhL1pzauZainKLtEWf7gieNe0UXZx-hsduruzRQuuGlmBMeZZd93KaUB/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyufi5LvfsgUEWjdSzGpGrGRXhNVOlQM1mzmcmE5Ei2U9P-w-M7E1rIPDmIIzN3-p9k/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -657,6 +708,7 @@ let GASTOS_PROPIEDAD    = [];   // gastos configurados por propiedad
 let PAGOS_PROPIEDAD     = [];   // registros de pago del mes
 let ARRIENDO_HISTORIAL    = [];   // historial de montos de arriendo por propiedad
 let GASTOS_RESPONSABLE    = [];   // historial de quién paga cada gasto por fecha
+let ARRENDATARIOS         = [];   // historial de arrendatarios por propiedad
 
 // ── ESTADO ──────────────────────────────────────────────────
 let DATA = { movimientos: [], saldos: [], loaded: false };
@@ -842,7 +894,7 @@ async function fetchSheet(nombre) {
 
 async function cargarDatos() {
   try {
-    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows] = await Promise.all([
+    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows] = await Promise.all([
       fetchSheet('Movimientos'),
       fetchSheet('Saldos'),
       fetchSheet('Propiedades'),
@@ -851,6 +903,7 @@ async function cargarDatos() {
       fetchSheet('PagosPropiedad'),
       fetchSheet('ArriendoHistorial').catch(() => []),
       fetchSheet('GastosResponsable').catch(() => []),
+      fetchSheet('Arrendatarios').catch(() => []),
     ]);
     DATA.movimientos = movs;
     DATA.saldos      = saldos;
@@ -869,10 +922,46 @@ async function cargarDatos() {
         gcComunes: toNum(r['Gastos comunes']),
         banco_hip: r['Banco hipoteca'] || '',
         estado:    (r['Estado arriendo'] || r['Estado'] || 'activa').trim().toLowerCase(),
+        arrNombre:   (r['Arrendatario nombre']  || r['Arrendatario Nombre']  || r['arrendatario_nombre']  || '').trim(),
+        arrContacto: (r['Arrendatario contacto'] || r['Arrendatario Contacto'] || r['arrendatario_contacto'] || '').trim(),
+        garantia:    toNum(r['Garantia'] || r['Garantía'] || r['garantia'] || 0),
         tipo:      (r['Tipo'] || '').trim().toLowerCase() || 'arriendo',
         prestamouF: toNum(r['Monto Prestamo (uf)'] || r['Monto Prestamo'] || 0),
         numDiv:     parseInt(r['Num. Div.Total'] || r['NumDiv'] || 0),
         tasa:       toNum(r['Tasa'] || 0),
+      }));
+
+    // Cargar historial de arrendatarios
+    console.log('Arrendatarios raw del Sheet:', JSON.stringify(arrendatariosRows?.slice(0,2)));
+    ARRENDATARIOS = (arrendatariosRows||[])
+      .filter(r => r['ID'] && r['Propiedad ID'])
+      .map(r => ({
+        id:          String(r['ID']).trim(),
+        propiedadId: String(r['Propiedad ID']).trim(),
+        nombre:      String(r['Nombre'] || r['nombre'] || r['NOMBRE'] || '').trim(),
+        contacto:    String(r['Contacto'] || r['contacto'] || r['CONTACTO'] || '').trim(),
+        garantia:    (() => {
+          const raw = r['Garantia'] || r['garantia'] || r['Garantía'] || r['garantía'] || 0;
+          const val = toNum(raw);
+          if (raw) console.log('garantia raw:', JSON.stringify(raw), '=> val:', val);
+          return val;
+        })(),
+        fechaInicio: (() => {
+          const v = r['Fecha inicio'] || r['fecha_inicio'] || '';
+          if (!v) return null;
+          const d = new Date(v);
+          if (isNaN(d)) return null;
+          return new Date(d.getFullYear(), d.getMonth(), d.getDate()); // sin hora
+        })(),
+        fechaFin: (() => {
+          const v = r['Fecha fin'] || r['fecha_fin'] || '';
+          if (!v || String(v).trim() === '') return null;
+          const d = new Date(v);
+          if (isNaN(d)) return null;
+          return new Date(d.getFullYear(), d.getMonth(), d.getDate()); // sin hora
+        })(),
+        activo:      String(r['Activo']).toLowerCase() === 'true',
+        notas:       String(r['Notas'] || '').trim(),
       }));
 
     // Cargar historial de responsables por gasto
@@ -1688,22 +1777,46 @@ function showProp(id) {
     hipWrap.style.display = tieneHipoteca ? 'block' : 'none';
     if (tieneHipoteca) {
       document.getElementById('det-prestamo').textContent = p.prestamouF > 0 ? p.prestamouF.toLocaleString('es-CL') : '—';
+      document.getElementById('det-tasa').textContent = p.tasa > 0 ? p.tasa.toFixed(2) : '—';
+
+      // Dividendo mensual estimado
+      const divEl = document.getElementById('det-dividendo');
+      if (divEl) divEl.textContent = p.hipoteca > 0 ? fmtK(p.hipoteca) : '—';
+
       const divPagados = p.numDiv > 0 && inicioDate && !isNaN(inicioDate)
         ? Math.min(p.numDiv, Math.max(0, Math.floor((fechaVista - inicioDate) / (1000*60*60*24*30.5)))) : 0;
-      document.getElementById('det-numdiv').textContent = p.numDiv > 0
-        ? divPagados + '/' + p.numDiv : '—';
-      const divLbl = document.getElementById('det-div-label');
-      if (divLbl) divLbl.textContent = p.numDiv > 0 ? `faltan ${p.numDiv - divPagados}` : 'pagados';
-      document.getElementById('det-tasa').textContent = p.tasa > 0 ? p.tasa.toFixed(2) : '—';
+      const divRestantes = p.numDiv - divPagados;
+
+      // Badge header
+      const badge = document.getElementById('det-div-badge');
+      if (badge) badge.textContent = p.numDiv > 0 ? divPagados + '/' + p.numDiv : '—';
+
       const divWrap = document.getElementById('det-div-pagados-wrap');
       if (divWrap && p.numDiv > 0) {
         divWrap.style.display = 'block';
         const pctDiv = Math.round(divPagados / p.numDiv * 100);
-        document.getElementById('det-div-pagados').textContent = divPagados + ' de ' + p.numDiv + ' · faltan ' + (p.numDiv - divPagados);
+
+        // Labels
+        document.getElementById('det-div-pagados').textContent  = divPagados + ' pagados';
+        document.getElementById('det-div-restantes').textContent = divRestantes + ' restantes';
+
+        // Barra
         const bar = document.getElementById('det-div-bar');
         if (bar) {
           bar.style.width = pctDiv + '%';
-          bar.style.background = pctDiv > 75 ? 'var(--green)' : pctDiv > 40 ? 'var(--blue)' : 'var(--amber)';
+          bar.style.background = pctDiv > 75 ? 'var(--green)' : 'var(--blue)';
+        }
+
+        // Hitos: inicio y fin estimado
+        const hitoInicio = document.getElementById('det-hito-inicio');
+        const hitoFin    = document.getElementById('det-hito-fin');
+        if (hitoInicio && inicioDate && !isNaN(inicioDate)) {
+          hitoInicio.textContent = inicioDate.toLocaleString('es-CL', {month:'short', year:'numeric'});
+        }
+        if (hitoFin && inicioDate && !isNaN(inicioDate)) {
+          const finDate = new Date(inicioDate);
+          finDate.setMonth(finDate.getMonth() + p.numDiv);
+          hitoFin.textContent = 'fin ' + finDate.toLocaleString('es-CL', {month:'short', year:'numeric'});
         }
       }
     }
@@ -1716,10 +1829,87 @@ function showProp(id) {
   _invDet.setAttribute('data-prop-id', id);
   window.scrollTo(0,0);
 
+  // Sección datos arrendatario — solo para propiedades en arriendo
+  const arrInfoEl = document.getElementById('det-arr-info');
+  if (arrInfoEl) {
+    if (!esHab) {
+      arrInfoEl.style.display = 'block';
+      // Buscar arrendatario vigente en el mes visualizado
+      const arrVig = getArrendatarioVigente(p.id, mmSP, yyyySP);
+      const tieneData = arrVig !== null;
+      const nombre   = arrVig ? arrVig.nombre   : '';
+      const contacto = arrVig ? arrVig.contacto : '';
+      const garantia = arrVig ? arrVig.garantia : 0;
+      console.log('arrVig:', JSON.stringify(arrVig), 'garantia:', garantia);
+      const fechaInicioArr = arrVig && arrVig.fechaInicio
+        ? arrVig.fechaInicio.toLocaleDateString('es-CL') : null;
+      const iniciales = nombre
+        ? nombre.trim().split(' ').slice(0,2).map(w=>w[0].toUpperCase()).join('')
+        : '?';
+      const inicioArr = fechaInicioArr;
+
+      arrInfoEl.innerHTML = tieneData ? `
+        <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
+          <div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border);">
+            <div style="width:36px;height:36px;border-radius:50%;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;color:var(--blue);flex-shrink:0;">${iniciales}</div>
+            <div style="flex:1;">
+              <div style="font-size:14px;font-weight:500;color:var(--text);">${nombre || 'Sin nombre'}</div>
+              <div style="font-size:11px;color:var(--text3);">Arrendatario activo</div>
+            </div>
+            <div onclick="abrirModalArrendatario('${p.id}')" style="font-size:11px;color:var(--blue);cursor:pointer;">Editar</div>
+          </div>
+          ${contacto ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;border-bottom:1px solid var(--border);">
+            <span style="font-size:11px;color:var(--text3);">Contacto</span>
+            <a href="tel:${contacto}" style="font-size:12px;font-weight:500;color:var(--blue);text-decoration:none;">${contacto}</a>
+          </div>` : ''}
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;${garantia>0?'border-bottom:1px solid var(--border);':''}">
+            <span style="font-size:11px;color:var(--text3);">Inicio arriendo</span>
+            <span style="font-size:12px;font-weight:500;color:var(--text);">${inicioArr || '—'}</span>
+          </div>
+          ${garantia > 0 ? `<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 14px;">
+            <span style="font-size:11px;color:var(--text3);">Garantía</span>
+            <span style="font-size:12px;font-weight:500;font-family:'DM Mono',monospace;background:var(--amber-bg);color:var(--amber);padding:2px 8px;border-radius:20px;">${fmt(garantia)}</span>
+          </div>` : ''}
+        </div>` :
+        `<div style="display:flex;justify-content:space-between;align-items:center;padding:2px 0 8px;">
+          <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Arrendatario</div>
+          <div onclick="abrirModalArrendatario('${p.id}')" style="font-size:11px;color:var(--blue);cursor:pointer;">+ Agregar datos</div>
+        </div>`;
+    } else {
+      arrInfoEl.style.display = 'none';
+    }
+  }
+
   document.getElementById('det-items').innerHTML = renderGastosPropiedad(p, esHab);
 }
 
 // ── HELPER GLOBAL — monto efectivo de un gasto (real si pagado, estimado si no) ──
+// Obtener arrendatario vigente para una propiedad en un mes/año
+function getArrendatarioVigente(propiedadId, mm, yyyy) {
+  const mesNum = yyyy * 10000 + (mm+1) * 100 + 1;
+  const toYMD  = d => {
+    if (!d) return null;
+    // Usar UTC para evitar problemas de timezone
+    return d.getUTCFullYear()*10000 + (d.getUTCMonth()+1)*100 + d.getUTCDate();
+  };
+
+  const lista = ARRENDATARIOS.filter(a => a.propiedadId === propiedadId);
+  if (!lista.length) return null;
+
+  // Buscar por rango de fechas
+  const porRango = lista.find(a => {
+    if (!a.fechaInicio) return false;
+    const ini = toYMD(a.fechaInicio);
+    const fin = a.fechaFin ? toYMD(a.fechaFin) : null;
+    return ini <= mesNum && (!fin || fin > mesNum);
+  });
+  if (porRango) return porRango;
+
+  // Sin fallback — si no hay arrendatario para este mes, retornar null
+  return null;
+}
+
+
 // Obtener quién paga un gasto en un mes/año dado
 function getQuienPagaVigente(gastoId, mm, yyyy) {
   const fechaMes = new Date(yyyy, mm, 1);
@@ -1923,7 +2113,7 @@ function renderGastosPropiedad(p, esHab) {
   const subtotalMios = montoHip + montoGC +
     misGastos.reduce((s,g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
   html += `<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;display:flex;justify-content:space-between;align-items:center;">
-    <span>Mis gastos <span style="color:var(--red);font-weight:400;">${fmtK(subtotalMios)}</span></span>
+    <span>Mis gastos <span style="color:var(--red);font-weight:400;">${fmt(subtotalMios)}</span></span>
     <div onclick="abrirFormGasto('${p.id}','yo')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
   </div>`;
 
@@ -2297,6 +2487,77 @@ async function toggleArriendoRecibido(propiedadId, monto) {
 }
 
 
+// ── DATOS ARRENDATARIO ────────────────────────────────────────
+let _arrPropId = '';
+
+function abrirModalArrendatario(propId) {
+  _arrPropId = propId;
+  const modal = document.getElementById('modal-arrendatario');
+  if (!modal) return;
+  const { mm, yyyy } = getMesFiltro();
+  const arrVig = getArrendatarioVigente(propId, mm, yyyy);
+  document.getElementById('arr-nombre-inp').value   = arrVig ? arrVig.nombre   : '';
+  document.getElementById('arr-contacto-inp').value = arrVig ? arrVig.contacto : '';
+  document.getElementById('arr-garantia-inp').value = arrVig && arrVig.garantia > 0
+    ? Math.round(arrVig.garantia).toLocaleString('es-CL') : '';
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('arr-inicio-inp').value = arrVig && arrVig.fechaInicio
+    ? arrVig.fechaInicio.toISOString().split('T')[0] : hoy;
+  document.getElementById('arr-fin-inp').value = arrVig && arrVig.fechaFin
+    ? arrVig.fechaFin.toISOString().split('T')[0] : '';
+  modal.classList.remove('hidden');
+}
+
+function cerrarModalArrendatario() {
+  document.getElementById('modal-arrendatario').classList.add('hidden');
+}
+
+async function guardarDatosArrendatario() {
+  const nombre   = document.getElementById('arr-nombre-inp').value.trim();
+  const contacto = document.getElementById('arr-contacto-inp').value.trim();
+  const garantiaRaw = document.getElementById('arr-garantia-inp').value || '0';
+  const garantia = parseInt(garantiaRaw.split('.').join('').split(',').join('').replace(/[^0-9]/g,'')) || 0;
+  const fechaInicio = document.getElementById('arr-inicio-inp').value;
+  const fechaFin    = document.getElementById('arr-fin-inp').value;
+
+  if (!nombre || !fechaInicio) { alert('Nombre y fecha inicio son obligatorios'); return; }
+
+  // Buscar si ya existe un arrendatario para esta propiedad+fechaInicio
+  const existente = ARRENDATARIOS.find(a =>
+    a.propiedadId === _arrPropId &&
+    a.fechaInicio && a.fechaInicio.toISOString().split('T')[0] === fechaInicio
+  );
+  const id = existente ? existente.id : _arrPropId + '_arr_' + Date.now();
+  const arrendatario = {
+    id, propiedadId: _arrPropId, nombre, contacto, garantia,
+    fechaInicio, fechaFin: fechaFin || '', activo: !fechaFin, notas: ''
+  };
+
+  // Actualizar local — marcar otros como inactivos si este es activo
+  if (arrendatario.activo) {
+    ARRENDATARIOS.filter(a => a.propiedadId === _arrPropId).forEach(a => { a.activo = false; });
+  }
+  const idx = ARRENDATARIOS.findIndex(a => a.id === id);
+  const entry = { ...arrendatario,
+    fechaInicio: new Date(fechaInicio),
+    fechaFin:    fechaFin ? new Date(fechaFin) : null,
+  };
+  if (idx > -1) ARRENDATARIOS[idx] = entry;
+  else ARRENDATARIOS.push(entry);
+
+  console.log('Guardando arrendatario:', JSON.stringify(arrendatario));
+  // Guardar en Sheet
+  try {
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setArrendatario', arrendatario }) });
+  } catch(e) { console.error('Error fetch:', e); }
+
+  cerrarModalArrendatario();
+  showProp(_arrPropId);
+}
+
+
 // ── GESTIÓN RESPONSABLES ──────────────────────────────────────
 let _respGastoId    = '';
 let _respPropId     = '';
@@ -2423,6 +2684,8 @@ async function guardarArriendoHistorial() {
     showProp(_arriendoPropId);
   }
 }
+
+
 
 
 function backToLista() {
