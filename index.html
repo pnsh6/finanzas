@@ -327,21 +327,113 @@
 
 <!-- GASTOS -->
 <div class="screen" id="screen-gastos">
-  <div class="header">
-    <div class="header-title">Gastos</div>
-    <div style="display:flex;align-items:center;gap:2px;">
-      <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(-1)">&#8249;</div>
-      <div class="header-month" id="gastos-mes">Mayo 2026</div>
-      <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(1)">&#8250;</div>
+
+  <!-- VISTA PRINCIPAL: lista + botones -->
+  <div id="gastos-main">
+    <div class="header">
+      <div class="header-title">Gastos</div>
+      <div style="display:flex;align-items:center;gap:2px;">
+        <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(-1)">&#8249;</div>
+        <div class="header-month" id="gastos-mes-label">Mayo 2026</div>
+        <div style="cursor:pointer;font-size:20px;color:var(--text2);padding:2px 6px;line-height:1;" onclick="cambiarMes(1)">&#8250;</div>
+      </div>
+    </div>
+    <div class="section">
+      <!-- Hero resumen -->
+      <div id="gastos-hero" style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;">
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Gastado</div>
+            <div id="g-gastado" style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--red);">$0</div>
+          </div>
+          <div style="text-align:center;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Presupuesto</div>
+            <div id="g-presupuesto" style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--text2);">$0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:3px;">Disponible</div>
+            <div id="g-disponible" style="font-family:'DM Mono',monospace;font-size:15px;font-weight:600;color:var(--green);">$0</div>
+          </div>
+        </div>
+        <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--text3);margin-bottom:4px;">
+            <span>Ejecución del mes</span>
+            <span id="g-pct" style="font-weight:600;">0%</span>
+          </div>
+          <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">
+            <div id="g-bar" style="height:5px;border-radius:3px;width:0%;background:var(--blue);transition:width 0.4s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toggle Por categoría / Movimientos / Por revisar -->
+      <div style="display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px;">
+        <div id="gtab-cat" onclick="switchGastosTab('cat')" style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:7px;border-radius:7px;cursor:pointer;background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.07);">Categorías</div>
+        <div id="gtab-movs" onclick="switchGastosTab('movs')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);">Movimientos</div>
+        <div id="gtab-revisar" onclick="switchGastosTab('revisar')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);position:relative;">
+          Por revisar
+          <span id="gtab-revisar-badge" style="display:none;position:absolute;top:4px;right:6px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;"></span>
+        </div>
+      </div>
+
+      <!-- Contenido según tab -->
+      <div id="gpanel-cat"></div>
+      <div id="gpanel-movs" style="display:none;"></div>
+      <div id="gpanel-revisar" style="display:none;"></div>
+
+      <!-- FAB registrar gasto -->
+      <div style="height:80px;"></div>
+    </div>
+    <!-- FAB flotante -->
+    <div onclick="abrirModalGasto()" style="position:sticky;bottom:80px;float:right;margin-right:16px;width:48px;height:48px;border-radius:14px;background:var(--red);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 3px 10px rgba(163,45,45,0.35);z-index:10;">
+      <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3v14M3 10h14" stroke="white" stroke-width="2.5" stroke-linecap="round"/></svg>
     </div>
   </div>
-  <div class="section">
-    <div class="type-toggle">
-      <div class="type-btn active" id="btn-cc" onclick="toggleGastos('cc')">Cuenta corriente</div>
-      <div class="type-btn" id="btn-tc" onclick="toggleGastos('tc')">Tarjeta de credito</div>
+
+  <!-- DETALLE CATEGORÍA -->
+  <div id="gastos-detalle" style="display:none;">
+    <div class="header">
+      <div onclick="backToGastos()" style="font-size:13px;color:var(--blue);cursor:pointer;">&#8249; Gastos</div>
     </div>
-    <div id="panel-cc"></div>
-    <div id="panel-tc" style="display:none"></div>
+    <div class="section" id="gastos-detalle-content"></div>
+  </div>
+
+</div>
+
+<!-- MODAL REGISTRAR GASTO -->
+<div class="modal-overlay hidden" id="modal-gasto">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Registrar gasto</div>
+    <div style="text-align:center;padding:8px 0 16px;border-bottom:1px solid var(--border);margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">¿Cuánto gastaste?</div>
+      <input id="gasto-monto-inp" type="text" inputmode="numeric" placeholder="$0"
+        oninput="formatSaldoInput(this)"
+        style="border:none;outline:none;font-size:36px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);width:100%;text-align:center;background:transparent;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Descripción</div>
+      <input id="gasto-desc-inp" type="text" placeholder="Ej: bencina, café, corte..."
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;">
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tipo</div>
+      <div style="display:flex;gap:6px;">
+        <div id="gtipo-frecuente" onclick="setGastoTipo('frecuente')" style="flex:1;text-align:center;font-size:12px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);">Frecuente</div>
+        <div id="gtipo-puntual" onclick="setGastoTipo('puntual')" style="flex:1;text-align:center;font-size:12px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer;background:var(--bg2);color:var(--text3);border:1px solid var(--border);">Puntual</div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Categoría</div>
+      <div id="gasto-chips" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+    <div style="margin-bottom:14px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Fecha</div>
+      <input id="gasto-fecha-inp" type="date"
+        style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);outline:none;">
+    </div>
+    <button class="modal-save-btn" onclick="guardarGastoManual()">Guardar gasto</button>
+    <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="cerrarModalGasto()">Cancelar</div>
   </div>
 </div>
 
@@ -659,7 +751,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbyufi5LvfsgUEWjdSzGpGrGRXhNVOlQM1mzmcmE5Ei2U9P-w-M7E1rIPDmIIzN3-p9k/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxaceTzR3wyQZ52KaAvOp-aT6trBEu9787p7-TTlMPH0qbsQ9rIn17utKS250dBOeRk/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -709,6 +801,8 @@ let PAGOS_PROPIEDAD     = [];   // registros de pago del mes
 let ARRIENDO_HISTORIAL    = [];   // historial de montos de arriendo por propiedad
 let GASTOS_RESPONSABLE    = [];   // historial de quién paga cada gasto por fecha
 let ARRENDATARIOS         = [];   // historial de arrendatarios por propiedad
+let CATEGORIAS_DATA       = [];   // categorías desde el Sheet
+let PRESUPUESTOS_DATA     = [];   // límites por categoría y mes
 
 // ── ESTADO ──────────────────────────────────────────────────
 let DATA = { movimientos: [], saldos: [], loaded: false };
@@ -894,7 +988,7 @@ async function fetchSheet(nombre) {
 
 async function cargarDatos() {
   try {
-    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows] = await Promise.all([
+    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows, categoriasRows, presupuestosRows] = await Promise.all([
       fetchSheet('Movimientos'),
       fetchSheet('Saldos'),
       fetchSheet('Propiedades'),
@@ -904,6 +998,8 @@ async function cargarDatos() {
       fetchSheet('ArriendoHistorial').catch(() => []),
       fetchSheet('GastosResponsable').catch(() => []),
       fetchSheet('Arrendatarios').catch(() => []),
+      fetchSheet('Categorias').catch(() => []),
+      fetchSheet('Presupuestos').catch(() => []),
     ]);
     DATA.movimientos = movs;
     DATA.saldos      = saldos;
@@ -932,6 +1028,36 @@ async function cargarDatos() {
       }));
 
     // Cargar historial de arrendatarios
+    // Cargar categorías personalizadas
+    if (categoriasRows && categoriasRows.length > 0) {
+      CATEGORIAS_DATA = categoriasRows
+        .filter(r => r['ID'] && r['Activo'] !== false && String(r['Activo']).toLowerCase() !== 'false')
+        .map(r => ({
+          id:     String(r['ID']).trim(),
+          nombre: String(r['Nombre'] || '').trim(),
+          tipo:   String(r['Tipo'] || 'frecuente').trim().toLowerCase(),
+          color:  String(r['Color'] || '#888780').trim(),
+          bg:     hexToBg(String(r['Color'] || '#888780').trim()),
+          activo: true,
+        }));
+    }
+    // Si no hay categorías en el Sheet, usar las por defecto
+    if (CATEGORIAS_DATA.length === 0) {
+      CATEGORIAS_DATA = JSON.parse(JSON.stringify(CATEGORIAS_CONFIG));
+    }
+
+    // Cargar presupuestos por mes
+    if (presupuestosRows && presupuestosRows.length > 0) {
+      PRESUPUESTOS_DATA = presupuestosRows
+        .filter(r => r['ID'])
+        .map(r => ({
+          id:     String(r['ID']).trim(),
+          catId:  String(r['Categoria ID'] || '').trim(),
+          mes:    String(r['Mes'] || '').trim(),
+          limite: toNum(r['Limite'] || 0),
+        }));
+    }
+
     console.log('Arrendatarios raw del Sheet:', JSON.stringify(arrendatariosRows?.slice(0,2)));
     ARRENDATARIOS = (arrendatariosRows||[])
       .filter(r => r['ID'] && r['Propiedad ID'])
@@ -1229,65 +1355,7 @@ function renderHome() {
 
 
 // ── RENDER GASTOS ─────────────────────────────────────────────
-function renderGastos() {
-  const movs = movsMes();
-  const cc = movs.filter(m => !['compra_tc','compra_tc_cuotas'].includes(m['Subtipo']));
-  const tc = movs.filter(m =>  ['compra_tc','compra_tc_cuotas'].includes(m['Subtipo']));
-
-  // Agrupar CC por banco
-  const porBanco = {};
-  cc.forEach(m => {
-    const b = m['Banco'] || 'Otro';
-    if (!porBanco[b]) porBanco[b] = [];
-    porBanco[b].push(m);
-  });
-
-  const panelCC = document.getElementById('panel-cc');
-  panelCC.innerHTML = Object.keys(porBanco).length === 0
-    ? '<div class="empty-state">No hay movimientos este mes aún</div>'
-    : Object.entries(porBanco).map(([banco, movs]) => {
-        const saldoRow = DATA.saldos.find(s => s['Banco'] === banco);
-        const saldo = saldoRow ? toNum(saldoRow['Saldo']) : 0;
-        return `
-        <div class="bank-section">
-          <div class="bank-section-head">
-            <div><div class="bank-section-name">${banco}</div><div class="bank-section-sub">Saldo disponible</div></div>
-            <div class="bank-section-bal" style="color:var(--green)">${fmtK(saldo)}</div>
-          </div>
-          <div class="txn-list">
-            ${movs.slice(0,20).map(m => txnRow(m)).join('')}
-          </div>
-        </div>`;
-      }).join('');
-
-  // TC agrupado por banco
-  const porBancoTC = {};
-  tc.forEach(m => {
-    const b = m['Banco'] || 'Otro';
-    if (!porBancoTC[b]) porBancoTC[b] = [];
-    porBancoTC[b].push(m);
-  });
-
-  const panelTC = document.getElementById('panel-tc');
-  panelTC.innerHTML = Object.keys(porBancoTC).length === 0
-    ? '<div class="empty-state">No hay compras con tarjeta de crédito este mes</div>'
-    : Object.entries(porBancoTC).map(([banco, movs]) => {
-        const total = movs.reduce((s, m) => s + toNum(m['Monto']), 0);
-        return `
-        <div class="tc-section">
-          <div class="tc-head">
-            <div class="tc-head-row">
-              <div><div class="tc-card-name">${banco} · Tarjeta crédito</div><div class="tc-dates">Movimientos del mes</div></div>
-              <div><div class="tc-used-v">${fmt(total)}</div><div class="tc-used-l">este mes</div></div>
-            </div>
-          </div>
-          <div class="txn-list" style="border-radius:0 0 var(--radius-sm) var(--radius-sm)">
-            ${movs.slice(0,20).map(m => txnRow(m)).join('')}
-          </div>
-        </div>`;
-      }).join('');
-}
-
+function renderGastos() { renderGastosMain(); }
 function txnRow(m) {
   const cat = m['Categoría'] || '';
   const [cbg, cfg] = colorCat(cat);
@@ -2686,6 +2754,537 @@ async function guardarArriendoHistorial() {
 }
 
 
+
+
+function hexToBg(hex) {
+  // Genera versión muy clara del color para usar como fondo
+  try {
+    const r = parseInt(hex.slice(1,3),16);
+    const g = parseInt(hex.slice(3,5),16);
+    const b = parseInt(hex.slice(5,7),16);
+    const mix = c => Math.round(c + (255-c)*0.85);
+    return 'rgb('+mix(r)+','+mix(g)+','+mix(b)+')';
+  } catch(e) { return '#F1EFE8'; }
+}
+
+function getLimiteMes(catId, mesKey) {
+  // Buscar límite específico para este mes
+  const espec = PRESUPUESTOS_DATA.find(p => p.catId === catId && p.mes === mesKey);
+  if (espec) return espec.limite;
+  // Fallback: Config general (legacy)
+  const cat = CATEGORIAS_DATA.find(c => c.id === catId);
+  if (!cat) return 0;
+  const key = 'presupuesto_' + cat.nombre.replace(/\s+/g,'');
+  return toNum(DATA.config && DATA.config[key]);
+}
+
+
+// ── MÓDULO GASTOS ─────────────────────────────────────────────
+const CATEGORIAS_CONFIG = [
+  { id:'supermercado',  nombre:'Supermercado',  tipo:'frecuente', color:'#A32D2D', bg:'#FCEBEB' },
+  { id:'restaurante',   nombre:'Restaurante',   tipo:'frecuente', color:'#854F0B', bg:'#FAEEDA' },
+  { id:'transporte',    nombre:'Transporte',    tipo:'frecuente', color:'#185FA5', bg:'#E6F1FB' },
+  { id:'salud',         nombre:'Salud',         tipo:'frecuente', color:'#3B6D11', bg:'#EAF3DE' },
+  { id:'suscripcion',   nombre:'Suscripcion',   tipo:'frecuente', color:'#534AB7', bg:'#EEEDFE' },
+  { id:'tecnologia',    nombre:'Tecnologia',    tipo:'frecuente', color:'#185FA5', bg:'#E6F1FB' },
+  { id:'ropa',          nombre:'Ropa y hogar',  tipo:'puntual',   color:'#854F0B', bg:'#FAEEDA' },
+  { id:'entretencion',  nombre:'Entretencion',  tipo:'puntual',   color:'#534AB7', bg:'#EEEDFE' },
+  { id:'otros',         nombre:'Otros',         tipo:'puntual',   color:'#A32D2D', bg:'#FCEBEB' },
+];
+
+let GASTOS_VISTA = 'cat';
+let GASTO_TIPO_SELECTED = 'frecuente';
+let GASTO_CAT_SELECTED = '';
+
+function getCatConfig(catId) {
+  const normalId = (catId||'').toLowerCase().replace(/\s+/g,'_');
+  // Buscar en datos del Sheet primero
+  if (CATEGORIAS_DATA.length > 0) {
+    const found = CATEGORIAS_DATA.find(c =>
+      c.id === catId || c.id === normalId ||
+      c.nombre.toLowerCase() === (catId||'').toLowerCase()
+    );
+    if (found) return found;
+  }
+  // Fallback a config hardcoded
+  return CATEGORIAS_CONFIG.find(c => c.id === catId || c.id === normalId ||
+    c.nombre.toLowerCase() === (catId||'').toLowerCase()) ||
+    { id: catId, nombre: catId||'Otros', tipo:'puntual', color:'#888780', bg:'#F1EFE8' };
+}
+
+function switchGastosTab(tab) {
+  GASTOS_VISTA = tab;
+  ['cat','movs','revisar'].forEach(t => {
+    const btn = document.getElementById('gtab-'+t);
+    const panel = document.getElementById('gpanel-'+t);
+    if (!btn || !panel) return;
+    const active = t === tab;
+    btn.style.background    = active ? 'var(--bg2)' : 'transparent';
+    btn.style.color         = active ? 'var(--text)'  : 'var(--text3)';
+    btn.style.fontWeight    = active ? '600' : '500';
+    btn.style.boxShadow     = active ? '0 1px 3px rgba(0,0,0,0.07)' : 'none';
+    panel.style.display     = active ? 'block' : 'none';
+  });
+  if (tab === 'cat')     renderGastosCat();
+  if (tab === 'movs')    renderGastosMovs();
+  if (tab === 'revisar') renderGastosRevisar();
+}
+
+function renderGastosMain() {
+  const { mm, yyyy } = getMesFiltro();
+  // Actualizar label mes
+  const label = document.getElementById('gastos-mes-label');
+  if (label) {
+    const n = new Date(yyyy, mm, 1).toLocaleString('es-CL',{month:'long',year:'numeric'});
+    label.textContent = n.charAt(0).toUpperCase()+n.slice(1);
+  }
+  // Calcular hero
+  const movs = movsMes().filter(m => m['Tipo']==='gasto');
+  const gastado = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
+  const presTot = CATEGORIAS_CONFIG
+    .filter(c => c.tipo==='frecuente')
+    .reduce((s,c) => {
+      const key = 'presupuesto_' + c.nombre.replace(/\s+/g,'');
+      const val = toNum(DATA.config && DATA.config[key]);
+      return s + val;
+    }, 0);
+  const disp = presTot - gastado;
+  const pct  = presTot > 0 ? Math.min(100, Math.round(gastado/presTot*100)) : 0;
+  const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : 'var(--blue)';
+
+  const setEl = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  setEl('g-gastado',     fmt(gastado));
+  setEl('g-presupuesto', presTot > 0 ? fmt(presTot) : '—');
+  setEl('g-disponible',  presTot > 0 ? (disp >= 0 ? '+' : '') + fmt(Math.abs(disp)) : '—');
+  setEl('g-pct',         pct + '%');
+  const bar = document.getElementById('g-bar');
+  if (bar) { bar.style.width = pct + '%'; bar.style.background = barCol; }
+
+  // Renderizar tab activo
+  switchGastosTab(GASTOS_VISTA);
+
+  // Badge por revisar
+  const sinClasif = (DATA.movimientos||[]).filter(m => !m['Categoría'] || m['Categoría']==='');
+  const badge = document.getElementById('gtab-revisar-badge');
+  if (badge) {
+    badge.style.display = sinClasif.length > 0 ? 'flex' : 'none';
+    badge.textContent = sinClasif.length;
+  }
+}
+
+function renderGastosCat() {
+  const movs = movsMes().filter(m => m['Tipo']==='gasto');
+  const html_parts = [];
+
+  const cats = CATEGORIAS_DATA.length > 0 ? CATEGORIAS_DATA : CATEGORIAS_CONFIG;
+  const frecuentes = cats.filter(c => c.tipo === 'frecuente');
+  const puntuales  = cats.filter(c => c.tipo === 'puntual');
+
+  const renderCatRow = (c) => {
+    const movsC = movs.filter(m => (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase());
+    const gastado = movsC.reduce((s,m) => s + toNum(m['Monto']), 0);
+    if (gastado === 0 && c.tipo === 'puntual') return '';
+    const { mm: mmG, yyyy: yyyyG } = getMesFiltro();
+    const mesKeyG = yyyyG + '-' + String(mmG+1).padStart(2,'0');
+    const limite = getLimiteMes(c.id, mesKeyG);
+    const pct = limite > 0 ? Math.min(100, Math.round(gastado/limite*100)) : 0;
+    const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color;
+    return `
+      <div onclick="verDetalleCat('${c.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500;color:var(--text);margin-bottom:${limite>0?'4px':'0'};">
+            <span>${c.nombre}</span>
+            <span style="font-family:'DM Mono',monospace;color:${c.color};">${fmt(gastado)}</span>
+          </div>
+          ${limite > 0 ? `
+          <div style="height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:2px;">
+            <div style="width:${pct}%;height:3px;border-radius:2px;background:${barCol};"></div>
+          </div>
+          <div style="font-size:9px;color:var(--text3);">${movsC.length} mov. · lím. ${fmt(limite)}</div>` :
+          `<div style="font-size:9px;color:var(--text3);">${movsC.length} movimiento${movsC.length!==1?'s':''} · sin límite</div>`}
+        </div>
+        <div style="font-size:13px;color:var(--text3);">›</div>
+      </div>`;
+  };
+
+  html_parts.push('<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">');
+  html_parts.push('<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px 4px;">Frecuentes</div>');
+  frecuentes.forEach(c => html_parts.push(renderCatRow(c)));
+  html_parts.push('</div>');
+
+  const puntualRows = puntuales.map(c => renderCatRow(c)).filter(Boolean);
+  if (puntualRows.length > 0) {
+    html_parts.push('<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">');
+    html_parts.push('<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;padding:8px 14px 4px;">Puntuales</div>');
+    puntualRows.forEach(r => html_parts.push(r));
+    html_parts.push('</div>');
+  }
+
+  document.getElementById('gpanel-cat').innerHTML = html_parts.join('');
+}
+
+function renderGastosMovs() {
+  const movs = movsMes().filter(m => m['Tipo']==='gasto' && m['Categoría']);
+  // Agrupar por fecha
+  const grupos = {};
+  movs.forEach(m => {
+    const d = m['Fecha'] ? new Date(m['Fecha']) : null;
+    const key = d && !isNaN(d) ? d.toLocaleDateString('es-CL',{day:'numeric',month:'short'}) : 'Sin fecha';
+    if (!grupos[key]) grupos[key] = [];
+    grupos[key].push(m);
+  });
+  let html = '';
+  Object.keys(grupos).forEach(fecha => {
+    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px 2px;">${fecha}</div>`;
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">`;
+    grupos[fecha].forEach(m => {
+      const cat = getCatConfig((m['Categoría']||'').toLowerCase().replace(/\s+/g,''));
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div style="width:8px;height:8px;border-radius:50%;background:${cat.color};flex-shrink:0;"></div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
+          <div style="font-size:10px;color:var(--text3);">${m['Categoría']} · ${m['Banco']||''}</div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  });
+  if (!html) html = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px;">Sin movimientos clasificados</div>';
+  document.getElementById('gpanel-movs').innerHTML = html;
+}
+
+function renderGastosRevisar() {
+  const sinClasif = (DATA.movimientos||[]).filter(m =>
+    m['Tipo']==='gasto' && (!m['Categoría'] || m['Categoría']==='')
+  );
+  let html = '';
+  if (sinClasif.length === 0) {
+    html = '<div style="text-align:center;padding:32px 16px;"><div style="font-size:32px;margin-bottom:8px;">✓</div><div style="font-size:14px;font-weight:500;color:var(--text);">Todo al día</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Sin movimientos por revisar</div></div>';
+  } else {
+    html += `<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+      <div style="flex:1;font-size:12px;color:var(--amber);">${sinClasif.length} movimientos sin clasificar</div>
+    </div>`;
+    sinClasif.slice(0,10).forEach(m => {
+      // Sugerir categoría basada en descripción
+      const desc = (m['Descripción']||m['Comercio']||'').toLowerCase();
+      let sugerida = '';
+      if (/jumbo|walmart|lider|tottus|unimarc/i.test(desc)) sugerida = 'supermercado';
+      else if (/copec|shell|petrobras|bencin/i.test(desc)) sugerida = 'transporte';
+      else if (/uber|cabify|metro|bip/i.test(desc)) sugerida = 'transporte';
+      else if (/farmacia|clinica|medic|salud/i.test(desc)) sugerida = 'salud';
+      else if (/netflix|spotify|amazon|apple/i.test(desc)) sugerida = 'suscripcion';
+      const catSug = sugerida ? getCatConfig(sugerida) : null;
+      html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
+            <div style="font-size:10px;color:var(--text3);">${m['Banco']||''} · ${m['Fecha']||''}</div>
+          </div>
+          <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
+        </div>
+        ${catSug ? `<div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
+          <span style="font-size:10px;color:var(--text3);">Sugerencia</span>
+          <span style="background:${catSug.bg};color:${catSug.color};font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;">${catSug.nombre}</span>
+        </div>` : ''}
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);">
+          <div onclick="aprobarMovimiento('${m['ID']||''}','${sugerida||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--green);cursor:pointer;border-right:1px solid var(--border);">✓ Aprobar</div>
+          <div onclick="cambiarCatMovimiento('${m['ID']||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--blue);cursor:pointer;border-right:1px solid var(--border);">✎ Cambiar</div>
+          <div onclick="ignorarMovimiento('${m['ID']||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;">✕ Ignorar</div>
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('gpanel-revisar').innerHTML = html;
+}
+
+function verDetalleCat(catId) {
+  const c = getCatConfig(catId);
+  const movs = movsMes().filter(m =>
+    m['Tipo']==='gasto' && (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase()
+  );
+  const gastado = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
+  const { mm: mmD, yyyy: yyyyD } = getMesFiltro();
+  const mesKeyD = yyyyD + '-' + String(mmD+1).padStart(2,'0');
+  const limite = getLimiteMes(c.id, mesKeyD);
+  const pct = limite > 0 ? Math.min(100, Math.round(gastado/limite*100)) : 0;
+  const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color;
+
+  let html = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.color};"></div>
+        <div style="font-size:16px;font-weight:600;color:var(--text);">${c.nombre}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:12px;color:var(--text3);">Gastado</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${c.color};">${fmt(gastado)}</span>
+      </div>
+      ${limite > 0 ? `
+      <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px;">
+        <div style="width:${pct}%;height:5px;border-radius:3px;background:${barCol};"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;">
+        <span style="font-size:11px;color:var(--text3);">Límite: ${fmt(limite)}</span>
+        <span style="font-size:11px;font-weight:500;color:${barCol};">${pct}%</span>
+      </div>
+      <div onclick="editarLimiteCat('${catId}')" style="margin-top:10px;text-align:center;font-size:11px;color:var(--blue);cursor:pointer;padding-top:8px;border-top:1px solid var(--border);">Ajustar límite</div>
+      ` : `<div onclick="editarLimiteCat('${catId}')" style="font-size:11px;color:var(--blue);cursor:pointer;">+ Agregar límite</div>`}
+    </div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">${movs.length} movimiento${movs.length!==1?'s':''}</div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">`;
+  if (movs.length === 0) {
+    html += '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Sin movimientos este mes</div>';
+  } else {
+    movs.forEach(m => {
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
+          <div style="font-size:10px;color:var(--text3);">${m['Fecha']||''} · ${m['Banco']||''}</div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
+      </div>`;
+    });
+  }
+  html += '</div>';
+  document.getElementById('gastos-detalle-content').innerHTML = html;
+  document.getElementById('gastos-main').style.display = 'none';
+  document.getElementById('gastos-detalle').style.display = 'block';
+}
+
+function backToGastos() {
+  document.getElementById('gastos-detalle').style.display = 'none';
+  document.getElementById('gastos-main').style.display = 'block';
+}
+
+function editarLimiteCat(catId, mesKeyParam) {
+  const c = getCatConfig(catId);
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = mesKeyParam || (yyyy + '-' + String(mm+1).padStart(2,'0'));
+  const actual = getLimiteMes(catId, mesKey);
+  abrirModalLimite(catId, mesKey, actual);
+}
+
+function abrirModalLimite(catId, mesKey, actual) {
+  const c = getCatConfig(catId);
+  // Generar meses próximos para planificar
+  const meses = [];
+  const hoy = new Date();
+  for (let i = 0; i < 6; i++) {
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() + i, 1);
+    const k = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0');
+    const lbl = d.toLocaleString('es-CL',{month:'long',year:'numeric'});
+    meses.push({ key: k, lbl: lbl.charAt(0).toUpperCase()+lbl.slice(1),
+      limite: getLimiteMes(catId, k) });
+  }
+
+  const rows = meses.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="flex:1;font-size:12px;color:${m.key===mesKey?'var(--text)':'var(--text3)'};">${m.lbl}</div>
+      <input type="text" inputmode="numeric" id="lim-${m.key}"
+        value="${m.limite > 0 ? Math.round(m.limite).toLocaleString('es-CL') : ''}"
+        oninput="formatSaldoInput(this)"
+        placeholder="Sin límite"
+        style="width:110px;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:6px 10px;font-size:13px;font-family:'DM Mono',monospace;color:var(--text);outline:none;text-align:right;">
+    </div>`).join('');
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'modal-limite-temp';
+  modal.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Límite · ${c.nombre}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">Define el presupuesto mensual para planificar los próximos meses</div>
+      ${rows}
+      <div style="height:12px;"></div>
+      <button class="modal-save-btn" onclick="guardarLimitesMes('${catId}',${JSON.stringify(meses.map(m=>m.key))})">Guardar</button>
+      <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="document.getElementById('modal-limite-temp').remove()">Cancelar</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function guardarLimitesMes(catId, mesKeys) {
+  for (const mesKey of mesKeys) {
+    const inp = document.getElementById('lim-' + mesKey);
+    if (!inp) continue;
+    const val = parseInt(inp.value.split('.').join('').replace(/[^0-9]/g,'')) || 0;
+    // Actualizar local
+    const existing = PRESUPUESTOS_DATA.find(p => p.catId===catId && p.mes===mesKey);
+    if (existing) { existing.limite = val; }
+    else if (val > 0) { PRESUPUESTOS_DATA.push({ id: catId+'_'+mesKey, catId, mes: mesKey, limite: val }); }
+    // Guardar en Sheet
+    if (val >= 0) {
+      await fetch(API_URL, { method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ action:'setPresupuestoMes', catId, mes: mesKey, limite: val }) });
+    }
+  }
+  document.getElementById('modal-limite-temp')?.remove();
+  verDetalleCat(catId);
+  renderGastosMain();
+}
+
+// Modal gasto manual
+function abrirModalNuevaCat() {
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'modal-nueva-cat';
+  modal.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Nueva categoría</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Nombre</div>
+        <input id="ncat-nombre" type="text" placeholder="Ej: Mascotas, Deporte..."
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;color:var(--text);outline:none;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:6px;">Tipo</div>
+        <div style="display:flex;gap:6px;">
+          <div id="ncat-frecuente" onclick="setNcatTipo('frecuente')" style="flex:1;text-align:center;font-size:12px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer;background:var(--blue-bg);color:var(--blue);border:1px solid var(--blue);">Frecuente</div>
+          <div id="ncat-puntual" onclick="setNcatTipo('puntual')" style="flex:1;text-align:center;font-size:12px;font-weight:500;padding:8px;border-radius:8px;cursor:pointer;background:var(--bg2);color:var(--text3);border:1px solid var(--border);">Puntual</div>
+        </div>
+      </div>
+      <button class="modal-save-btn" onclick="guardarNuevaCat()">Crear categoría</button>
+      <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="document.getElementById('modal-nueva-cat').remove()">Cancelar</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+let _ncatTipo = 'frecuente';
+function setNcatTipo(tipo) {
+  _ncatTipo = tipo;
+  ['frecuente','puntual'].forEach(t => {
+    const el = document.getElementById('ncat-'+t);
+    if (!el) return;
+    const a = t === tipo;
+    el.style.background = a ? 'var(--blue-bg)' : 'var(--bg2)';
+    el.style.color      = a ? 'var(--blue)'    : 'var(--text3)';
+    el.style.border     = a ? '1px solid var(--blue)' : '1px solid var(--border)';
+  });
+}
+
+async function guardarNuevaCat() {
+  const nombre = (document.getElementById('ncat-nombre')?.value||'').trim();
+  if (!nombre) { alert('Ingresa un nombre'); return; }
+  const id = 'cat_' + nombre.toLowerCase().replace(/[^a-z0-9]/g,'_') + '_' + Date.now();
+  const colores = ['#A32D2D','#854F0B','#185FA5','#3B6D11','#534AB7','#0F6E56','#712B13'];
+  const color = colores[CATEGORIAS_DATA.length % colores.length];
+  const nueva = { id, nombre, tipo: _ncatTipo, color, bg: hexToBg(color), activo: true };
+  CATEGORIAS_DATA.push(nueva);
+  // Guardar en Sheet
+  await fetch(API_URL, { method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'setCategoriaPersonal', categoria: nueva }) });
+  document.getElementById('modal-nueva-cat')?.remove();
+  GASTO_CAT_SELECTED = id;
+  setGastoTipo(_ncatTipo);
+}
+
+
+function abrirModalGasto() {
+  const hoy = new Date().toISOString().split('T')[0];
+  document.getElementById('gasto-monto-inp').value = '';
+  document.getElementById('gasto-desc-inp').value = '';
+  document.getElementById('gasto-fecha-inp').value = hoy;
+  setGastoTipo('frecuente');
+  GASTO_CAT_SELECTED = '';
+  renderGastoChips();
+  document.getElementById('modal-gasto').classList.remove('hidden');
+}
+function cerrarModalGasto() { document.getElementById('modal-gasto').classList.add('hidden'); }
+
+function setGastoTipo(tipo) {
+  GASTO_TIPO_SELECTED = tipo;
+  ['frecuente','puntual'].forEach(t => {
+    const el = document.getElementById('gtipo-'+t);
+    const active = t === tipo;
+    el.style.background  = active ? 'var(--blue-bg)' : 'var(--bg2)';
+    el.style.color       = active ? 'var(--blue)'    : 'var(--text3)';
+    el.style.border      = active ? '1px solid var(--blue)' : '1px solid var(--border)';
+  });
+  GASTO_CAT_SELECTED = '';
+  renderGastoChips();
+}
+
+function renderGastoChips() {
+  const cats = CATEGORIAS_CONFIG.filter(c => c.tipo === GASTO_TIPO_SELECTED);
+  const chips = cats.map(c => {
+    const sel = GASTO_CAT_SELECTED === c.id;
+    return `<div onclick="selGastoChip('${c.id}')" style="font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid ${sel?c.color:' var(--border)'};background:${sel?c.bg:'var(--bg2)'};color:${sel?c.color:'var(--text3)'};">${c.nombre}</div>`;
+  }).join('');
+  const chipNueva = `<div onclick="abrirModalNuevaCat()" style="font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid var(--border);background:var(--bg2);color:var(--blue);">+ Nueva</div>`;
+  document.getElementById('gasto-chips').innerHTML = chips + chipNueva;
+}
+
+function selGastoChip(catId) {
+  GASTO_CAT_SELECTED = catId;
+  renderGastoChips();
+}
+
+async function guardarGastoManual() {
+  const montoRaw = document.getElementById('gasto-monto-inp').value;
+  const monto = parseInt(montoRaw.split('.').join('').replace(/[^0-9]/g,'')) || 0;
+  const desc  = document.getElementById('gasto-desc-inp').value.trim();
+  const fecha = document.getElementById('gasto-fecha-inp').value;
+  if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
+  if (!GASTO_CAT_SELECTED) { alert('Selecciona una categoría'); return; }
+  const cat = getCatConfig(GASTO_CAT_SELECTED);
+  const gasto = {
+    tipo: 'gasto', subtipo: GASTO_TIPO_SELECTED,
+    descripcion: desc || cat.nombre, categoria: cat.nombre,
+    monto, fecha, banco: 'Manual', id: 'manual_' + Date.now()
+  };
+  // Guardar en Sheet
+  try {
+    await fetch(API_URL, { method:'POST', mode:'no-cors',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ action:'setMovimiento', movimiento: gasto }) });
+  } catch(e) {}
+  // Actualizar local
+  if (!DATA.movimientos) DATA.movimientos = [];
+  DATA.movimientos.push({
+    'ID': gasto.id, 'Tipo': 'gasto', 'Subtipo': GASTO_TIPO_SELECTED,
+    'Descripción': gasto.descripcion, 'Categoría': cat.nombre,
+    'Monto': monto, 'Fecha': fecha, 'Banco': 'Manual'
+  });
+  cerrarModalGasto();
+  renderGastosMain();
+}
+
+function aprobarMovimiento(id, catId) {
+  const m = (DATA.movimientos||[]).find(x => x['ID'] === id);
+  if (!m) return;
+  const cat = getCatConfig(catId || 'otros');
+  m['Categoría'] = cat.nombre;
+  fetch(API_URL, { method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'setCategoria', id, categoria: cat.nombre }) });
+  renderGastosRevisar();
+  renderGastosCat();
+}
+
+function ignorarMovimiento(id) {
+  const m = (DATA.movimientos||[]).find(x => x['ID'] === id);
+  if (!m) return;
+  m['Categoría'] = 'ignorado';
+  fetch(API_URL, { method:'POST', mode:'no-cors',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ action:'setCategoria', id, categoria: 'ignorado' }) });
+  renderGastosRevisar();
+}
+
+function cambiarCatMovimiento(id) {
+  const cats = CATEGORIAS_CONFIG.map((c,i) => (i+1)+'. '+c.nombre).join('\n');
+  const resp = prompt('Elige categoría:\n' + cats);
+  if (!resp) return;
+  const idx = parseInt(resp) - 1;
+  if (idx >= 0 && idx < CATEGORIAS_CONFIG.length) {
+    aprobarMovimiento(id, CATEGORIAS_CONFIG[idx].id);
+  }
+}
 
 
 function backToLista() {
