@@ -371,15 +371,17 @@
         <div id="gtab-cat" onclick="switchGastosTab('cat')" style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:7px;border-radius:7px;cursor:pointer;background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.07);">Categorías</div>
         <div id="gtab-movs" onclick="switchGastosTab('movs')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);">Movimientos</div>
         <div id="gtab-revisar" onclick="switchGastosTab('revisar')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);position:relative;">
-          Por revisar
+          Revisar
           <span id="gtab-revisar-badge" style="display:none;position:absolute;top:4px;right:6px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;"></span>
         </div>
+        <div id="gtab-realizados" onclick="switchGastosTab('realizados')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);">Realizados</div>
       </div>
 
       <!-- Contenido según tab -->
       <div id="gpanel-cat"></div>
       <div id="gpanel-movs" style="display:none;"></div>
       <div id="gpanel-revisar" style="display:none;"></div>
+      <div id="gpanel-realizados" style="display:none;"></div>
 
       <!-- FAB registrar gasto -->
       <div style="height:80px;"></div>
@@ -751,7 +753,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbxaceTzR3wyQZ52KaAvOp-aT6trBEu9787p7-TTlMPH0qbsQ9rIn17utKS250dBOeRk/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxsNL6HX_tJSaoFV_gd5EtcWq0-FW1bPYgcUmcTlVAl037Y7pEC2L2SZrqJ2wXb1IjG/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -803,6 +805,7 @@ let GASTOS_RESPONSABLE    = [];   // historial de quién paga cada gasto por fec
 let ARRENDATARIOS         = [];   // historial de arrendatarios por propiedad
 let CATEGORIAS_DATA       = [];   // categorías desde el Sheet
 let PRESUPUESTOS_DATA     = [];   // límites por categoría y mes
+let GASTOS_PERSONALES     = [];   // gastos planificados por el usuario
 
 // ── ESTADO ──────────────────────────────────────────────────
 let DATA = { movimientos: [], saldos: [], loaded: false };
@@ -988,7 +991,7 @@ async function fetchSheet(nombre) {
 
 async function cargarDatos() {
   try {
-    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows, categoriasRows, presupuestosRows] = await Promise.all([
+    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows, categoriasRows, presupuestosRows, gastosPersonalesRows] = await Promise.all([
       fetchSheet('Movimientos'),
       fetchSheet('Saldos'),
       fetchSheet('Propiedades'),
@@ -1000,6 +1003,7 @@ async function cargarDatos() {
       fetchSheet('Arrendatarios').catch(() => []),
       fetchSheet('Categorias').catch(() => []),
       fetchSheet('Presupuestos').catch(() => []),
+      fetchSheet('GastosPersonales').catch(() => []),
     ]);
     DATA.movimientos = movs;
     DATA.saldos      = saldos;
@@ -1028,6 +1032,29 @@ async function cargarDatos() {
       }));
 
     // Cargar historial de arrendatarios
+    // Cargar gastos personales planificados
+    GASTOS_PERSONALES = (gastosPersonalesRows||[])
+      .filter(r => r['ID'])
+      .map(r => ({
+        id:          String(r['ID']).trim(),
+        mes: (() => {
+          var v = String(r['Mes']||'').trim();
+          if (!v) return '';
+          if (/^\d{4}-\d{2}$/.test(v)) return v;
+          var d = new Date(v);
+          if (!isNaN(d)) return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+          return v.slice(0,7);
+        })(),
+        descripcion:     String(r['Descripcion']||r['Descripción']||'').trim(),
+        categoria:       String(r['Categoria']||r['Categoría']||'').trim(),
+        tipo:            String(r['Tipo']||'frecuente').trim(),
+        montoEstimado:   toNum(r['Monto estimado']||0),
+        montoReal:       toNum(r['Monto real']||0),
+        confirmado:      String(r['Confirmado']).toLowerCase()==='true',
+        fechaConfirmacion: String(r['Fecha confirmacion']||'').trim(),
+        notas:           String(r['Notas']||'').trim(),
+      }));
+
     // Cargar categorías personalizadas
     if (categoriasRows && categoriasRows.length > 0) {
       CATEGORIAS_DATA = categoriasRows
@@ -2078,7 +2105,7 @@ function renderGastosPropiedad(p, esHab) {
 
   const hoy = new Date().toLocaleDateString('es-CL');
 
-  const renderItem = (g, esArrend) => {
+  const renderItem = (g, esArrend, esBase = false) => {
     const pago = getPagoPropiedad(g.id);
     const pagado = pago && pago['Pagado'] === 'true';
     const fechaPago = pago ? pago['Fecha pago'] : '';
@@ -2123,7 +2150,7 @@ function renderGastosPropiedad(p, esHab) {
         <div style="flex:1;">
           <div style="display:flex;align-items:center;gap:4px;">
             <span style="font-size:10px;font-weight:500;color:var(--text);">${g.nombre}${tagArr}${tagTipo}</span>
-            <span onclick="event.stopPropagation();abrirModalResponsable('${g.id}','${p.id}','${g.nombre}',false)"
+            <span onclick="event.stopPropagation();abrirModalResponsable('${g.id}','${p.id}','${g.nombre}',${esBase})"
               style="font-size:10px;color:var(--text3);cursor:pointer;padding:0 2px;" title="Cambiar responsable">⇄</span>
           </div>
           <div style="font-size:8px;color:${atrasado && !pagado ? 'var(--red)' : 'var(--text3)'};margin-top:1px;">${sub}</div>
@@ -2196,9 +2223,9 @@ function renderGastosPropiedad(p, esHab) {
 
   // Bloque "Mis gastos" — hipoteca + GC si es mío + extras míos
   const itemsMios = [];
-  itemsMios.push(renderItem(gastoHipBase, false));
-  if (gcEsDueno) itemsMios.push(renderItem(gastoGCBase, false));
-  misGastos.forEach(g => itemsMios.push(renderItem(g, false)));
+  itemsMios.push(renderItem(gastoHipBase, false, true));
+  if (gcEsDueno) itemsMios.push(renderItem(gastoGCBase, false, true));
+  misGastos.forEach(g => itemsMios.push(renderItem(g, false, false)));
 
   if (itemsMios.length > 0) {
     html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:8px;">`;
@@ -2639,6 +2666,11 @@ function abrirModalResponsable(gastoId, propId, nombreGasto, esBase) {
   const modal = document.getElementById('modal-responsable');
   if (!modal) return;
   document.getElementById('modal-resp-nombre').textContent = nombreGasto;
+  // Adaptar label según si es habitada o arriendo
+  const prop = PROPIEDADES.find(p => p.id === propId);
+  const esHab2 = prop && prop.tipo === 'habitada';
+  const btnArr = document.getElementById('resp-btn-arr');
+  if (btnArr) btnArr.textContent = esHab2 ? 'Tercero' : 'Tercero / Arrendatario';
   // Pre-rellenar con responsable actual
   const { mm, yyyy } = getMesFiltro();
   const actual = esBase
@@ -2814,7 +2846,7 @@ function getCatConfig(catId) {
 
 function switchGastosTab(tab) {
   GASTOS_VISTA = tab;
-  ['cat','movs','revisar'].forEach(t => {
+  ['cat','movs','revisar','realizados'].forEach(t => {
     const btn = document.getElementById('gtab-'+t);
     const panel = document.getElementById('gpanel-'+t);
     if (!btn || !panel) return;
@@ -2825,10 +2857,87 @@ function switchGastosTab(tab) {
     btn.style.boxShadow     = active ? '0 1px 3px rgba(0,0,0,0.07)' : 'none';
     panel.style.display     = active ? 'block' : 'none';
   });
-  if (tab === 'cat')     renderGastosCat();
-  if (tab === 'movs')    renderGastosMovs();
-  if (tab === 'revisar') renderGastosRevisar();
+  if (tab === 'cat')        renderGastosCat();
+  if (tab === 'movs')       renderGastosMovs();
+  if (tab === 'revisar')    renderGastosRevisar();
+  if (tab === 'realizados') renderGastosRealizados();
 }
+
+// ── API POST HELPER ───────────────────────────────────────────
+async function apiPost(data) {
+  try {
+    await fetch(API_URL, {
+      method: 'POST',
+      redirect: 'follow',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(data)
+    });
+  } catch(e) { /* redirect de Apps Script — POST sí llegó */ }
+}
+
+// ── CONFIRMAR / EDITAR GASTO PERSONAL ────────────────────────
+function abrirConfirmarGasto(gastoId) {
+  const g = GASTOS_PERSONALES.find(x => x.id === gastoId);
+  if (!g) return;
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'modal-confirmar-gasto';
+  const montoFmt = g.confirmado && g.montoReal > 0
+    ? Math.round(g.montoReal).toLocaleString('es-CL')
+    : Math.round(g.montoEstimado).toLocaleString('es-CL');
+  modal.innerHTML = `
+    <div class="modal-sheet">
+      <div class="modal-handle"></div>
+      <div class="modal-title">${g.descripcion}</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">${g.categoria} · ${g.mes}</div>
+      <div style="margin-bottom:10px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Monto ${g.confirmado?'real':'estimado'}</div>
+        <input id="conf-monto-inp" type="text" inputmode="numeric" value="${montoFmt}"
+          oninput="formatSaldoInput(this)"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:20px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;text-align:right;">
+      </div>
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Notas (opcional)</div>
+        <input id="conf-notas-inp" type="text" placeholder="Ej: pagué con efectivo..."
+          value="${g.notas||''}"
+          style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);outline:none;">
+      </div>
+      ${g.confirmado ? `
+        <button class="modal-save-btn" onclick="confirmarGasto('${gastoId}',true)">Actualizar</button>
+        <div onclick="confirmarGasto('${gastoId}',false)" style="text-align:center;margin-top:8px;padding:10px;font-size:13px;font-weight:500;color:var(--red);cursor:pointer;border:1px solid var(--red);border-radius:8px;">Desmarcar — no realizado</div>
+      ` : `
+        <button class="modal-save-btn" style="background:var(--green);" onclick="confirmarGasto('${gastoId}',true)">✓ Confirmar gasto</button>
+        <div onclick="confirmarGasto('${gastoId}',false)" style="text-align:center;margin-top:8px;padding:10px;font-size:13px;color:var(--text3);cursor:pointer;">Marcar como no realizado</div>
+      `}
+      <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="document.getElementById('modal-confirmar-gasto').remove()">Cancelar</div>
+      <div onclick="eliminarGastoPersonal('${gastoId}')" style="text-align:center;margin-top:8px;font-size:11px;color:var(--red);cursor:pointer;">Eliminar gasto</div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function confirmarGasto(gastoId, confirmado) {
+  const g = GASTOS_PERSONALES.find(x => x.id === gastoId);
+  if (!g) return;
+  const montoRaw = document.getElementById('conf-monto-inp')?.value || '';
+  const monto = parseInt(montoRaw.split('.').join('').replace(/[^0-9]/g,'')) || 0;
+  const notas = document.getElementById('conf-notas-inp')?.value || '';
+  g.confirmado          = confirmado;
+  g.montoReal           = confirmado ? monto : 0;
+  g.notas               = notas;
+  g.fechaConfirmacion   = confirmado ? new Date().toISOString().split('T')[0] : '';
+  await apiPost({ action:'setGastoPersonal', gasto: g });
+  document.getElementById('modal-confirmar-gasto')?.remove();
+  renderGastosMain();
+}
+
+async function eliminarGastoPersonal(gastoId) {
+  if (!confirm('¿Eliminar este gasto?')) return;
+  GASTOS_PERSONALES = GASTOS_PERSONALES.filter(x => x.id !== gastoId);
+  await apiPost({ action:'deleteGastoPersonal', id: gastoId });
+  document.getElementById('modal-confirmar-gasto')?.remove();
+  renderGastosMain();
+}
+
 
 function renderGastosMain() {
   const { mm, yyyy } = getMesFiltro();
@@ -2924,80 +3033,171 @@ function renderGastosCat() {
   document.getElementById('gpanel-cat').innerHTML = html_parts.join('');
 }
 
+
+// ── MOVIMIENTOS: gastos planificados por el usuario, todos los meses ──
 function renderGastosMovs() {
-  const movs = movsMes().filter(m => m['Tipo']==='gasto' && m['Categoría']);
-  // Agrupar por fecha
-  const grupos = {};
-  movs.forEach(m => {
-    const d = m['Fecha'] ? new Date(m['Fecha']) : null;
-    const key = d && !isNaN(d) ? d.toLocaleDateString('es-CL',{day:'numeric',month:'short'}) : 'Sin fecha';
-    if (!grupos[key]) grupos[key] = [];
-    grupos[key].push(m);
-  });
-  let html = '';
-  Object.keys(grupos).forEach(fecha => {
-    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 6px 2px;">${fecha}</div>`;
-    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">`;
-    grupos[fecha].forEach(m => {
-      const cat = getCatConfig((m['Categoría']||'').toLowerCase().replace(/\s+/g,''));
-      html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
-        <div style="width:8px;height:8px;border-radius:50%;background:${cat.color};flex-shrink:0;"></div>
-        <div style="flex:1;">
-          <div style="font-size:12px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
-          <div style="font-size:10px;color:var(--text3);">${m['Categoría']} · ${m['Banco']||''}</div>
-        </div>
-        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
-      </div>`;
+  var fltM = getMesFiltro();
+  var mesKeyM = fltM.yyyy + '-' + String(fltM.mm+1).padStart(2,'0');
+  var all = (GASTOS_PERSONALES||[]).filter(function(g){ return g.mes === mesKeyM; });
+  var html = '';
+  if (!all.length) {
+    html = '<div style="text-align:center;color:var(--text3);padding:32px;font-size:13px">Sin gastos planificados este mes</div>';
+  } else {
+    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px">';
+    all.forEach(function(g) {
+        var monto = g.montoReal > 0 ? g.montoReal : g.montoEstimado;
+        var conf  = g.confirmado;
+        var dotCol   = conf ? 'var(--green)' : 'var(--text3)';
+        var montoCol = conf ? 'var(--green)' : 'var(--text3)';
+        var estado   = conf ? '\u2713 Confirmado' : 'Pendiente de confirmar';
+        html += '<div onclick="abrirConfirmarGasto(\''+g.id+'\')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);cursor:pointer">'
+          +'<div style="width:8px;height:8px;border-radius:50%;background:'+dotCol+';flex-shrink:0"></div>'
+          +'<div style="flex:1">'
+            +'<div style="font-size:13px;font-weight:500;color:var(--text)">'+g.descripcion+'</div>'
+            +'<div style="font-size:10px;color:'+(conf?'var(--green)':'var(--text3)')+'">'+g.categoria+' \xb7 '+estado+'</div>'
+          +'</div>'
+          +'<div style="text-align:right">'
+            +'<div style="font-family:\'DM Mono\',monospace;font-size:13px;font-weight:500;color:'+montoCol+'">'+(conf?'':'~')+fmt(monto)+'</div>'
+            +'<div style="font-size:9px;color:var(--text3)">'+(conf?'real':'estimado')+'</div>'
+          +'</div>'
+          +'<div style="font-size:13px;color:var(--text3);margin-left:4px">\u203a</div>'
+          +'</div>';
     });
-    html += `</div>`;
-  });
-  if (!html) html = '<div style="text-align:center;color:var(--text3);padding:24px;font-size:13px;">Sin movimientos clasificados</div>';
+    html += '</div>';
+  }
   document.getElementById('gpanel-movs').innerHTML = html;
 }
 
+// ── REVISAR: movimientos del banco sin clasificar, del mes actual ──
 function renderGastosRevisar() {
-  const sinClasif = (DATA.movimientos||[]).filter(m =>
-    m['Tipo']==='gasto' && (!m['Categoría'] || m['Categoría']==='')
-  );
-  let html = '';
-  if (sinClasif.length === 0) {
-    html = '<div style="text-align:center;padding:32px 16px;"><div style="font-size:32px;margin-bottom:8px;">✓</div><div style="font-size:14px;font-weight:500;color:var(--text);">Todo al día</div><div style="font-size:12px;color:var(--text3);margin-top:4px;">Sin movimientos por revisar</div></div>';
+  var flt = getMesFiltro();
+  var mesKeyR = flt.yyyy + '-' + String(flt.mm+1).padStart(2,'0');
+  var CATS_INV = ['', 'sin categ\xf3ria', 'sin categoria', 'no clasificado'];
+  function getCat(m) { return (m['Categor\xeda']||m['Categoria']||'').toLowerCase().trim(); }
+  function getMesMov(m) {
+    var f = String(m['Fecha']||'');
+    if (f.length < 7) return '';
+    return f.indexOf('/') >= 0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7);
+  }
+  var sinClasif = (DATA.movimientos||[]).filter(function(m) {
+    if ((m['Tipo']||'').toLowerCase() !== 'gasto') return false;
+    var cat = getCat(m);
+    if (cat === 'ignorado') return false;
+    if (CATS_INV.indexOf(cat) < 0) return false;
+    return getMesMov(m) === mesKeyR;
+  });
+  var badge = document.getElementById('gtab-revisar-badge');
+  if (badge) { badge.style.display = sinClasif.length>0?'flex':'none'; badge.textContent=sinClasif.length; }
+  var html = '';
+  if (!sinClasif.length) {
+    html = '<div style="text-align:center;padding:32px"><div style="font-size:32px">\u2713</div><div style="font-size:14px;font-weight:500;color:var(--text);margin-top:8px">Todo al d\xeda</div><div style="font-size:12px;color:var(--text3);margin-top:4px">Sin movimientos por revisar este mes</div></div>';
   } else {
-    html += `<div style="background:var(--amber-bg);border:1px solid var(--amber);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;margin-bottom:10px;">
-      <div style="flex:1;font-size:12px;color:var(--amber);">${sinClasif.length} movimientos sin clasificar</div>
-    </div>`;
-    sinClasif.slice(0,10).forEach(m => {
-      // Sugerir categoría basada en descripción
-      const desc = (m['Descripción']||m['Comercio']||'').toLowerCase();
-      let sugerida = '';
-      if (/jumbo|walmart|lider|tottus|unimarc/i.test(desc)) sugerida = 'supermercado';
-      else if (/copec|shell|petrobras|bencin/i.test(desc)) sugerida = 'transporte';
-      else if (/uber|cabify|metro|bip/i.test(desc)) sugerida = 'transporte';
-      else if (/farmacia|clinica|medic|salud/i.test(desc)) sugerida = 'salud';
-      else if (/netflix|spotify|amazon|apple/i.test(desc)) sugerida = 'suscripcion';
-      const catSug = sugerida ? getCatConfig(sugerida) : null;
-      html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px;">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);">
-          <div style="flex:1;">
-            <div style="font-size:13px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
-            <div style="font-size:10px;color:var(--text3);">${m['Banco']||''} · ${m['Fecha']||''}</div>
-          </div>
-          <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
-        </div>
-        ${catSug ? `<div style="padding:8px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px;">
-          <span style="font-size:10px;color:var(--text3);">Sugerencia</span>
-          <span style="background:${catSug.bg};color:${catSug.color};font-size:11px;font-weight:500;padding:2px 8px;border-radius:20px;">${catSug.nombre}</span>
-        </div>` : ''}
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-top:1px solid var(--border);">
-          <div onclick="aprobarMovimiento('${m['ID']||''}','${sugerida||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--green);cursor:pointer;border-right:1px solid var(--border);">✓ Aprobar</div>
-          <div onclick="cambiarCatMovimiento('${m['ID']||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--blue);cursor:pointer;border-right:1px solid var(--border);">✎ Cambiar</div>
-          <div onclick="ignorarMovimiento('${m['ID']||''}')" style="text-align:center;padding:9px;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;">✕ Ignorar</div>
-        </div>
-      </div>`;
-    });
+    html += '<div style="background:var(--amber-bg);border:0.5px solid var(--amber);border-radius:10px;padding:8px 12px;font-size:12px;color:var(--amber);margin-bottom:10px">'+sinClasif.length+' movimientos sin clasificar</div>';
+    for (var i=0; i<sinClasif.length; i++) {
+      var m = sinClasif[i];
+      var movIdx = DATA.movimientos.indexOf(m);
+      var desc = (m['Descripci\xf3n']||m['Descripcion']||m['Comercio']||'').trim() || '\u2014';
+      var dl = desc.toLowerCase();
+      var sug='';
+      if (/jumbo|walmart|lider|tottus|unimarc|santa.isabel/.test(dl)) sug='supermercado';
+      else if (/copec|shell|petrobras|bencin|enex/.test(dl)) sug='transporte';
+      else if (/uber|cabify|metro|bip|taxi/.test(dl)) sug='transporte';
+      else if (/farmacia|clinica|medic|salud|cruz.verde|ahumada/.test(dl)) sug='salud';
+      else if (/netflix|spotify|amazon|apple|hbo|disney|openai/.test(dl)) sug='suscripcion';
+      else if (/restaurante|sushi|pizza|burger|mcdonalds|starbucks|cafe/.test(dl)) sug='restaurante';
+      var cs = sug ? getCatConfig(sug) : null;
+      var sh = cs ? '<div style="padding:7px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:var(--text3)">Sugerencia</span><span style="background:'+cs.bg+';color:'+cs.color+';font-size:11px;padding:2px 8px;border-radius:20px">'+cs.nombre+' \u2728</span></div>' : '';
+      html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px">'
+        +'<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border)">'
+        +'<div style="flex:1"><div style="font-size:13px;font-weight:500;color:var(--text)">'+desc+'</div>'
+        +'<div style="font-size:10px;color:var(--text3)">'+(m['Banco']||'')+' \xb7 '+(m['Fecha']||'')+'</div></div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:14px;font-weight:600;color:var(--red)">'+fmt(toNum(m['Monto']))+'</div>'
+        +'</div>'+sh
+        +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr">'
+        +'<div onclick="aprobarMovimiento('+movIdx+',\''+(sug||'otros')+'\')" style="text-align:center;padding:10px;font-size:12px;font-weight:500;color:var(--green);cursor:pointer;border-right:1px solid var(--border)">\u2713 Aprobar</div>'
+        +'<div onclick="abrirCambiarCat('+movIdx+')" style="text-align:center;padding:10px;font-size:12px;font-weight:500;color:var(--blue);cursor:pointer;border-right:1px solid var(--border)">\u270e Cambiar</div>'
+        +'<div onclick="ignorarMovimiento('+movIdx+')" style="text-align:center;padding:10px;font-size:12px;font-weight:500;color:var(--text3);cursor:pointer">\u00d7 Ignorar</div>'
+        +'</div></div>';
+    }
   }
   document.getElementById('gpanel-revisar').innerHTML = html;
 }
+
+// ── REALIZADOS: todos los movimientos del mes (banco + manuales), fecha desc ──
+function renderGastosRealizados() {
+  var flt3 = getMesFiltro();
+  var mesKeyRz = flt3.yyyy + '-' + String(flt3.mm+1).padStart(2,'0');
+
+  // Movimientos del banco clasificados del mes
+  var movsB = (DATA.movimientos||[]).filter(function(m) {
+    if ((m['Tipo']||'').toLowerCase() !== 'gasto') return false;
+    var cat = (m['Categor\xeda']||m['Categoria']||'').toLowerCase().trim();
+    if (!cat || cat==='ignorado' || cat==='sin categ\xf3ria' || cat==='sin categoria') return false;
+    var f = String(m['Fecha']||'');
+    var mm2 = f.length>=7 ? (f.indexOf('/')>=0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7)) : '';
+    return mm2 === mesKeyRz;
+  });
+
+  // Gastos personales confirmados del mes
+  var movsGP = (GASTOS_PERSONALES||[]).filter(function(g) {
+    return g.mes === mesKeyRz && g.confirmado;
+  });
+
+  // Unir y ordenar por fecha desc
+  var todos = movsB.map(function(m) {
+    return {
+      desc:  m['Descripci\xf3n']||m['Descripcion']||m['Comercio']||'\u2014',
+      cat:   m['Categor\xeda']||m['Categoria']||'',
+      monto: toNum(m['Monto']),
+      fecha: String(m['Fecha']||''),
+      tipo:  'banco'
+    };
+  }).concat(movsGP.map(function(g) {
+    return {
+      desc:  g.descripcion,
+      cat:   g.categoria,
+      monto: g.montoReal > 0 ? g.montoReal : g.montoEstimado,
+      fecha: g.fechaConfirmacion || g.mes,
+      tipo:  'manual'
+    };
+  }));
+
+  // Parsear fecha dd/MM/yyyy o yyyy-MM-dd para ordenar correctamente
+  function parseFechaR(s) {
+    if (!s) return 0;
+    s = String(s);
+    if (s.indexOf('/') >= 0) {
+      var p = s.split('/');
+      return new Date(p[2]||2000, (p[1]||1)-1, p[0]||1).getTime();
+    }
+    return new Date(s).getTime() || 0;
+  }
+  todos.sort(function(a,b) { return parseFechaR(b.fecha) - parseFechaR(a.fecha); });
+
+  var html = '';
+  if (!todos.length) {
+    html = '<div style="text-align:center;color:var(--text3);padding:32px;font-size:13px">Sin movimientos realizados este mes</div>';
+  } else {
+    html += '<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:8px">';
+    todos.forEach(function(t) {
+      var cc = getCatConfig(t.cat.toLowerCase().replace(/\s+/g,'_'));
+      var tipoTag = t.tipo==='manual'
+        ? '<span style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:6px;margin-left:4px">Manual</span>'
+        : '';
+      html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">'
+        +'<div style="width:8px;height:8px;border-radius:50%;background:'+cc.color+';flex-shrink:0"></div>'
+        +'<div style="flex:1">'
+          +'<div style="font-size:12px;font-weight:500;color:var(--text)">'+t.desc+tipoTag+'</div>'
+          +'<div style="font-size:10px;color:var(--text3)">'+t.cat+' \xb7 '+t.fecha+'</div>'
+        +'</div>'
+        +'<div style="font-family:\'DM Mono\',monospace;font-size:12px;font-weight:500;color:var(--red)">'+fmt(t.monto)+'</div>'
+        +'</div>';
+    });
+    html += '</div>';
+  }
+  document.getElementById('gpanel-realizados').innerHTML = html;
+}
+
 
 function verDetalleCat(catId) {
   const c = getCatConfig(catId);
@@ -3232,24 +3432,26 @@ async function guardarGastoManual() {
   if (!monto || monto <= 0) { alert('Ingresa un monto'); return; }
   if (!GASTO_CAT_SELECTED) { alert('Selecciona una categoría'); return; }
   const cat = getCatConfig(GASTO_CAT_SELECTED);
-  const gasto = {
-    tipo: 'gasto', subtipo: GASTO_TIPO_SELECTED,
-    descripcion: desc || cat.nombre, categoria: cat.nombre,
-    monto, fecha, banco: 'Manual', id: 'manual_' + Date.now()
+  // Mes desde el string de fecha directo — evita problema de timezone Chile
+  const mes = fecha ? fecha.slice(0,7) : (() => {
+    const n = new Date(); return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0');
+  })();
+  const id = 'gp_' + Date.now();
+  const gastoPersonal = {
+    id, mes,
+    descripcion: desc || cat.nombre,
+    categoria:   cat.nombre,
+    tipo:        GASTO_TIPO_SELECTED,
+    montoEstimado: monto,
+    montoReal:     0,
+    confirmado:    false,
+    fechaConfirmacion: '',
+    notas: ''
   };
-  // Guardar en Sheet
-  try {
-    await fetch(API_URL, { method:'POST', mode:'no-cors',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ action:'setMovimiento', movimiento: gasto }) });
-  } catch(e) {}
+  // Guardar en hoja GastosPersonales
+  await apiPost({ action: 'setGastoPersonal', gasto: gastoPersonal });
   // Actualizar local
-  if (!DATA.movimientos) DATA.movimientos = [];
-  DATA.movimientos.push({
-    'ID': gasto.id, 'Tipo': 'gasto', 'Subtipo': GASTO_TIPO_SELECTED,
-    'Descripción': gasto.descripcion, 'Categoría': cat.nombre,
-    'Monto': monto, 'Fecha': fecha, 'Banco': 'Manual'
-  });
+  GASTOS_PERSONALES.push(gastoPersonal);
   cerrarModalGasto();
   renderGastosMain();
 }
@@ -3264,6 +3466,8 @@ function aprobarMovimiento(id, catId) {
     body: JSON.stringify({ action:'setCategoria', id, categoria: cat.nombre }) });
   renderGastosRevisar();
   renderGastosCat();
+  var rz2=document.getElementById('gpanel-realizados');if(rz2&&rz2.style.display!=='none')renderGastosRealizados();
+  var rz=document.getElementById('gpanel-realizados');if(rz&&rz.style.display!=='none')renderGastosRealizados();
 }
 
 function ignorarMovimiento(id) {
