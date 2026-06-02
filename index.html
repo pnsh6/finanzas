@@ -7,22 +7,23 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Finanzas">
-<meta name="theme-color" content="#F2F2F7">
+<meta name="theme-color" content="#0A0A0A">
 <title>Finanzas</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' rx='14' fill='%23185FA5'/><text x='32' y='40' text-anchor='middle' font-family='system-ui' font-size='32' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
 <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect width='180' height='180' rx='40' fill='%23185FA5'/><text x='90' y='115' text-anchor='middle' font-family='system-ui' font-size='90' font-weight='600' fill='%2360a5fa'>%24</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>  :root {
-    --bg:  #F2F2F7; --bg2: #FFFFFF; --bg3: #F2F2F7; --bg4: #E5E5EA;
-    --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.18);
-    --text: #1C1C1E; --text2: #48484A; --text3: #8E8E93;
-    --green:  #1A7F4B; --green-bg:  #D4F1E4;
-    --red:    #D93025; --red-bg:    #FDECEA;
-    --amber:  #B45309; --amber-bg:  #FEF3C7;
-    --blue:   #185FA5; --blue-bg:   #DBEAFE;
-    --purple: #6D28D9; --purple-bg: #EDE9FE;
-    --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 2px 12px rgba(0,0,0,0.04);
+    --bg:  #0A0A0A; --bg2: #141414; --bg3: #1C1C1C; --bg4: #2A2A2A;
+    --border: rgba(255,255,255,0.08); --border2: rgba(255,255,255,0.16);
+    --text: #F2F2F2; --text2: #A0A0A0; --text3: #5A5A5A;
+    --green:  #34C77B; --green-bg:  rgba(52,199,123,0.12);
+    --red:    #FF453A; --red-bg:    rgba(255,69,58,0.12);
+    --amber:  #FF9F0A; --amber-bg:  rgba(255,159,10,0.12);
+    --blue:   #60A5FA; --blue-bg:   rgba(96,165,250,0.12);
+    --purple: #A78BFA; --purple-bg: rgba(167,139,250,0.12);
+    --shadow: 0 1px 4px rgba(0,0,0,0.4), 0 2px 12px rgba(0,0,0,0.3);
     --radius: 16px; --radius-sm: 10px;
+    --nav-bg: #111111;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; max-width: 430px; margin: 0 auto; padding-bottom: 80px; font-size: 15px; -webkit-font-smoothing: antialiased; }
@@ -244,13 +245,14 @@
   .refresh-btn { font-size: 11px; color: var(--blue); cursor: pointer; }
 
   /* NAV */
-  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: rgba(255,255,255,0.96); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border-top: 1px solid var(--border); display: flex; padding: 6px 0 24px; z-index: 100; box-shadow: 0 -1px 0 rgba(0,0,0,0.06); }
-  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; position: relative; }
-  .nav-icon { font-size: 22px; line-height: 1.2; transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1); }
-  .nav-item.active .nav-icon { transform: scale(1.2); }
-  .nav-label { font-size: 10px; color: var(--text3); font-weight: 400; transition: color 0.15s; }
-  .nav-item.active .nav-label { color: var(--blue); font-weight: 600; }
-  .nav-item.active::after { content:''; position:absolute; bottom:-2px; left:50%; transform:translateX(-50%); width:20px; height:3px; background:var(--blue); border-radius:2px 2px 0 0; }
+  .bottom-nav { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 430px; background: var(--nav-bg); border-top: 1px solid var(--border); display: flex; padding: 10px 8px 28px; z-index: 100; }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; }
+  .nav-icon-wrap { width: 44px; height: 30px; display: flex; align-items: center; justify-content: center; border-radius: 20px; transition: background 0.2s; }
+  .nav-item.active .nav-icon-wrap { background: rgba(96,165,250,0.15); }
+  .nav-icon { width: 22px; height: 22px; stroke: var(--text3); fill: none; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; transition: stroke 0.2s; }
+  .nav-item.active .nav-icon { stroke: var(--blue); }
+  .nav-label { font-size: 10px; color: var(--text3); font-weight: 400; transition: color 0.2s; letter-spacing: 0.01em; }
+  .nav-item.active .nav-label { color: var(--blue); font-weight: 500; }
   .nav-dot { display: none; }
   .screen { display: none; }
   .screen.active { display: block; animation: fadeIn 0.2s ease; }
@@ -281,45 +283,93 @@
   <div id="home-loading" class="loading"><div class="spinner"></div><div class="loading-text">Cargando datos...</div></div>
   <div id="home-content" style="display:none">
     <div style="padding:14px 16px 0;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-        <div style="font-size:15px;color:var(--text2);">Hola <strong style="color:var(--text);font-weight:500;">Francisco</strong></div>
-        <div onclick="abrirModalSaldo()" style="width:28px;height:28px;border-radius:7px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">
-          <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linecap="round"><path d="M10 2l2 2-7 7H3v-2l7-7z"/></svg>
+
+      <!-- Header -->
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <div>
+          <div style="font-size:12px;color:var(--text3);" id="home-fecha-lbl"></div>
+          <div style="font-size:16px;color:var(--text);font-weight:500;">Hola, Francisco</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div id="home-health-pill" style="display:flex;align-items:center;gap:4px;font-size:10px;font-weight:500;padding:3px 9px;border-radius:20px;background:var(--bg3);color:var(--text3);">
+            <div id="health-dot" style="width:6px;height:6px;border-radius:50%;background:var(--text3);flex-shrink:0;"></div>
+            <span id="health-txt">cargando</span>
+          </div>
+          <!-- Botón refresh -->
+          <div id="btn-refresh" onclick="recargarDatos()" style="width:30px;height:30px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;" title="Actualizar datos">
+            <svg id="refresh-icon" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--text2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13.5 8A5.5 5.5 0 1 1 10 3.07"/>
+              <path d="M10 1v3h3"/>
+            </svg>
+            <div id="refresh-spinner" style="display:none;width:14px;height:14px;border:1.5px solid var(--border2);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;"></div>
+          </div>
+          <div onclick="abrirModalSaldo()" style="width:30px;height:30px;border-radius:9px;background:var(--bg2);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="var(--text2)" stroke-width="1.4" stroke-linecap="round"><path d="M10 2l2 2-7 7H3v-2l7-7z"/></svg>
+          </div>
         </div>
       </div>
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;">
-        <div style="font-size:11px;color:var(--text3);margin-bottom:3px;">Total disponible</div>
-        <div id="total-disponible" style="font-family:'DM Mono',monospace;font-size:34px;font-weight:500;color:var(--text);letter-spacing:-1px;line-height:1;">--</div>
-        <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:8px;border-top:1px solid var(--border);">
-          <span id="total-inicial" style="font-size:11px;color:var(--text3);">--</span>
-          <span id="total-delta" style="font-size:11px;">--</span>
+      <div id="home-last-update" style="font-size:10px;color:var(--text3);text-align:right;margin-top:-8px;margin-bottom:8px;"></div>
+
+      <!-- Alertas -->
+      <div id="alertas-container" style="margin-bottom:8px;"></div>
+
+      <!-- Hero saldo -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">Saldo disponible</div>
+        <div id="total-disponible" style="font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:var(--text);letter-spacing:-1px;line-height:1.1;margin-bottom:10px;">--</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding-top:10px;border-top:1px solid var(--border);">
+          <div>
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Ingresos</div>
+            <div id="home-ingresos" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--green);">--</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Gastos</div>
+            <div id="home-gastado" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">--</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Neto</div>
+            <div id="total-delta" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;">--</div>
+          </div>
         </div>
-        <div style="display:flex;align-items:center;gap:5px;margin-top:7px;">
-          <div id="health-dot" style="width:7px;height:7px;border-radius:50%;background:var(--text3);"></div>
-          <span id="health-txt" style="font-size:11px;color:var(--text3);">cargando...</span>
-        </div>
-        <div id="hero-updated" style="font-size:10px;color:var(--text3);margin-top:4px;"></div>
       </div>
-      <div id="alertas-container" style="margin-bottom:10px;"></div>
-      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:10px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-          <span style="font-size:12px;color:var(--text2);">Presupuesto <span id="pres-mes-lbl"></span></span>
+
+      <!-- Presupuesto bar -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+          <span style="font-size:11px;color:var(--text2);">Presupuesto <span id="pres-mes-lbl" style="color:var(--text3);"></span></span>
           <span style="font-family:'DM Mono',monospace;font-size:11px;color:var(--text3);"><strong id="pres-gastado" style="color:var(--text);">--</strong> / <span id="pres-total">--</span></span>
         </div>
-        <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;">
-          <div id="pres-fill" style="height:5px;border-radius:3px;width:0%;background:var(--blue);transition:width 0.5s;"></div>
+        <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;">
+          <div id="pres-fill" style="height:4px;border-radius:2px;width:0%;background:var(--blue);transition:width 0.5s;"></div>
         </div>
-        <div id="pres-cats" style="display:flex;gap:10px;margin-top:7px;flex-wrap:wrap;"></div>
-      </div>
-      <div style="display:flex;align-items:center;margin-bottom:8px;">
-        <span style="font-size:11px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;flex:1;">Por banco</span>
-        <div style="display:flex;align-items:center;gap:2px;">
-          <div onclick="cambiarMes(-1)" style="font-size:16px;color:var(--text2);padding:2px 6px;cursor:pointer;">&#8249;</div>
-          <div id="mes-label" class="header-month" style="font-size:11px;padding:3px 8px;">cargando...</div>
-          <div onclick="cambiarMes(1)" style="font-size:16px;color:var(--text2);padding:2px 6px;cursor:pointer;">&#8250;</div>
+        <div style="display:flex;justify-content:space-between;margin-top:5px;">
+          <div id="pres-pct-lbl" style="font-size:10px;color:var(--blue);">0% usado</div>
+          <div id="pres-libre-lbl" style="font-size:10px;color:var(--text3);">--</div>
         </div>
       </div>
-      <div id="bank-grid"></div>
+
+      <!-- Gastos por categoría + gráfico -->
+      <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:11px;font-weight:500;color:var(--text2);">Gastos por categoría</span>
+          <span id="home-mes-cat-lbl" style="font-size:10px;color:var(--text3);"></span>
+        </div>
+        <div id="home-cats-bars" style="display:flex;flex-direction:column;gap:7px;margin-bottom:12px;"></div>
+        <div style="border-top:1px solid var(--border);padding-top:10px;">
+          <div style="position:relative;width:100%;height:80px;">
+            <canvas id="home-chart-gastos" role="img" aria-label="Gráfico de gastos diarios del mes">Gastos diarios del mes.</canvas>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-top:4px;">
+            <span style="font-size:10px;color:var(--text3);" id="home-chart-desde">1</span>
+            <div style="display:flex;gap:12px;align-items:center;">
+              <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:2px;background:var(--blue);border-radius:1px;"></div><span style="font-size:10px;color:var(--text3);">diario</span></div>
+              <div style="display:flex;align-items:center;gap:3px;"><div style="width:10px;height:0;border-top:2px dashed var(--amber,#BA7517);"></div><span style="font-size:10px;color:var(--text3);">acumulado</span></div>
+            </div>
+            <span style="font-size:10px;color:var(--text3);">hoy</span>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
   <div id="home-error" style="display:none"></div>
@@ -366,24 +416,25 @@
         </div>
       </div>
 
-      <!-- Toggle Por categoría / Movimientos / Por revisar -->
-      <div style="display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;margin-bottom:12px;">
-        <div id="gtab-cat" onclick="switchGastosTab('cat')" style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:7px;border-radius:7px;cursor:pointer;background:var(--bg2);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,0.07);">Categorías</div>
-        <div id="gtab-movs" onclick="switchGastosTab('movs')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);">Movimientos</div>
-        <div id="gtab-revisar" onclick="switchGastosTab('revisar')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);position:relative;">
-          Revisar
-          <span id="gtab-revisar-badge" style="display:none;position:absolute;top:4px;right:6px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;"></span>
+      <!-- 2 tabs: Resumen / Movimientos -->
+      <div style="display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:3px;gap:3px;margin-bottom:12px;">
+        <div id="gtab-resumen" onclick="switchGastosTab('resumen')" style="flex:1;text-align:center;font-size:11px;font-weight:600;padding:7px;border-radius:7px;cursor:pointer;background:var(--bg2);color:var(--text);">Resumen</div>
+        <div id="gtab-movs" onclick="switchGastosTab('movs')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);position:relative;">
+          Movimientos
+          <span id="gtab-movs-badge" style="display:none;position:absolute;top:4px;right:6px;background:var(--red);color:#fff;font-size:9px;font-weight:700;width:16px;height:16px;border-radius:8px;align-items:center;justify-content:center;"></span>
         </div>
-        <div id="gtab-realizados" onclick="switchGastosTab('realizados')" style="flex:1;text-align:center;font-size:11px;font-weight:500;padding:7px;border-radius:7px;cursor:pointer;color:var(--text3);">Realizados</div>
       </div>
 
       <!-- Contenido según tab -->
-      <div id="gpanel-cat"></div>
+      <div id="gpanel-resumen"></div>
       <div id="gpanel-movs" style="display:none;"></div>
+
+      <!-- IDs legacy para compatibilidad con código que los referencia -->
+      <div id="gpanel-cat" style="display:none;"></div>
       <div id="gpanel-revisar" style="display:none;"></div>
       <div id="gpanel-realizados" style="display:none;"></div>
+      <span id="gtab-revisar-badge" style="display:none;"></span>
 
-      <!-- FAB registrar gasto -->
       <div style="height:80px;"></div>
     </div>
     <!-- FAB flotante -->
@@ -490,41 +541,24 @@
       <!-- Crédito hipotecario — opción A con hitos -->
       <div id="det-hipoteca-wrap" style="display:none;margin-bottom:10px;">
         <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);">
-          <!-- Header -->
           <div style="background:var(--bg3);padding:8px 14px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);">
             <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;">Crédito hipotecario</span>
-            <span id="det-div-badge" style="font-size:11px;font-weight:500;font-family:'DM Mono',monospace;color:var(--blue);background:var(--blue-bg);padding:2px 8px;border-radius:20px;">—/—</span>
           </div>
-          <!-- Stats 3 columnas -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;border-bottom:1px solid var(--border);">
-            <div style="text-align:center;padding:10px 6px;">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;">
+            <div style="text-align:center;padding:12px 6px;">
               <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Préstamo</div>
-              <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div id="det-prestamo" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text);">—</div>
               <div style="font-size:9px;color:var(--text3);">UF</div>
             </div>
-            <div style="text-align:center;padding:10px 6px;border-left:1px solid var(--border);border-right:1px solid var(--border);">
+            <div style="text-align:center;padding:12px 6px;border-left:1px solid var(--border);">
               <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Tasa</div>
-              <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div id="det-tasa" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text);">—</div>
               <div style="font-size:9px;color:var(--text3);">% anual</div>
             </div>
-            <div style="text-align:center;padding:10px 6px;">
+            <div style="text-align:center;padding:12px 6px;border-left:1px solid var(--border);">
               <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Dividendo</div>
-              <div id="det-dividendo" style="font-family:'DM Mono',monospace;font-size:13px;font-weight:600;color:var(--text);">—</div>
+              <div id="det-dividendo" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:600;color:var(--text);">—</div>
               <div style="font-size:9px;color:var(--text3);">mensual</div>
-            </div>
-          </div>
-          <!-- Barra de progreso con hitos -->
-          <div id="det-div-pagados-wrap" style="display:none;padding:10px 14px;">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-              <span id="det-div-pagados" style="font-size:11px;color:var(--text2);">—</span>
-              <span id="det-div-restantes" style="font-size:11px;font-weight:600;color:var(--blue);font-family:'DM Mono',monospace;">—</span>
-            </div>
-            <div style="height:6px;background:var(--bg3);border-radius:3px;overflow:hidden;">
-              <div id="det-div-bar" style="height:6px;border-radius:3px;width:0%;transition:width 0.5s;"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-top:4px;">
-              <span id="det-hito-inicio" style="font-size:9px;color:var(--text3);">—</span>
-              <span id="det-hito-fin" style="font-size:9px;color:var(--text3);">—</span>
             </div>
           </div>
         </div>
@@ -555,10 +589,18 @@
 <div class="modal-overlay hidden" id="modal-saldo">
   <div class="modal-sheet">
     <div class="modal-handle"></div>
-    <div class="modal-title">Saldo inicial del mes</div>
-    <div class="modal-sub" id="modal-mes-label">Ingresa el saldo real de cada cuenta</div>
-    <div id="saldo-inputs"></div>
-    <button class="modal-save-btn" onclick="guardarSaldos()">Guardar saldos</button>
+    <div class="modal-title">Saldo disponible</div>
+    <div class="modal-sub" id="modal-mes-label">Ingresa tu saldo total actual</div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">Saldo total</div>
+      <div style="position:relative;">
+        <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text3);font-family:'DM Mono',monospace;">$</span>
+        <input id="inp-saldo-total" type="text" inputmode="numeric"
+          style="width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:14px 14px 14px 30px;font-family:'DM Mono',monospace;font-size:20px;color:var(--text);text-align:left;"
+          placeholder="0" oninput="formatSaldoInput(this)" autocomplete="off">
+      </div>
+    </div>
+    <button class="modal-save-btn" onclick="guardarSaldos()">Guardar</button>
   </div>
 </div>
 
@@ -587,6 +629,14 @@
         </div>
       </div>
       <div id="cp-seguimiento-hint" style="display:none;font-size:10px;color:var(--amber);margin-top:5px;">No suma al gasto real · solo registra que fue pagado</div>
+    </div>
+    <!-- Vincular a movimiento bancario -->
+    <div id="cp-vincular-wrap" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <div style="font-size:11px;color:var(--text3);">Vincular a movimiento bancario</div>
+        <div style="font-size:10px;color:var(--text3);">opcional · evita doble conteo</div>
+      </div>
+      <div id="cp-movs-lista" style="background:var(--bg3);border-radius:8px;overflow:hidden;max-height:160px;overflow-y:auto;"></div>
     </div>
     <button class="modal-save-btn" onclick="ejecutarPago()">
       <span id="cp-btn-text">Marcar como pagado</span>
@@ -735,19 +785,27 @@
 <!-- NAV -->
 <nav class="bottom-nav">
   <div class="nav-item active" id="nav-home" onclick="goTo('home')">
-    <span class="nav-icon">🏠</span>
+    <div class="nav-icon-wrap">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 01-1 1H5a1 1 0 01-1-1V9.5z"/><path d="M9 21V12h6v9"/></svg>
+    </div>
     <span class="nav-label">Inicio</span>
   </div>
   <div class="nav-item" id="nav-gastos" onclick="goTo('gastos')">
-    <span class="nav-icon">💳</span>
+    <div class="nav-icon-wrap">
+      <svg class="nav-icon" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/><path d="M14 15h4"/></svg>
+    </div>
     <span class="nav-label">Gastos</span>
   </div>
   <div class="nav-item" id="nav-inversiones" onclick="goTo('inversiones')">
-    <span class="nav-icon">🏢</span>
+    <div class="nav-icon-wrap">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M3 21h18"/><path d="M5 21V7l7-4 7 4v14"/><path d="M9 21v-6h6v6"/><path d="M9 10h.01M15 10h.01"/></svg>
+    </div>
     <span class="nav-label">Inversiones</span>
   </div>
   <div class="nav-item" id="nav-presupuesto" onclick="goTo('presupuesto')">
-    <span class="nav-icon">📊</span>
+    <div class="nav-icon-wrap">
+      <svg class="nav-icon" viewBox="0 0 24 24"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+    </div>
     <span class="nav-label">Presupuesto</span>
   </div>
 </nav>
@@ -828,16 +886,18 @@ function cambiarMes(delta) {
 
 function getMesFiltro() {
   const d = new Date();
+  d.setDate(1); // evita overflow de setMonth en días 29-31
   d.setMonth(d.getMonth() + MES_OFFSET);
   return { mm: d.getMonth(), yyyy: d.getFullYear() };
 }
 
 function actualizarLabelMes() {
   const d = new Date();
+  d.setDate(1);
   d.setMonth(d.getMonth() + MES_OFFSET);
   const label = d.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
   const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
-  ['mes-label','gastos-mes','gastos-status-mes'].forEach(id => {
+  ['mes-label','gastos-mes','gastos-status-mes','gastos-mes-label','inv-mes-label','det-mes-label'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.textContent = labelCap;
   });
@@ -888,26 +948,10 @@ function formatFechaCorta(str) {
   return s.split(' ')[0] || '—';
 }
 
-function getMesFiltro() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + MES_OFFSET);
-  return { mm: d.getMonth(), yyyy: d.getFullYear() };
-}
-
-function actualizarLabelMes() {
-  const d = new Date();
-  d.setMonth(d.getMonth() + MES_OFFSET);
-  const label = d.toLocaleString('es-CL', { month: 'long', year: 'numeric' });
-  const labelCap = label.charAt(0).toUpperCase() + label.slice(1);
-  ['mes-label','gastos-mes','gastos-status-mes'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = labelCap;
-  });
-}
-
 function movsMes() {
   const { mm, yyyy } = getMesFiltro();
   return DATA.movimientos.filter(m => {
+    if ((m['Vinculado']||'') !== '') return false; // vinculado a gasto de propiedad — excluir
     const d = parseFecha(m['Fecha']);
     if (!d) return false;
     return d.getMonth() === mm && d.getFullYear() === yyyy;
@@ -1202,10 +1246,163 @@ function renderTodo() {
   document.getElementById('bud-dias').textContent = diasRestantes + ' días restantes';
   document.getElementById('home-loading').style.display = 'none';
   document.getElementById('home-content').style.display = 'block';
+  // Guardar hora de última actualización
+  const h = String(now.getHours()).padStart(2,'0');
+  const m = String(now.getMinutes()).padStart(2,'0');
+  const updEl = document.getElementById('home-last-update');
+  if (updEl) updEl.textContent = `Actualizado ${h}:${m}`;
   renderHome();
   renderGastos();
   renderInversiones();
   renderPresupuesto();
+}
+
+// ── RECARGAR DATOS (refresh manual) ──────────────────────────
+async function recargarDatos() {
+  const btn = document.getElementById('btn-refresh');
+  const icon = document.getElementById('refresh-icon');
+  const spinner = document.getElementById('refresh-spinner');
+  const updEl = document.getElementById('home-last-update');
+
+  // Mostrar spinner, ocultar ícono
+  if (icon) icon.style.display = 'none';
+  if (spinner) spinner.style.display = 'block';
+  if (btn) btn.style.pointerEvents = 'none';
+  if (updEl) updEl.textContent = 'Actualizando...';
+
+  try {
+    const [movs, saldos, propRows, configRows, gastosRows, pagosRows, arriendoRows, responsableRows, arrendatariosRows, categoriasRows, presupuestosRows, gastosPersonalesRows] = await Promise.all([
+      fetchSheet('Movimientos'),
+      fetchSheet('Saldos'),
+      fetchSheet('Propiedades'),
+      fetchSheet('Config'),
+      fetchSheet('GastosPropiedad'),
+      fetchSheet('PagosPropiedad'),
+      fetchSheet('ArriendoHistorial').catch(() => []),
+      fetchSheet('GastosResponsable').catch(() => []),
+      fetchSheet('Arrendatarios').catch(() => []),
+      fetchSheet('Categorias').catch(() => []),
+      fetchSheet('Presupuestos').catch(() => []),
+      fetchSheet('GastosPersonales').catch(() => []),
+    ]);
+
+    DATA.movimientos = movs;
+    DATA.saldos      = saldos;
+    DATA.loaded      = true;
+
+    // Re-procesar todos los datos igual que en cargarDatos
+    PROPIEDADES = propRows
+      .filter(r => r['ID'] && (r['Nombre'] || r['Propiedad']))
+      .map(r => ({
+        id: r['ID'].trim(), nombre: (r['Nombre'] || r['Propiedad'] || '').trim(),
+        dir: r['Dirección'] || r['Direccion'] || '', inicio: r['Inicio arriendo'] || '',
+        arriendo: toNum(r['Arriendo mensual']), hipoteca: toNum(r['Hipoteca mensual']),
+        gcComunes: toNum(r['Gastos comunes']), banco_hip: r['Banco hipoteca'] || '',
+        estado: (r['Estado arriendo'] || r['Estado'] || 'activa').trim().toLowerCase(),
+        arrNombre: (r['Arrendatario nombre'] || '').trim(),
+        arrContacto: (r['Arrendatario contacto'] || '').trim(),
+        garantia: toNum(r['Garantia'] || r['Garantía'] || 0),
+        tipo: (r['Tipo'] || '').trim().toLowerCase() || 'arriendo',
+        prestamouF: toNum(r['Monto Prestamo (uf)'] || r['Monto Prestamo'] || 0),
+        numDiv: parseInt(r['Num. Div.Total'] || r['NumDiv'] || 0),
+        tasa: toNum(r['Tasa'] || 0),
+      }));
+
+    GASTOS_PROPIEDAD = gastosRows.filter(r => r['ID'] && r['Propiedad ID']).map(r => ({
+      id: r['ID'].trim(), propiedadId: r['Propiedad ID'].trim(),
+      nombre: (r['Nombre'] || r['Gasto'] || '').trim(),
+      quienPaga: (r['Quien paga'] || r['QuienPaga'] || 'yo').trim().toLowerCase(),
+      montoTipo: (r['Monto tipo'] || 'fijo').trim().toLowerCase(),
+      montoEstimado: toNum(r['Monto estimado'] || r['Monto'] || 0),
+      diaVencimiento: parseInt(r['Dia vencimiento'] || r['Dia'] || 5),
+    }));
+
+    PAGOS_PROPIEDAD = pagosRows.filter(r => r['Gasto ID']).map(r => ({
+      'ID': (r['ID'] || '').trim(), 'Gasto ID': (r['Gasto ID'] || '').trim(),
+      'Propiedad ID': (r['Propiedad ID'] || '').trim(), 'Mes': (r['Mes'] || '').trim(),
+      'Pagado': String(r['Pagado'] || 'false').trim(),
+      'Fecha pago': r['Fecha pago'] || '', 'Monto real': String(r['Monto real'] || '0'),
+      'Notas': r['Notas'] || '',
+    }));
+
+    ARRIENDO_HISTORIAL = arriendoRows.filter(r => r['Propiedad ID']).map(r => ({
+      propiedadId: r['Propiedad ID'].trim(), mes: (r['Mes'] || '').trim(),
+      monto: toNum(r['Monto'] || 0),
+    }));
+
+    GASTOS_RESPONSABLE = responsableRows.filter(r => r['Gasto ID']).map(r => ({
+      gastoId: r['Gasto ID'].trim(), propiedadId: (r['Propiedad ID'] || '').trim(),
+      mes: (r['Mes'] || '').trim(), quienPaga: (r['Quien paga'] || 'yo').trim().toLowerCase(),
+    }));
+
+    ARRENDATARIOS = arrendatariosRows.filter(r => r['ID'] && r['Propiedad ID']).map(r => ({
+      id: r['ID'].trim(), propiedadId: r['Propiedad ID'].trim(),
+      nombre: (r['Nombre'] || '').trim(), contacto: (r['Contacto'] || '').trim(),
+      garantia: toNum(r['Garantia'] || r['Garantía'] || 0),
+      fechaInicio: r['Fecha inicio'] || '', fechaFin: r['Fecha fin'] || '',
+      activo: String(r['Activo'] || 'true').trim().toLowerCase() !== 'false',
+      notas: r['Notas'] || '',
+    }));
+
+    GASTOS_PERSONALES = gastosPersonalesRows.filter(r => r['ID']).map(r => ({
+      id: String(r['ID']).trim(),
+      mes: (() => {
+        var v = String(r['Mes']||'').trim();
+        if (!v) return '';
+        if (/^\d{4}-\d{2}$/.test(v)) return v;
+        var d = new Date(v);
+        if (!isNaN(d)) return d.getUTCFullYear()+'-'+String(d.getUTCMonth()+1).padStart(2,'0');
+        return v.slice(0,7);
+      })(),
+      descripcion: String(r['Descripcion'] || r['Descripción'] || '').trim(),
+      categoria: String(r['Categoria'] || r['Categoría'] || '').trim(),
+      montoEstimado: toNum(r['Monto estimado'] || r['Monto'] || 0),
+      montoReal: toNum(r['Monto real'] || 0),
+      confirmado: String(r['Confirmado'] || 'false').trim().toLowerCase() === 'true',
+      fechaConfirmacion: String(r['Fecha confirmacion'] || '').trim(),
+      notas: String(r['Notas'] || '').trim(),
+    }));
+
+    if (categoriasRows && categoriasRows.length > 0) {
+      CATEGORIAS_DATA = categoriasRows.filter(r => r['ID'] && r['Activo'] !== false && String(r['Activo']).toLowerCase() !== 'false').map(r => ({
+        id: String(r['ID']).trim(), nombre: String(r['Nombre'] || '').trim(),
+        tipo: String(r['Tipo'] || 'frecuente').trim().toLowerCase(),
+        color: String(r['Color'] || '#888780').trim(),
+        bg: hexToBg(String(r['Color'] || '#888780').trim()), activo: true,
+      }));
+    }
+    if (CATEGORIAS_DATA.length === 0) CATEGORIAS_DATA = JSON.parse(JSON.stringify(CATEGORIAS_CONFIG));
+
+    if (presupuestosRows && presupuestosRows.length > 0) {
+      PRESUPUESTOS_DATA = presupuestosRows.filter(r => r['ID']).map(r => ({
+        id: String(r['ID']).trim(), catId: String(r['Categoria ID'] || '').trim(),
+        mes: String(r['Mes'] || '').trim(), limite: toNum(r['Limite'] || 0),
+      }));
+    }
+
+    PRESUPUESTOS_DINAMICOS = {};
+    (configRows || []).forEach(r => {
+      const clave = (r['Clave'] || '').trim();
+      if (clave.startsWith('presupuesto_')) PRESUPUESTOS_DINAMICOS[clave.replace('presupuesto_', '')] = toNum(r['Valor']);
+    });
+
+    renderTodo();
+
+  } catch(e) {
+    if (updEl) updEl.textContent = 'Error al actualizar';
+    console.error('recargarDatos error:', e);
+  } finally {
+    // Restaurar botón
+    if (icon) icon.style.display = 'block';
+    if (spinner) spinner.style.display = 'none';
+    if (btn) btn.style.pointerEvents = 'auto';
+    // Animación de rotación completa antes de restaurar
+    if (icon) {
+      icon.style.transition = 'transform 0.3s';
+      icon.style.transform = 'rotate(360deg)';
+      setTimeout(() => { if (icon) icon.style.transform = 'rotate(0deg)'; }, 300);
+    }
+  }
 }
 
 // ── RENDER HOME ───────────────────────────────────────────────
@@ -1214,171 +1411,270 @@ function renderHome() {
   const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
   const movsMesActual = movsMes();
   let ingMes = 0, gasMes = 0;
-
-  const ingresosPorBanco = {};
-  const gastosPorBanco   = {};
   movsMesActual.forEach(m => {
-    const b     = m['Banco'] || 'Otro';
     const monto = toNum(m['Monto']);
-    if (m['Tipo'] === 'ingreso') { ingresosPorBanco[b] = (ingresosPorBanco[b]||0) + monto; ingMes += monto; }
-    else                         { gastosPorBanco[b]   = (gastosPorBanco[b]  ||0) + monto; gasMes += monto; }
+    if (m['Tipo'] === 'ingreso') ingMes += monto; else gasMes += monto;
   });
 
+  // Sumar arriendos recibidos del mes (marcados en PAGOS_PROPIEDAD como _arriendo)
+  const ingArriendoRecibido = PROPIEDADES.filter(p => p.tipo !== 'habitada').reduce((sum, p) => {
+    const gastoId = p.id + '_arriendo';
+    const pago = PAGOS_PROPIEDAD.find(pg => {
+      const pgId  = (pg['Gasto ID']||'').trim();
+      const pgMes = (pg['Mes']||'').trim();
+      const pgPag = String(pg['Pagado']||'').trim().toLowerCase();
+      return pgId === gastoId && pgMes === mesKey && pgPag === 'true';
+    });
+    if (!pago) return sum;
+    const montoReal = toNum(pago['Monto real']);
+    return sum + (montoReal > 0 ? montoReal : p.arriendo);
+  }, 0);
+  ingMes += ingArriendoRecibido;
+
+  // Fecha
+  const fechaEl = document.getElementById('home-fecha-lbl');
+  if (fechaEl) {
+    const hoy = new Date();
+    const dias = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+    const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    fechaEl.textContent = `${dias[hoy.getDay()]} ${hoy.getDate()} ${meses[hoy.getMonth()]}`;
+  }
+
+  // Saldo total — leer columna del mes actual del Sheet
   let totalSaldoInicial = 0;
-  const bankGrid = document.getElementById('bank-grid');
-  if (!bankGrid) return;
-  bankGrid.innerHTML = '';
-
-  // Para meses futuros: proyectar saldo desde el mes actual
-  const mesKeyBase = (() => {
-    const now2 = new Date();
-    return `${now2.getFullYear()}-${String(now2.getMonth()+1).padStart(2,'0')}`;
-  })();
-
-  // Estimar egresos recurrentes mensuales de propiedades
-  const egresoRecurrenteMensual = GASTOS_PROPIEDAD
-    .filter(g => (g.quienPaga||'yo').toLowerCase() === 'yo')
-    .reduce((s, g) => s + g.montoEstimado, 0)
-    + PROPIEDADES.reduce((s, p) => s + p.hipoteca + p.gcComunes, 0);
-
-  // Estimar ingresos mensuales de arriendos
-  const ingresoArriendoMensual = PROPIEDADES
-    .filter(p => p.tipo !== 'habitada')
-    .reduce((s, p) => s + p.arriendo, 0);
-
+  const mesKeyBase = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
+  const ingresoArriendoMensual = PROPIEDADES.filter(p => p.tipo !== 'habitada').reduce((s,p) => s+p.arriendo, 0);
+  const egresoRecurrenteMensual = GASTOS_PROPIEDAD.filter(g => (g.quienPaga||'yo').toLowerCase()==='yo').reduce((s,g) => s+g.montoEstimado,0)
+    + PROPIEDADES.reduce((s,p) => s+p.hipoteca+p.gcComunes, 0);
   DATA.saldos.forEach(s => {
-    const banco = (s['Banco'] || '').trim();
+    const banco = (s['Banco']||'').trim();
     if (!banco) return;
-    // Saldo base: usar mes actual como punto de partida para proyecciones
-    const saldoBase = toNum(s[mesKeyBase]) || toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
-    const saldoInicial = MES_OFFSET > 0 ? saldoBase : (toNum(s[mesKey]) || toNum(s['Saldo']) || 0);
-    // Para mes futuro: proyectar solo si hay saldo base > 0
-    const proyFuturo = saldoBase > 0
-      ? saldoBase + (ingresoArriendoMensual - egresoRecurrenteMensual) * MES_OFFSET
-      : 0;
-    const saldoReal = MES_OFFSET > 0
-      ? proyFuturo
-      : saldoInicial + (ingresosPorBanco[banco]||0) - (gastosPorBanco[banco]||0);
-    totalSaldoInicial += saldoInicial;
-    const style    = BANK_STYLE[banco] || { bg:'#333', color:'#aaa', text:banco.slice(0,3).toUpperCase() };
-    const logoHtml = `<div class="bcard-logo" style="background:${style.bg};"><span style="font-size:${style.text.length>2?'8':'11'}px;font-weight:700;color:${style.color};">${style.text}</span></div>`;
-    const productos = BANK_PRODUCTS[banco] || ['CC'];
-    const subRows = productos.map(prod => {
-      const keyDisp = banco + '_' + prod + '_disp';
-      const keyApro = banco + '_' + prod + '_apro';
-      const saldoRow = DATA.saldos.find(s2 => (s2['Banco']||'').trim() === banco);
-      const disp = prod === 'CC' ? saldoReal : (saldoRow ? toNum(saldoRow[keyDisp]) : 0);
-      const apro = saldoRow ? toNum(saldoRow[keyApro]) : 0;
-      const tagClass = prod === 'CC' ? 'sub-tag-cc' : prod === 'LC' ? 'sub-tag-lc' : 'sub-tag-tc';
-      const aprobadoHtml = apro > 0 ? `<span class="sub-aprobado">($${Math.round(apro).toLocaleString('es-CL')})</span>` : '';
-      return `<div class="sub-row"><span class="sub-tag ${tagClass}">${prod}</span><span class="sub-sep">:</span><div class="sub-vals"><span class="sub-disp">$${Math.round(disp).toLocaleString('es-CL')}</span>${aprobadoHtml}</div></div>`;
-    }).join('');
-    const cardId = 'bcard-' + banco.replace(/[^a-zA-Z0-9]/g,'_');
-    bankGrid.innerHTML += `
-      <div class="bcard" id="${cardId}">
-        <div class="bcard-head" onclick="toggleBcard('${cardId}')">
-          ${logoHtml}
-          <div class="bcard-info"><div class="bcard-name">${banco}</div><div class="bcard-total">$${Math.round(saldoReal).toLocaleString('es-CL')}</div></div>
-          <span class="bcard-chevron">›</span>
-        </div>
-        <div class="bcard-sub">${subRows}</div>
-      </div>`;
+    // Para mes actual: leer columna del mes (ej: 2026-06), fallback a Saldo
+    // Para mes futuro: proyectar desde el mes actual
+    const saldoMesActual = toNum(s[mesKeyBase]) || toNum(s['Saldo']) || 0;
+    const saldoMesFiltro = toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
+    if (MES_OFFSET > 0) {
+      // Proyección: saldo base + flujo recurrente por cada mes adelante
+      const proyDelta = ingresoArriendoMensual - egresoRecurrenteMensual;
+      totalSaldoInicial += saldoMesActual + proyDelta * MES_OFFSET;
+    } else {
+      totalSaldoInicial += saldoMesFiltro;
+    }
   });
-  bankGrid.innerHTML += `<div class="bank-add" onclick="abrirModalSaldo()">+ actualizar saldos</div>`;
-
   const totalReal = totalSaldoInicial + ingMes - gasMes;
-  const totalEl = document.getElementById('total-disponible');
-  if (totalEl) totalEl.textContent = fmt(totalReal);
 
-  const inicialEl = document.getElementById('total-inicial');
-  if (inicialEl) inicialEl.textContent = 'Inicial ' + fmt(totalSaldoInicial);
+  const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+  setEl('total-disponible', fmt(totalReal));
 
+  // Neto
   const delta = ingMes - gasMes;
   const deltaEl = document.getElementById('total-delta');
   if (deltaEl) {
     if (MES_OFFSET > 0) {
-      const proyDelta = ingresoArriendoMensual - egresoRecurrenteMensual;
-      deltaEl.textContent = (proyDelta >= 0 ? '+' : '') + fmt(proyDelta) + '/mes estimado';
-      deltaEl.style.color = proyDelta >= 0 ? 'var(--green)' : 'var(--red)';
+      const p = ingresoArriendoMensual - egresoRecurrenteMensual;
+      deltaEl.textContent = (p >= 0 ? '+' : '') + fmtK(p);
+      deltaEl.style.color = p >= 0 ? 'var(--green)' : 'var(--red)';
     } else {
-      deltaEl.textContent = (delta >= 0 ? '+' : '') + fmt(delta) + ' este mes';
+      deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtK(delta);
       deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
     }
   }
 
+  // Ingresos / Gastos
+  const ingEl = document.getElementById('home-ingresos');
+  if (ingEl) { ingEl.textContent = ingMes > 0 ? '+'+fmtK(ingMes) : '—'; ingEl.style.color = ingMes>0?'var(--green)':'var(--text3)'; }
+  const gastEl = document.getElementById('home-gastado');
+  if (gastEl) { gastEl.textContent = gasMes > 0 ? '−'+fmtK(gasMes) : '—'; gastEl.style.color = gasMes>0?'var(--red)':'var(--text3)'; }
+
+  // Health pill
   const totalPres = Object.values(getPRESUPUESTOS()).reduce((a,b) => a+b, 0);
   const pct = totalPres > 0 ? gasMes / totalPres : 0;
+  const barCol = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)';
   const healthDot = document.getElementById('health-dot');
   const healthTxt = document.getElementById('health-txt');
-  if (healthDot && healthTxt) {
-    if (pct > 1) { healthDot.style.background = 'var(--red)'; healthTxt.style.color = 'var(--red)'; healthTxt.textContent = 'Sobre el presupuesto'; }
-    else if (pct > 0.85) { healthDot.style.background = 'var(--amber)'; healthTxt.style.color = 'var(--amber)'; healthTxt.textContent = 'Cerca del límite'; }
-    else { healthDot.style.background = 'var(--green)'; healthTxt.style.color = 'var(--green)'; healthTxt.textContent = 'Dentro del presupuesto'; }
-  }
-
-  const updEl = document.getElementById('hero-updated');
-  if (updEl) {
-    if (MES_OFFSET > 0) {
-      updEl.textContent = 'Proyección basada en gastos recurrentes';
-      updEl.style.color = 'var(--amber)';
+  const pill = document.getElementById('home-health-pill');
+  if (healthDot && healthTxt && pill) {
+    if (pct > 1) {
+      healthDot.style.background = 'var(--red)'; healthTxt.style.color = 'var(--red)'; healthTxt.textContent = 'Sobre presupuesto';
+      pill.style.background = 'rgba(220,38,38,0.08)';
+    } else if (pct > 0.85) {
+      healthDot.style.background = 'var(--amber)'; healthTxt.style.color = 'var(--amber)'; healthTxt.textContent = 'Cerca del límite';
+      pill.style.background = 'rgba(180,83,9,0.08)';
     } else {
-      updEl.textContent = 'Actualizado ' + new Date().toLocaleTimeString('es-CL', {hour:'2-digit',minute:'2-digit'});
-      updEl.style.color = 'var(--text3)';
+      healthDot.style.background = 'var(--green)'; healthTxt.style.color = 'var(--green)'; healthTxt.textContent = 'Al día';
+      pill.style.background = 'rgba(34,197,94,0.08)';
     }
   }
 
-  const now2 = new Date();
-  const mesNombre = now2.toLocaleString('es-CL', {month:'long'});
-  const presMesEl = document.getElementById('pres-mes-lbl');
-  if (presMesEl) presMesEl.textContent = mesNombre;
-  const presGastEl = document.getElementById('pres-gastado');
-  const presTotEl  = document.getElementById('pres-total');
-  const presFill   = document.getElementById('pres-fill');
-  if (presGastEl) presGastEl.textContent = fmtK(gasMes);
-  if (presTotEl)  presTotEl.textContent  = fmtK(totalPres);
-  if (presFill) { presFill.style.width = Math.min(100, Math.round(pct*100)) + '%'; presFill.style.background = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)'; }
+  // Presupuesto bar
+  const pctNum = Math.min(100, Math.round(pct * 100));
+  const now = new Date();
+  const mesNombre = new Date(yyyy, mm, 1).toLocaleString('es-CL', {month:'long'});
+  setEl('pres-mes-lbl', mesNombre);
+  setEl('pres-gastado', fmtK(gasMes));
+  setEl('pres-total', totalPres > 0 ? fmtK(totalPres) : '—');
+  const fill = document.getElementById('pres-fill');
+  if (fill) { fill.style.width = pctNum + '%'; fill.style.background = barCol; }
+  const pctLbl = document.getElementById('pres-pct-lbl');
+  if (pctLbl) { pctLbl.textContent = pctNum + '% usado'; pctLbl.style.color = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)'; }
+  const diasMes = new Date(yyyy, mm+1, 0).getDate();
+  const diasRest = diasMes - now.getDate();
+  setEl('pres-libre-lbl', totalPres > 0 ? `${fmtK(totalPres - gasMes)} libre · ${diasRest} días` : '');
 
-  const presCats = document.getElementById('pres-cats');
-  if (presCats) {
-    const porCatBar = {};
-    movsMesActual.filter(m => m['Tipo'] === 'gasto').forEach(m => {
-      const cat = m['Categoría'] || 'Otros';
-      porCatBar[cat] = (porCatBar[cat]||0) + toNum(m['Monto']);
-    });
-    // Para meses futuros sin movimientos, mostrar "sin datos aún"
-    if (MES_OFFSET > 0 && Object.keys(porCatBar).length === 0) {
-      presCats.innerHTML = '<span style="font-size:10px;color:var(--amber);">Sin movimientos aún · basado en presupuesto</span>';
-      // Saltar el resto del render de categorías
+  // ── Categorías barras ──────────────────────────────────────
+  const catsMesEl = document.getElementById('home-mes-cat-lbl');
+  if (catsMesEl) catsMesEl.textContent = mesNombre;
+
+  const presupuestos = getPRESUPUESTOS();
+  const porCat = {};
+  movsMesActual.filter(m => m['Tipo'] === 'gasto').forEach(m => {
+    const cat = m['Categoría'] || m['Categoria'] || 'Otros';
+    porCat[cat] = (porCat[cat] || 0) + toNum(m['Monto']);
+  });
+  // También incluir gastos personales confirmados del mes
+  (GASTOS_PERSONALES||[]).filter(g => g.mes===mesKey && g.confirmado).forEach(g => {
+    const cat = g.categoria || 'Otros';
+    porCat[cat] = (porCat[cat]||0) + (g.montoReal > 0 ? g.montoReal : g.montoEstimado);
+  });
+
+  const catColors = ['var(--blue)','var(--green)','var(--amber)','var(--purple,#7c3aed)','var(--red)'];
+  const topCats = Object.entries(porCat).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const catsEl = document.getElementById('home-cats-bars');
+  if (catsEl) {
+    if (topCats.length === 0) {
+      catsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">Sin movimientos este mes</div>`;
     } else {
-    const coloresBar = {'Supermercado':'var(--blue)','Restaurante':'var(--purple)','Transporte':'var(--green)','Salud':'var(--amber)'};
-    const topCats = Object.entries(porCatBar).sort((a,b) => b[1]-a[1]).slice(0,4);
-    presCats.innerHTML = topCats.map(([cat, v]) => {
-      const lim = getPRESUPUESTOS()[cat] || 1;
-      const sobre = v > lim;
-      const color = sobre ? 'var(--red)' : (coloresBar[cat] || 'var(--text3)');
-      return `<div class="cat-pip"><div class="pip" style="background:${color};"></div><span style="${sobre?'color:var(--red);':''}">${cat}</span></div>`;
-    }).join('');
-    } // cierra else mes futuro
+      catsEl.innerHTML = topCats.map(([cat, v], i) => {
+        const lim = presupuestos[cat] || 0;
+        const pctCat = lim > 0 ? Math.min(100, Math.round(v/lim*100)) : null;
+        const sobre = lim > 0 && v > lim;
+        const col = sobre ? 'var(--red)' : catColors[i % catColors.length];
+        const limTxt = lim > 0 ? ` <span style="color:var(--text3);font-weight:400;">/ ${fmtK(lim)}</span>` : '';
+        const pctTxt = pctCat !== null ? `<span style="font-size:10px;color:${sobre?'var(--red)':col};margin-left:4px;">${pctCat}%</span>` : '';
+        return `<div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:3px;align-items:center;">
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0;"></span>
+              <span style="font-size:11px;color:var(--text);">${cat}</span>${pctTxt}
+            </div>
+            <span style="font-size:11px;font-family:'DM Mono',monospace;color:${sobre?'var(--red)':'var(--text2)'};">${fmtK(v)}${limTxt}</span>
+          </div>
+          <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;">
+            <div style="height:4px;border-radius:2px;width:${pctCat||Math.min(100,Math.round(v/gasMes*100))}%;background:${col};transition:width 0.5s;"></div>
+          </div>
+        </div>`;
+      }).join('');
+    }
   }
 
+  // ── Gráfico diario ──────────────────────────────────────────
+  const diaHoy = now.getDate();
+  const diasData = Array.from({length: diaHoy}, (_, i) => i + 1);
+  const gastosDia = {};
+  movsMesActual.filter(m => m['Tipo']==='gasto').forEach(m => {
+    const f = String(m['Fecha']||'');
+    let dia = 0;
+    if (f.indexOf('/') >= 0) dia = parseInt(f.split('/')[0]) || 0;
+    else if (f.length >= 10) dia = parseInt(f.split('-')[2]) || 0;
+    if (dia > 0) gastosDia[dia] = (gastosDia[dia]||0) + toNum(m['Monto']);
+  });
+  const dataD = diasData.map(d => gastosDia[d] || 0);
+  const dataAcum = dataD.reduce((acc, v) => { acc.push((acc[acc.length-1]||0) + v); return acc; }, []);
+
+  setEl('home-chart-desde', '1 ' + mesNombre.slice(0,3));
+
+  const canvas = document.getElementById('home-chart-gastos');
+  if (canvas && window.Chart) {
+    if (canvas._chartInstance) canvas._chartInstance.destroy();
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const gridC = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
+    const textC = isDark ? '#888' : '#999';
+    canvas._chartInstance = new Chart(canvas, {
+      type: 'line',
+      data: {
+        labels: diasData,
+        datasets: [
+          {
+            label: 'Diario',
+            data: dataD,
+            borderColor: '#185FA5',
+            backgroundColor: isDark ? 'rgba(24,95,165,0.1)' : 'rgba(24,95,165,0.07)',
+            borderWidth: 1.5,
+            pointRadius: dataD.map(v => v > 0 ? 2.5 : 0),
+            pointBackgroundColor: '#185FA5',
+            fill: true,
+            tension: 0.35,
+            yAxisID: 'y',
+          },
+          {
+            label: 'Acumulado',
+            data: dataAcum,
+            borderColor: '#BA7517',
+            borderWidth: 1.5,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.3,
+            yAxisID: 'y2',
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              title: ctx => `Día ${ctx[0].label}`,
+              label: ctx => ctx.dataset.label + ': ' + fmtK(Math.round(ctx.parsed.y))
+            }
+          }
+        },
+        scales: {
+          x: {
+            ticks: { color: textC, font: { size: 9 }, maxTicksLimit: 5, maxRotation: 0, autoSkip: true },
+            grid: { color: gridC },
+            border: { display: false }
+          },
+          y: {
+            position: 'left',
+            ticks: { color: textC, font: { size: 9 }, maxTicksLimit: 3, callback: v => fmtK(v) },
+            grid: { color: gridC },
+            border: { display: false }
+          },
+          y2: {
+            position: 'right',
+            ticks: { color: '#BA7517', font: { size: 9 }, maxTicksLimit: 3, callback: v => fmtK(v) },
+            grid: { display: false },
+            border: { display: false }
+          }
+        }
+      }
+    });
+  }
+
+  // Alertas
   const alertas = generarAlertas(movsMesActual);
   const cont = document.getElementById('alertas-container');
   if (!cont) return;
   if (alertas.length === 0) {
-    cont.innerHTML = `<div class="alert-strip ok"><div class="alert-strip-head"><div class="alert-strip-dot"></div><span class="alert-strip-txt">Todo al día</span></div></div>`;
+    cont.innerHTML = '';
   } else {
     const tipo = alertas.some(a => a.tipo === 'red') ? 'warn' : 'blue-s';
     const stripId = 'alert-strip-main';
     cont.innerHTML = `<div class="alert-strip ${tipo} expanded" id="${stripId}">
       <div class="alert-strip-head" onclick="document.getElementById('${stripId}').classList.toggle('expanded')">
         <div class="alert-strip-dot"></div>
-        <span class="alert-strip-txt">${alertas.length} alerta${alertas.length>1?'s':''} activa${alertas.length>1?'s':''}</span>
+        <span class="alert-strip-txt">${alertas.length} alerta${alertas.length>1?'s':''}</span>
         <span class="alert-strip-chev">›</span>
       </div>
       <div class="alert-items">${alertas.map(a => `<div class="alert-item-row ${a.tipo==='blue'?'blue':''}" ${a.accion?`onclick="${a.accion}" style="cursor:pointer"`:''}>· ${a.titulo} — ${a.sub}</div>`).join('')}</div>
     </div>`;
   }
 }
+
+
 
 
 // ── RENDER GASTOS ─────────────────────────────────────────────
@@ -1408,7 +1704,10 @@ function calcBarraCard(p) {
   const mesKey = getMesKeyActual();
   const { mm: mmB, yyyy: yyyyB } = getMesFiltro();
 
-  // Solo gastos que son MÍOs en este mes (según historial responsable)
+  const isPagado = (r) => String(r['Pagado']||'').trim().toLowerCase() === 'true'
+    && (r['Notas']||'').trim() !== 'seguimiento';
+
+  // Solo gastos que son MÍOS en este mes (según historial responsable)
   const esHabitadaB = p.tipo === 'habitada';
   const misGastosIds = [
     ...(esHabitadaB || getQuienPagaBase(p.id+'_hip', p.id, mmB, yyyyB) === 'yo' ? [p.id+'_hip'] : []),
@@ -1426,7 +1725,7 @@ function calcBarraCard(p) {
   let pagados = 0, pendientes = 0;
   misGastosIds.forEach(gid => {
     const pg = PAGOS_PROPIEDAD.find(r =>
-      (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && r['Pagado']==='true');
+      (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagado(r));
     if (pg) {
       const est = gid===p.id+'_hip'?p.hipoteca:gid===p.id+'_gc'?p.gcComunes
         :(GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
@@ -1436,23 +1735,21 @@ function calcBarraCard(p) {
     }
   });
 
-  // Arriendo pendiente
+  // Arriendo pendiente — para propiedades en arriendo
   let arrPendiente = 0;
   if (p.tipo !== 'habitada') {
     const arriendoV = getArriendoVigente(p.id, mmB, yyyyB);
     if (arriendoV > 0) {
       const arrPg = PAGOS_PROPIEDAD.find(r =>
         (r['Gasto ID']||'').trim()===p.id+'_arriendo' &&
-        (r['Mes']||'').trim()===mesKey && r['Pagado']==='true');
-      const arrBanco = MES_OFFSET === 0 && DATA.movimientos && DATA.movimientos.some(m =>
-        (m['Categoría']==='Arriendo recibido' || (m['Descripción']||'').toLowerCase().includes('arriendo')) &&
-        toNum(m['Monto']) > arriendoV * 0.7
-      );
-      if (!arrPg && !arrBanco) arrPendiente = 1;
+        (r['Mes']||'').trim()===mesKey && isPagado(r));
+      if (!arrPg) arrPendiente = 1;
+      else pagados += arriendoV; // sumar arriendo recibido al progreso
+      if (arrPg) totalEst; // ya está en denominador implícito
     }
   }
 
-  // Gastos del arrendatario pendientes — solo para propiedades en arriendo
+  // Gastos del arrendatario pendientes
   let arrPendientesGastos = 0;
   if (!esHabitadaB) {
     const gastosArrIds = [
@@ -1463,14 +1760,15 @@ function calcBarraCard(p) {
     arrPendientesGastos = gastosArrIds.filter(gid =>
       !PAGOS_PROPIEDAD.find(r =>
         (r['Gasto ID']||'').trim()===gid &&
-        (r['Mes']||'').trim()===mesKey && r['Pagado']==='true')
+        (r['Mes']||'').trim()===mesKey && isPagado(r))
     ).length;
   }
 
   const totalPend = pendientes + arrPendiente + arrPendientesGastos;
+  // Barra: % de gastos PROPIOS pagados sobre total estimado
   const pctBar = totalEst > 0 ? Math.min(100, Math.round(pagados/totalEst*100)) : 0;
   const barCol = pctBar >= 100 ? 'var(--green)' : pctBar > 85 ? 'var(--amber)' : 'var(--blue)';
-  const efectivoPend = pctBar >= 100 ? 0 : totalPend;
+  const efectivoPend = totalPend;
 
   return {
     pctBar, barCol, efectivoPend,
@@ -1772,7 +2070,6 @@ function showProp(id) {
         ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
           getQuienPagaVigente(g.id, mmSP2, yyyySP2) === 'yo').map(g => g.id)
       ].filter(gid => {
-        // Excluir GC si es del arrendatario
         if (gid === p.id+'_gc' && gcEsArrSP) return false;
         return true;
       });
@@ -1812,33 +2109,39 @@ function showProp(id) {
       ? (din.netoReal >= 0 ? '+' : '-') + fmtK(Math.abs(din.netoReal))
       : '—';
 
+    // Neto presupuestado = arriendo vigente - mis gastos estimados (lo que debería ser)
+    const netoPresupuestado = arriendoVigenteShow - egreso;
+    const colNetoP = netoPresupuestado >= 0 ? 'var(--green)' : 'var(--red)';
+
     // Sub de arriendo según estado
     const arriendoSub = arriendoVigenteShow > 0
       ? (din.arriendoRecibido ? 'recibido' : (MES_OFFSET > 0 ? 'programado' : 'pendiente'))
       : 'sin arriendo aún';
     const bgArriendo = din.arriendoRecibido ? '#EDFAF3' : (arriendoVigenteShow > 0 ? '#F0FDF4' : 'var(--bg3)');
+    const colArriendo = din.arriendoRecibido ? 'var(--green)' : (arriendoVigenteShow > 0 ? 'var(--text2)' : 'var(--text3)');
 
-    statsEl.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);';
+    // Mis gastos estimados totales (presupuesto)
+    const misGastosEst = egreso; // ya calculado arriba como montoHip + montoGC + extras
+
+    statsEl.style.cssText = 'display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);';
     statsEl.innerHTML = `
-      <div style="background:${bgArriendo};border-radius:8px;padding:10px 12px;">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Arriendo <span style="cursor:pointer;" onclick="abrirModalArriendo('${id}')">✏️</span></div>
-        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${arriendoVigenteShow>0?'var(--green)':'var(--text3)'};">${arriendoVigenteShow>0?fmtK(arriendoVigenteShow):'—'}</div>
-        <div style="font-size:9px;color:var(--green);margin-top:3px;">${arriendoSub}</div>
+      <div style="background:${bgArriendo};border-radius:8px;padding:10px 10px;">
+        <div style="font-size:9px;color:var(--text3);margin-bottom:3px;display:flex;align-items:center;justify-content:space-between;">
+          <span>Arriendo</span>
+          <span onclick="abrirModalArriendo('${id}')" style="cursor:pointer;font-size:11px;line-height:1;">✏️</span>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:${colArriendo};">${arriendoVigenteShow>0?fmtK(arriendoVigenteShow):'—'}</div>
+        <div style="font-size:9px;color:${din.arriendoRecibido?'var(--green)':arriendoVigenteShow>0?'var(--amber)':'var(--text3)'};margin-top:2px;">${arriendoSub}</div>
       </div>
-      <div style="background:#FEF2F2;border-radius:8px;padding:10px 12px;">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Costo total depto</div>
-        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--red);">${fmtK(costoTotalDepto)}</div>
-        <div style="font-size:9px;color:var(--red);margin-top:3px;">hip. + todos los gastos</div>
+      <div style="background:#FFF5F5;border-radius:8px;padding:10px 10px;">
+        <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Mis gastos</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--red);">${misGastosEst>0?fmtK(misGastosEst):'—'}</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">presupuesto</div>
       </div>
-      <div style="background:#EFF6FF;border-radius:8px;padding:10px 12px;">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Aporta arrendatario</div>
-        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:var(--blue);">${din.aportaTotal>0?fmtK(din.aportaTotal):'—'}</div>
-        <div style="font-size:9px;color:var(--blue);margin-top:3px;">${din.arriendoRecibido?'arriendo':'sin arriendo'}${din.gastoArrPagados>0?' + gastos':''}</div>
-      </div>
-      <div style="background:${din.netoReal!==0?bgNetoD:'var(--bg3)'};border-radius:8px;padding:10px 12px;">
-        <div style="font-size:10px;color:var(--text3);margin-bottom:4px;">Neto del mes</div>
-        <div style="font-family:'DM Mono',monospace;font-size:16px;font-weight:700;color:${din.netoReal!==0?colNetoD:'var(--text3)'};">${netoLabelD}</div>
-        <div style="font-size:9px;color:${din.netoReal!==0?colNetoD:'var(--text3)'};margin-top:3px;">${din.netoReal!==0?(din.netoReal>=0?'positivo':'negativo'):'sin movimientos'}</div>
+      <div style="background:${netoPresupuestado>=0?'#EDFAF3':'#FEF2F2'};border-radius:8px;padding:10px 10px;">
+        <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Neto</div>
+        <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:${colNetoP};">${(netoPresupuestado>=0?'+':'')+fmtK(netoPresupuestado)}</div>
+        <div style="font-size:9px;color:${colNetoP};margin-top:2px;">${netoPresupuestado>=0?'positivo':'negativo'}</div>
       </div>`;
     // Barra ejecución para arriendo: mis gastos pagados vs costo total
     // Todos los gastos pagados (propios + seguimiento + arrendatario)
@@ -1877,43 +2180,6 @@ function showProp(id) {
       // Dividendo mensual estimado
       const divEl = document.getElementById('det-dividendo');
       if (divEl) divEl.textContent = p.hipoteca > 0 ? fmtK(p.hipoteca) : '—';
-
-      const divPagados = p.numDiv > 0 && inicioDate && !isNaN(inicioDate)
-        ? Math.min(p.numDiv, Math.max(0, Math.floor((fechaVista - inicioDate) / (1000*60*60*24*30.5)))) : 0;
-      const divRestantes = p.numDiv - divPagados;
-
-      // Badge header
-      const badge = document.getElementById('det-div-badge');
-      if (badge) badge.textContent = p.numDiv > 0 ? divPagados + '/' + p.numDiv : '—';
-
-      const divWrap = document.getElementById('det-div-pagados-wrap');
-      if (divWrap && p.numDiv > 0) {
-        divWrap.style.display = 'block';
-        const pctDiv = Math.round(divPagados / p.numDiv * 100);
-
-        // Labels
-        document.getElementById('det-div-pagados').textContent  = divPagados + ' pagados';
-        document.getElementById('det-div-restantes').textContent = divRestantes + ' restantes';
-
-        // Barra
-        const bar = document.getElementById('det-div-bar');
-        if (bar) {
-          bar.style.width = pctDiv + '%';
-          bar.style.background = pctDiv > 75 ? 'var(--green)' : 'var(--blue)';
-        }
-
-        // Hitos: inicio y fin estimado
-        const hitoInicio = document.getElementById('det-hito-inicio');
-        const hitoFin    = document.getElementById('det-hito-fin');
-        if (hitoInicio && inicioDate && !isNaN(inicioDate)) {
-          hitoInicio.textContent = inicioDate.toLocaleString('es-CL', {month:'short', year:'numeric'});
-        }
-        if (hitoFin && inicioDate && !isNaN(inicioDate)) {
-          const finDate = new Date(inicioDate);
-          finDate.setMonth(finDate.getMonth() + p.numDiv);
-          hitoFin.textContent = 'fin ' + finDate.toLocaleString('es-CL', {month:'short', year:'numeric'});
-        }
-      }
     }
   }
 
@@ -2108,8 +2374,12 @@ function renderGastosPropiedad(p, esHab) {
   const renderItem = (g, esArrend, esBase = false) => {
     const pago = getPagoPropiedad(g.id);
     const pagado = pago && pago['Pagado'] === 'true';
-    const fechaPago = pago ? pago['Fecha pago'] : '';
     const montoReal = pago ? toNum(pago['Monto real']) : 0;
+
+    // Ocultar ítems del arrendatario sin monto real ni estimado relevante
+    if (esArrend && !pagado && g.montoEstimado === 0) return '';
+
+    const fechaPago = pago ? pago['Fecha pago'] : '';
     const now2 = new Date();
     const diaHoy = now2.getDate();
     // Para meses futuros nada está vencido
@@ -2125,7 +2395,9 @@ function renderGastosPropiedad(p, esHab) {
       ? `Programado · día ${g.diaVencimiento}`
       : (atrasado ? `Vencido día ${g.diaVencimiento}` : `Vence día ${g.diaVencimiento}`);
     let sub = pagado
-      ? (esSeguimiento ? `Seguimiento ${fechaPago}` : `Pagado ${fechaPago}${pago ? ' · ' + fmt(montoReal) + diferencia : ''}`)
+      ? (esSeguimiento
+          ? `Registrado ${fechaPago}${montoReal > 0 ? ' · ' + fmt(montoReal) : ''}`
+          : `Pagado ${fechaPago}${pago ? ' · ' + fmt(montoReal) + diferencia : ''}`)
       : subPendiente;
     let montoColor = pagado ? 'var(--green)' : (atrasado ? 'var(--red)' : 'var(--text3)');
     const montoDisplay = (pagado && montoReal > 0) ? fmt(montoReal) : (g.montoTipo === 'fijo' ? fmt(g.montoEstimado) : `~${fmt(g.montoEstimado)}`);
@@ -2144,7 +2416,7 @@ function renderGastosPropiedad(p, esHab) {
       <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);">
         <div style="width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;
           ${pagado ? 'background:var(--green-bg);border:1.5px solid var(--green);' : (atrasado ? 'border:1.5px solid var(--red);' : 'border:1.5px solid var(--border2);')}"
-          onclick="togglePagoPropiedad('${g.id}','${p.id}','${g.montoEstimado}','${g.montoTipo === 'fijo'}')">
+          onclick="togglePagoPropiedad('${g.id}','${p.id}','${g.montoEstimado}','${g.montoTipo === 'fijo'}',${esArrend})">
           ${checkIcon}
         </div>
         <div style="flex:1;">
@@ -2182,35 +2454,28 @@ function renderGastosPropiedad(p, esHab) {
 
     const arrChkStyle = arrendoRecibido
       ? 'background:var(--green-bg);border:1.5px solid var(--green);'
-      : 'border:1.5px solid var(--border2);';
+      : 'border:1.5px solid var(--border2);cursor:pointer;';
     const arrChkIcon = arrendoRecibido
       ? `<svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="var(--green)" stroke-width="1.5" stroke-linecap="round"/></svg>`
       : '';
-    const arrOnclick = MES_OFFSET > 0
-      ? `onclick="toggleArriendoRecibido('${p.id}','${p.arriendo}')"`
-      : '';
-    const arrColor = arrendoRecibido ? 'var(--green)' : 'var(--text3)';
+    const arrOnclick = `onclick="toggleArriendoRecibido('${p.id}','${arriendoMes}')"`;
+    const arrColor = arrendoRecibido ? 'var(--green)' : (arriendoMes > 0 ? 'var(--text2)' : 'var(--text3)');
     const arrLabel = arrendoRecibido ? 'Arriendo recibido' : 'Arriendo pendiente de cobro';
 
-    html += `<div style="font-size:9px;font-weight:500;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;">Ingresos</div>`;
+    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px;">Ingresos</div>`;
     html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;margin-bottom:10px;">
-      <div style="display:flex;align-items:center;gap:6px;padding:6px 0;">
-        <div style="width:18px;height:18px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;${arrChkStyle}" ${arrOnclick}>
+      <div style="display:flex;align-items:center;gap:8px;padding:9px 0;">
+        <div style="width:20px;height:20px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;cursor:pointer;${arrChkStyle}" ${arrOnclick}>
           ${arrChkIcon}
         </div>
-        <div style="flex:1;font-size:10px;font-weight:500;color:var(--text);">${arrLabel}</div>
-        <div style="font-size:10px;font-weight:500;font-family:'DM Mono',monospace;color:${arrColor};">${arriendoMes > 0 ? '+'+fmt(arriendoMes) : '—'}</div>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);">${arrLabel}</div>
+          ${!arrendoRecibido && arriendoMes > 0 ? `<div style="font-size:10px;color:var(--amber);">Toca para marcar como recibido</div>` : ''}
+        </div>
+        <div style="font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:${arrColor};">${arriendoMes > 0 ? '+'+fmt(arriendoMes) : '—'}</div>
       </div>
     </div>`;
   }
-
-  // Calcular subtotal mis gastos
-  const subtotalMios = montoHip + montoGC +
-    misGastos.reduce((s,g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
-  html += `<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 5px;display:flex;justify-content:space-between;align-items:center;">
-    <span>Mis gastos <span style="color:var(--red);font-weight:400;">${fmt(subtotalMios)}</span></span>
-    <div onclick="abrirFormGasto('${p.id}','yo')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
-  </div>`;
 
   // Convertir hipoteca y GC base a gastos virtuales con ID fijo
   const gastoHipBase = { id: p.id+'_hip', propiedadId: p.id, nombre: 'Hipoteca '+p.banco_hip,
@@ -2220,6 +2485,18 @@ function renderGastosPropiedad(p, esHab) {
 
   // Hipoteca siempre del dueño. GC y otros gastos según historial vigente
   const gcEsDueno = getQuienPagaBase(p.id+'_gc', p.id, mmFG, yyyyFG) === 'yo';
+
+  // Calcular subtotal mis gastos — solo hipoteca + gastos propios (respeta quién paga GC este mes)
+  const subtotalMios = p.hipoteca +
+    (gcEsDueno ? getMontoEfectivo(p.id+'_gc', p.gcComunes) : 0) +
+    misGastos.reduce((s,g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
+  html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 5px;display:flex;justify-content:space-between;align-items:center;">
+    <span>Mis gastos</span>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text2);">${fmt(subtotalMios)}</span>
+      <div onclick="abrirFormGasto('${p.id}','yo')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+    </div>
+  </div>`;
 
   // Bloque "Mis gastos" — hipoteca + GC si es mío + extras míos
   const itemsMios = [];
@@ -2268,13 +2545,17 @@ function renderGastosPropiedad(p, esHab) {
 
   // Sección arrendatario — solo para propiedades en arriendo (no Mi hogar)
   if (!esHab) {
-    const subtotalArr = (gcEsDueno ? 0 : p.gcComunes) +
-      gastoArr.reduce((s,g) => s + g.montoEstimado, 0);
-    html += `<div style="font-size:9px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:8px 0 3px;display:flex;justify-content:space-between;align-items:center;">
-      <span>Arrendatario <span style="color:var(--amber);font-weight:400;">${subtotalArr>0?fmtK(subtotalArr):''}</span></span>
-      <div onclick="abrirFormGasto('${p.id}','arrendatario')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+    // subtotalArr: suma GC del arrendatario + gastoArr usando monto real si pagado
+    const subtotalArr = (gcEsDueno ? 0 : getMontoEfectivo(p.id+'_gc', p.gcComunes)) +
+      gastoArr.reduce((s,g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
+    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin:10px 0 3px;display:flex;justify-content:space-between;align-items:center;">
+      <span>Arrendatario</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        ${subtotalArr>0?`<span style="font-family:'DM Mono',monospace;font-size:11px;font-weight:500;color:var(--text2);">${fmtK(subtotalArr)}</span>`:''}
+        <div onclick="abrirFormGasto('${p.id}','arrendatario')" style="width:20px;height:20px;border-radius:6px;background:var(--blue-bg);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;color:var(--blue);">+</div>
+      </div>
     </div>`;
-    html += `<div style="font-size:10px;color:var(--text3);margin-bottom:6px;">No afectan tu resultado — solo seguimiento</div>`;
+    html += `<div style="font-size:10px;color:var(--text3);margin-bottom:6px;">Seguimiento — no afecta tu resultado</div>`;
     if (gastosArrConGC.length > 0) {
       html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:0 12px;">`;
       gastosArrConGC.forEach(g => { html += renderItem(g, true); });
@@ -2287,12 +2568,12 @@ function renderGastosPropiedad(p, esHab) {
   return html;
 }
 
-function togglePagoPropiedad(gastoId, propiedadId, montoEst, esFijo) {
+function togglePagoPropiedad(gastoId, propiedadId, montoEst, esFijo, esArrend) {
   const pago = getPagoPropiedad(gastoId);
   const yaPagado = pago && pago['Pagado'] === 'true';
 
   // Siempre mostrar modal de confirmación
-  abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo === 'true', yaPagado);
+  abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo === 'true', yaPagado, esArrend === true || esArrend === 'true');
 }
 
 // Variables para el modal de confirmación de pago
@@ -2300,8 +2581,37 @@ let _confirmGastoId = '';
 let _confirmPropId  = '';
 let _confirmEsFijo  = true;
 let _confirmYaPagado = false;
+let _cpMovVinculadoIdx = null; // índice en DATA.movimientos del mov bancario vinculado
 
-function abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo, yaPagado) {
+function seleccionarMovVinculado(idx) {
+  _cpMovVinculadoIdx = _cpMovVinculadoIdx === idx ? null : idx;
+  // Re-render lista para reflejar selección
+  const lista = document.getElementById('cp-movs-lista');
+  if (!lista) return;
+  lista.querySelectorAll('[data-movidx]').forEach(el => {
+    const elIdx = parseInt(el.getAttribute('data-movidx'));
+    if (elIdx === _cpMovVinculadoIdx) {
+      el.style.background = 'var(--blue-bg)';
+      el.style.borderLeft = '3px solid var(--blue)';
+      el.querySelector('.cp-mov-check').textContent = '✓';
+      el.querySelector('.cp-mov-check').style.color = 'var(--blue)';
+    } else {
+      el.style.background = 'transparent';
+      el.style.borderLeft = '3px solid transparent';
+      el.querySelector('.cp-mov-check').textContent = '';
+    }
+  });
+  // Auto-completar monto con el del movimiento seleccionado
+  if (_cpMovVinculadoIdx !== null) {
+    const mov = DATA.movimientos[_cpMovVinculadoIdx];
+    if (mov) {
+      const montoInp = document.getElementById('cp-monto');
+      montoInp.value = Math.round(toNum(mov['Monto'])).toLocaleString('es-CL');
+    }
+  }
+}
+
+function abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo, yaPagado, esArrend) {
   _confirmGastoId   = gastoId;
   _confirmPropId    = propiedadId;
   _confirmEsFijo    = esFijo;
@@ -2310,34 +2620,92 @@ function abrirConfirmPago(gastoId, propiedadId, montoEst, esFijo, yaPagado) {
   const modal = document.getElementById('modal-confirm-pago');
   if (!modal) return;
 
-  const titulo   = document.getElementById('cp-titulo');
-  const montoInp = document.getElementById('cp-monto');
+  const titulo    = document.getElementById('cp-titulo');
+  const montoInp  = document.getElementById('cp-monto');
   const montoWrap = document.getElementById('cp-monto-wrap');
-  const btnText  = document.getElementById('cp-btn-text');
-  const btnDes   = document.getElementById('cp-btn-desmarcar');
+  const btnText   = document.getElementById('cp-btn-text');
+  const btnDes    = document.getElementById('cp-btn-desmarcar');
 
   // Siempre mostrar el input de monto — permite editar aunque ya esté pagado
   montoWrap.style.display = 'block';
 
+  // Para gastos del arrendatario: ocultar toggle (siempre es seguimiento)
+  // Para gastos propios: mostrar toggle normalmente
+  const tipoWrap = document.getElementById('cp-tipo-wrap');
+  if (tipoWrap) tipoWrap.style.display = esArrend ? 'none' : 'block';
+  // Pre-seleccionar tipo según contexto
+  setCpTipo(esArrend ? 'seguimiento' : 'propio');
+
   if (yaPagado) {
-    // Cargar monto real ya registrado
     const pagoExist = getPagoPropiedad(gastoId);
+    // Para arrendatario: mostrar monto guardado (puede ser 0 en seguimiento) o estimado
     const montoActual = pagoExist ? toNum(pagoExist['Monto real']) : toNum(montoEst);
-    titulo.textContent = 'Actualizar pago';
-    montoInp.value = montoActual > 0 ? Math.round(montoActual).toLocaleString('es-CL') : Math.round(toNum(montoEst)).toLocaleString('es-CL');
-    btnText.textContent = 'Actualizar monto';
+    titulo.textContent = esArrend ? 'Actualizar registro' : 'Actualizar pago';
+    montoInp.value = montoActual > 0
+      ? Math.round(montoActual).toLocaleString('es-CL')
+      : Math.round(toNum(montoEst)).toLocaleString('es-CL');
+    btnText.textContent = esArrend ? 'Actualizar registro' : 'Actualizar monto';
     if (btnDes) btnDes.style.display = 'block';
   } else {
-    titulo.textContent = esFijo ? 'Confirmar pago' : 'Registrar monto real';
+    titulo.textContent = esArrend ? 'Registrar pago arrendatario' : (esFijo ? 'Confirmar pago' : 'Registrar monto real');
     const montoNum = toNum(montoEst);
     montoInp.value = montoNum > 0 ? Math.round(montoNum).toLocaleString('es-CL') : '0';
-    btnText.textContent = 'Marcar como pagado';
+    btnText.textContent = esArrend ? 'Marcar como recibido' : 'Marcar como pagado';
     if (btnDes) btnDes.style.display = 'none';
   }
 
   modal.classList.remove('hidden');
   // Foco y seleccionar todo el texto para edición rápida
   setTimeout(() => { montoInp.focus(); montoInp.select(); }, 100);
+
+  // Poblar lista de movimientos bancarios para vincular
+  _cpMovVinculadoIdx = null;
+  const montoEst2 = toNum(montoEst);
+  const { mm: mmV, yyyy: yyyyV } = getMesFiltro();
+  const mesKeyV = `${yyyyV}-${String(mmV+1).padStart(2,'0')}`;
+
+  // Movimientos del mes que aún no están vinculados a otro gasto
+  const movsVinculables = (DATA.movimientos || []).map((m, i) => ({ m, i })).filter(({ m }) => {
+    if ((m['Tipo']||'').toLowerCase() !== 'gasto') return false;
+    if ((m['Vinculado']||'') !== '') return false; // ya vinculado a otro
+    const f = String(m['Fecha']||'');
+    const mmov = f.length>=7 ? (f.indexOf('/')>=0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7)) : '';
+    return mmov === mesKeyV;
+  });
+
+  const lista = document.getElementById('cp-movs-lista');
+  const vincWrap = document.getElementById('cp-vincular-wrap');
+  if (!lista || !vincWrap) return;
+
+  if (movsVinculables.length === 0) {
+    vincWrap.style.display = 'none';
+  } else {
+    vincWrap.style.display = 'block';
+    // Ordenar: primero los que tienen monto similar al estimado
+    movsVinculables.sort((a, b) => {
+      const diffA = Math.abs(toNum(a.m['Monto']) - montoEst2);
+      const diffB = Math.abs(toNum(b.m['Monto']) - montoEst2);
+      return diffA - diffB;
+    });
+    lista.innerHTML = movsVinculables.slice(0, 8).map(({ m, i }) => {
+      const desc = (m['Descripción']||m['Descripcion']||m['Comercio']||'—').trim();
+      const monto = toNum(m['Monto']);
+      const diffPct = montoEst2 > 0 ? Math.abs(monto - montoEst2) / montoEst2 : 1;
+      const similar = diffPct < 0.1;
+      return `<div data-movidx="${i}" onclick="seleccionarMovVinculado(${i})"
+        style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${desc}</div>
+          <div style="font-size:10px;color:var(--text3);">${m['Fecha']||''} · ${m['Banco']||''}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${similar?'var(--green)':'var(--text2)'};">${fmt(monto)}</div>
+          ${similar ? '<div style="font-size:9px;color:var(--green);">Similar</div>' : ''}
+        </div>
+        <div class="cp-mov-check" style="width:16px;font-size:12px;color:var(--blue);font-weight:600;flex-shrink:0;"></div>
+      </div>`;
+    }).join('');
+  }
 }
 
 let _cpTipo = 'propio'; // 'propio' | 'seguimiento'
@@ -2405,7 +2773,19 @@ async function ejecutarPago() {
   const montoInp = document.getElementById('cp-monto');
   const rawMonto = (montoInp.value||'').replace(/\./g,'').replace(/[^\d]/g,'');
   const montoReal = rawMonto !== '' ? parseInt(rawMonto) : 0;
-  // montoReal puede ser 0 — es válido (pago sin cargo)
+
+  // Si hay movimiento vinculado, marcarlo como 'vinculado' para excluirlo del doble conteo
+  let notasExtra = _cpTipo === 'seguimiento' ? 'seguimiento' : '';
+  if (_cpMovVinculadoIdx !== null && DATA.movimientos[_cpMovVinculadoIdx]) {
+    const movVin = DATA.movimientos[_cpMovVinculadoIdx];
+    movVin['Vinculado'] = _confirmGastoId; // marcar en memoria
+    notasExtra = (notasExtra ? notasExtra + '|' : '') + 'vinculado:' + _cpMovVinculadoIdx;
+    // Guardar vínculo en Sheet
+    try {
+      await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ action: 'vincularMovimiento', movIdx: _cpMovVinculadoIdx, gastoId: _confirmGastoId }) });
+    } catch(e) {}
+  }
 
   const nuevoPago = {
     gastoId:    _confirmGastoId,
@@ -2413,11 +2793,10 @@ async function ejecutarPago() {
     mes:        mesKey,
     pagado:     true,
     fechaPago:  hoy,
-    montoReal:  _cpTipo === 'seguimiento' ? 0 : montoReal,
-    notas:      _cpTipo === 'seguimiento' ? 'seguimiento' : '',
+    montoReal:  montoReal,
+    notas:      notasExtra,
   };
 
-  // Actualizar local — buscar por GastoID + Mes (más robusto que por ID)
   const pagoId = _confirmGastoId + '_' + mesKey;
   const pagoRow = {
     'ID': pagoId,
@@ -2426,28 +2805,24 @@ async function ejecutarPago() {
     'Mes': mesKey,
     'Pagado': 'true',
     'Fecha pago': hoy,
-    'Monto real': String(_cpTipo === 'seguimiento' ? 0 : montoReal),
-    'Notas': _cpTipo === 'seguimiento' ? 'seguimiento' : ''
+    'Monto real': String(montoReal),
+    'Notas': notasExtra
   };
-  // Buscar por Gasto ID + Mes (no por ID compuesto)
   const idx = PAGOS_PROPIEDAD.findIndex(p =>
     (p['Gasto ID']||'').trim() === _confirmGastoId &&
     (p['Mes']||'').trim() === mesKey
   );
-  if (idx > -1) {
-    PAGOS_PROPIEDAD[idx] = pagoRow;
-  } else {
-    PAGOS_PROPIEDAD.push(pagoRow);
-  }
+  if (idx > -1) PAGOS_PROPIEDAD[idx] = pagoRow;
+  else PAGOS_PROPIEDAD.push(pagoRow);
 
   cerrarConfirmPago();
+  _cpMovVinculadoIdx = null;
 
-  // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
-  // Re-render
   const p = PROPIEDADES.find(x => x.id === _confirmPropId);
   if (p) showProp(p.id);
 }
@@ -2800,14 +3175,26 @@ function hexToBg(hex) {
 }
 
 function getLimiteMes(catId, mesKey) {
-  // Buscar límite específico para este mes
+  // 1. Buscar límite específico para este mes en PRESUPUESTOS_DATA
   const espec = PRESUPUESTOS_DATA.find(p => p.catId === catId && p.mes === mesKey);
   if (espec) return espec.limite;
-  // Fallback: Config general (legacy)
-  const cat = CATEGORIAS_DATA.find(c => c.id === catId);
-  if (!cat) return 0;
-  const key = 'presupuesto_' + cat.nombre.replace(/\s+/g,'');
-  return toNum(DATA.config && DATA.config[key]);
+
+  // 2. Buscar también por nombre de categoría en PRESUPUESTOS_DATA
+  const cat = CATEGORIAS_DATA.find(c => c.id === catId) || CATEGORIAS_CONFIG.find(c => c.id === catId);
+  if (cat) {
+    const porNombre = PRESUPUESTOS_DATA.find(p =>
+      p.mes === mesKey && p.catId.toLowerCase() === cat.nombre.toLowerCase()
+    );
+    if (porNombre) return porNombre.limite;
+
+    // 3. Fallback a PRESUPUESTOS_DINAMICOS (hoja Config) — keyed por nombre
+    const dinamico = PRESUPUESTOS_DINAMICOS[cat.nombre];
+    if (dinamico > 0) return dinamico;
+  }
+
+  // 4. Fallback a PRESUPUESTOS_DEFAULT
+  const catNombre = cat ? cat.nombre : catId;
+  return PRESUPUESTOS_DEFAULT[catNombre] || 0;
 }
 
 
@@ -2824,13 +3211,12 @@ const CATEGORIAS_CONFIG = [
   { id:'otros',         nombre:'Otros',         tipo:'puntual',   color:'#A32D2D', bg:'#FCEBEB' },
 ];
 
-let GASTOS_VISTA = 'cat';
+let GASTOS_VISTA = 'resumen';
 let GASTO_TIPO_SELECTED = 'frecuente';
 let GASTO_CAT_SELECTED = '';
 
 function getCatConfig(catId) {
   const normalId = (catId||'').toLowerCase().replace(/\s+/g,'_');
-  // Buscar en datos del Sheet primero
   if (CATEGORIAS_DATA.length > 0) {
     const found = CATEGORIAS_DATA.find(c =>
       c.id === catId || c.id === normalId ||
@@ -2838,7 +3224,6 @@ function getCatConfig(catId) {
     );
     if (found) return found;
   }
-  // Fallback a config hardcoded
   return CATEGORIAS_CONFIG.find(c => c.id === catId || c.id === normalId ||
     c.nombre.toLowerCase() === (catId||'').toLowerCase()) ||
     { id: catId, nombre: catId||'Otros', tipo:'puntual', color:'#888780', bg:'#F1EFE8' };
@@ -2846,21 +3231,252 @@ function getCatConfig(catId) {
 
 function switchGastosTab(tab) {
   GASTOS_VISTA = tab;
-  ['cat','movs','revisar','realizados'].forEach(t => {
+  // Tabs
+  ['resumen','movs'].forEach(t => {
     const btn = document.getElementById('gtab-'+t);
-    const panel = document.getElementById('gpanel-'+t);
-    if (!btn || !panel) return;
+    if (!btn) return;
     const active = t === tab;
-    btn.style.background    = active ? 'var(--bg2)' : 'transparent';
-    btn.style.color         = active ? 'var(--text)'  : 'var(--text3)';
-    btn.style.fontWeight    = active ? '600' : '500';
-    btn.style.boxShadow     = active ? '0 1px 3px rgba(0,0,0,0.07)' : 'none';
-    panel.style.display     = active ? 'block' : 'none';
+    btn.style.background = active ? 'var(--bg2)' : 'transparent';
+    btn.style.color      = active ? 'var(--text)' : 'var(--text3)';
+    btn.style.fontWeight = active ? '600' : '500';
   });
-  if (tab === 'cat')        renderGastosCat();
-  if (tab === 'movs')       renderGastosMovs();
-  if (tab === 'revisar')    renderGastosRevisar();
-  if (tab === 'realizados') renderGastosRealizados();
+  // Panels
+  const rPanel = document.getElementById('gpanel-resumen');
+  const mPanel = document.getElementById('gpanel-movs');
+  if (rPanel) rPanel.style.display = tab === 'resumen' ? 'block' : 'none';
+  if (mPanel) mPanel.style.display = tab === 'movs'    ? 'block' : 'none';
+
+  if (tab === 'resumen') renderGastosResumen();
+  if (tab === 'movs')    renderGastosMovsCombinado();
+}
+
+// ── RESUMEN: categorías + pendientes + banner revisar ─────────
+function renderGastosResumen() {
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = yyyy + '-' + String(mm+1).padStart(2,'0');
+  const movs = movsMes().filter(m => m['Tipo']==='gasto');
+
+  let html = '';
+
+  // Banner "sin clasificar" si los hay
+  const sinClasif = (DATA.movimientos||[]).filter(m => {
+    if ((m['Tipo']||'').toLowerCase() !== 'gasto') return false;
+    const cat = (m['Categoría']||m['Categoria']||'').toLowerCase().trim();
+    if (cat === 'ignorado') return false;
+    const f = String(m['Fecha']||'');
+    const mmov = f.length>=7 ? (f.indexOf('/')>=0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7)) : '';
+    if (mmov !== mesKey) return false;
+    return !cat || cat === 'sin categoría' || cat === 'sin categoria';
+  });
+
+  // Badge en tab Movimientos
+  const badge = document.getElementById('gtab-movs-badge');
+  if (badge) {
+    badge.style.display = sinClasif.length > 0 ? 'flex' : 'none';
+    badge.textContent = sinClasif.length;
+  }
+
+  if (sinClasif.length > 0) {
+    html += `<div onclick="switchGastosTab('movs')" style="display:flex;align-items:center;justify-content:space-between;background:var(--red-bg);border:1px solid rgba(220,38,38,0.2);border-radius:var(--radius-sm);padding:9px 14px;margin-bottom:10px;cursor:pointer;">
+      <div style="display:flex;align-items:center;gap:7px;">
+        <div style="width:6px;height:6px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>
+        <span style="font-size:12px;font-weight:500;color:var(--red);">${sinClasif.length} movimiento${sinClasif.length!==1?'s':''} sin clasificar</span>
+      </div>
+      <span style="font-size:12px;color:var(--amber);font-weight:500;">Revisar →</span>
+    </div>`;
+  }
+
+  // Categorías
+  html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Categorías</div>`;
+  const cats = CATEGORIAS_DATA.length > 0 ? CATEGORIAS_DATA : CATEGORIAS_CONFIG;
+  const porCat = {};
+  movs.forEach(m => {
+    const cat = (m['Categoría']||m['Categoria']||'').trim();
+    if (cat && cat.toLowerCase() !== 'ignorado') porCat[cat] = (porCat[cat]||0) + toNum(m['Monto']);
+  });
+  (GASTOS_PERSONALES||[]).filter(g => g.mes===mesKey && g.confirmado).forEach(g => {
+    const cat = g.categoria||'Otros';
+    porCat[cat] = (porCat[cat]||0) + (g.montoReal>0?g.montoReal:g.montoEstimado);
+  });
+
+  const catsConGasto = cats.filter(c => porCat[c.nombre] > 0);
+  const catsSinGasto = cats.filter(c => !porCat[c.nombre] && c.tipo === 'frecuente');
+
+  const renderCatFila = (c) => {
+    const gastado = porCat[c.nombre] || 0;
+    const limite = getLimiteMes(c.id, mesKey);
+    const pct = limite > 0 ? Math.min(100, Math.round(gastado/limite*100)) : 0;
+    const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color;
+    const montoCol = gastado > 0 ? (pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color) : 'var(--text3)';
+    const pctTag = limite > 0 && gastado > 0 ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:${pct>=100?'var(--red-bg)':pct>85?'var(--amber-bg)':'var(--bg3)'};color:${barCol};margin-left:4px;">${pct}%</span>` : '';
+    return `<div onclick="verDetalleCat('${c.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+      <div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;"></div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:13px;font-weight:500;color:var(--text);">${c.nombre}${pctTag}</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${montoCol};">${gastado>0?fmt(gastado):'$0'}</span>
+        </div>
+        ${limite>0?`<div style="height:2px;background:var(--bg3);border-radius:1px;overflow:hidden;margin-top:4px;"><div style="width:${pct}%;height:2px;border-radius:1px;background:${barCol};transition:width 0.4s;"></div></div>`:''}
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${limite>0?`lím. ${fmt(limite)}`:'sin límite'}</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);">›</div>
+    </div>`;
+  };
+
+  html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;padding:0 14px;">`;
+  if (catsConGasto.length > 0) catsConGasto.forEach(c => { html += renderCatFila(c); });
+  if (catsSinGasto.length > 0) {
+    catsSinGasto.forEach(c => { html += renderCatFila(c); });
+  }
+  if (catsConGasto.length === 0 && catsSinGasto.length === 0) {
+    html += `<div style="padding:20px;text-align:center;font-size:13px;color:var(--text3);">Sin movimientos este mes</div>`;
+  }
+  html += `</div>`;
+
+  // Pendientes del mes
+  const pendientes = (GASTOS_PERSONALES||[]).filter(g => g.mes===mesKey && !g.confirmado);
+  const confirmados = (GASTOS_PERSONALES||[]).filter(g => g.mes===mesKey && g.confirmado);
+
+  if (pendientes.length > 0 || confirmados.length > 0) {
+    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Planificados del mes</div>`;
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;padding:0 14px;">`;
+    pendientes.forEach(g => {
+      html += `<div onclick="abrirConfirmarGasto('${g.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border2);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;color:var(--text);">${g.descripcion||g.categoria}</div><div style="font-size:10px;color:var(--text3);">${g.categoria} · pendiente</div></div>
+        <div style="text-align:right;"><div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text3);">~${fmt(g.montoEstimado)}</div></div>
+        <div style="font-size:12px;color:var(--text3);">›</div>
+      </div>`;
+    });
+    confirmados.forEach(g => {
+      const monto = g.montoReal > 0 ? g.montoReal : g.montoEstimado;
+      html += `<div onclick="abrirConfirmarGasto('${g.id}')" style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer;">
+        <div style="width:18px;height:18px;border-radius:50%;background:var(--green-bg);border:1.5px solid var(--green);display:flex;align-items:center;justify-content:center;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5L8 3" stroke="var(--green)" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;color:var(--text2);">${g.descripcion||g.categoria}</div><div style="font-size:10px;color:var(--green);">✓ Confirmado</div></div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--green);">${fmt(monto)}</div>
+        <div style="font-size:12px;color:var(--text3);">›</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  document.getElementById('gpanel-resumen').innerHTML = html;
+}
+
+// ── MOVIMIENTOS COMBINADOS: bancarios + manuales + sin clasificar ─
+function renderGastosMovsCombinado() {
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = yyyy + '-' + String(mm+1).padStart(2,'0');
+
+  // Todos los movimientos del mes (bancarios)
+  const todosMovs = (DATA.movimientos||[]).filter(m => {
+    const f = String(m['Fecha']||'');
+    const mmov = f.length>=7 ? (f.indexOf('/')>=0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7)) : '';
+    return mmov === mesKey && (m['Tipo']||'').toLowerCase() === 'gasto' && (m['Vinculado']||'') === '';
+  });
+
+  // Gastos personales del mes
+  const gpMes = (GASTOS_PERSONALES||[]).filter(g => g.mes === mesKey);
+
+  // Construir lista unificada
+  const items = [];
+
+  todosMovs.forEach((m, idx) => {
+    const cat = (m['Categoría']||m['Categoria']||'').trim();
+    const sinCat = !cat || cat.toLowerCase() === 'sin categoría' || cat.toLowerCase() === 'sin categoria';
+    items.push({
+      fecha: m['Fecha']||'',
+      desc: (m['Descripción']||m['Descripcion']||m['Comercio']||'—').trim(),
+      cat: cat || '—',
+      monto: toNum(m['Monto']),
+      tipo: sinCat ? 'sincat' : 'banco',
+      movIdx: idx,
+      id: null,
+    });
+  });
+
+  gpMes.forEach(g => {
+    items.push({
+      fecha: g.fechaConfirmacion || mesKey,
+      desc: g.descripcion || g.categoria,
+      cat: g.categoria,
+      monto: g.montoReal > 0 ? g.montoReal : g.montoEstimado,
+      tipo: g.confirmado ? 'manual' : 'pendiente',
+      id: g.id,
+      estimado: !g.confirmado,
+    });
+  });
+
+  // Ordenar por fecha desc
+  items.sort((a, b) => {
+    const pa = a.fecha;
+    const pb = b.fecha;
+    const toTs = s => { s = String(s); if (s.indexOf('/')>=0) { const p=s.split('/'); return new Date(p[2],p[1]-1,p[0]).getTime(); } return new Date(s).getTime()||0; };
+    return toTs(pb) - toTs(pa);
+  });
+
+  // Separar sin clasificar al tope
+  const sinCat = items.filter(i => i.tipo === 'sincat');
+  const resto   = items.filter(i => i.tipo !== 'sincat');
+
+  let html = '';
+
+  if (sinCat.length > 0) {
+    html += `<div style="font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Sin clasificar · ${sinCat.length}</div>`;
+    html += `<div style="background:var(--bg2);border:1px solid rgba(220,38,38,0.2);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;padding:0 14px;">`;
+    sinCat.forEach(item => {
+      const movIdx = DATA.movimientos.findIndex((m,i) => {
+        const f = String(m['Fecha']||'');
+        const mmov = f.length>=7?(f.indexOf('/')>=0?f.slice(6,10)+'-'+f.slice(3,5):f.slice(0,7)):'';
+        const desc = (m['Descripción']||m['Descripcion']||m['Comercio']||'').trim();
+        return mmov===mesKey && desc===item.desc && Math.abs(toNum(m['Monto'])-item.monto)<1;
+      });
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+        <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>
+        <div style="flex:1;"><div style="font-size:12px;font-weight:500;color:var(--text);">${item.desc}</div><div style="font-size:10px;color:var(--text3);">${item.fecha}</div></div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(item.monto)}</div>
+          <div style="display:flex;gap:4px;margin-top:3px;">
+            <span onclick="event.stopPropagation();abrirCambiarCat(${movIdx})" style="font-size:10px;color:var(--blue);cursor:pointer;">Clasificar</span>
+            <span style="font-size:10px;color:var(--text3);">·</span>
+            <span onclick="event.stopPropagation();ignorarMovimiento(${movIdx})" style="font-size:10px;color:var(--text3);cursor:pointer;">Ignorar</span>
+          </div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (resto.length > 0) {
+    html += `<div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Todos los movimientos</div>`;
+    html += `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;padding:0 14px;">`;
+    resto.forEach(item => {
+      const cc = getCatConfig(item.cat.toLowerCase().replace(/\s+/g,'_'));
+      const dotColor = item.tipo==='pendiente' ? 'var(--text3)' : item.tipo==='manual' ? 'var(--blue)' : cc.color||'var(--text3)';
+      const montoColor = item.tipo==='pendiente' ? 'var(--text3)' : item.tipo==='manual' ? 'var(--green)' : 'var(--red)';
+      const tipoTag = item.tipo==='manual'
+        ? `<span style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:4px;margin-left:4px;">Manual</span>`
+        : item.tipo==='pendiente'
+        ? `<span style="font-size:9px;background:var(--bg3);color:var(--text3);padding:1px 5px;border-radius:4px;margin-left:4px;">Pendiente</span>`
+        : '';
+      const onclick = item.id ? `onclick="abrirConfirmarGasto('${item.id}')"` : '';
+      html += `<div ${onclick} style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);${item.id?'cursor:pointer;':''}">
+        <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:12px;font-weight:500;color:${item.tipo==='pendiente'?'var(--text2)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.desc}${tipoTag}</div>
+          <div style="font-size:10px;color:var(--text3);">${item.cat} · ${item.fecha}</div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${montoColor};flex-shrink:0;">${item.estimado?'~':''}${fmt(item.monto)}</div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (items.length === 0) {
+    html = `<div style="text-align:center;color:var(--text3);padding:32px;font-size:13px;">Sin movimientos este mes</div>`;
+  }
+
+  document.getElementById('gpanel-movs').innerHTML = html;
 }
 
 // ── API POST HELPER ───────────────────────────────────────────
@@ -2941,22 +3557,69 @@ async function eliminarGastoPersonal(gastoId) {
 
 function renderGastosMain() {
   const { mm, yyyy } = getMesFiltro();
+  const mesKey = yyyy + '-' + String(mm+1).padStart(2,'0');
+
   // Actualizar label mes
   const label = document.getElementById('gastos-mes-label');
   if (label) {
     const n = new Date(yyyy, mm, 1).toLocaleString('es-CL',{month:'long',year:'numeric'});
     label.textContent = n.charAt(0).toUpperCase()+n.slice(1);
   }
-  // Calcular hero
+
+  // Gastado: movimientos bancarios + gastos personales confirmados + pagos de propiedades
   const movs = movsMes().filter(m => m['Tipo']==='gasto');
-  const gastado = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
-  const presTot = CATEGORIAS_CONFIG
-    .filter(c => c.tipo==='frecuente')
-    .reduce((s,c) => {
-      const key = 'presupuesto_' + c.nombre.replace(/\s+/g,'');
-      const val = toNum(DATA.config && DATA.config[key]);
-      return s + val;
-    }, 0);
+  const gastadoBanco = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
+  const gastadoPersonal = (GASTOS_PERSONALES||[])
+    .filter(g => g.mes === mesKey && g.confirmado)
+    .reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
+
+  // Pagos de propiedades marcados como míos y pagados (no seguimiento)
+  const { mm: mmGM, yyyy: yyyyGM } = getMesFiltro();
+  const gastadoProp = (() => {
+    let total = 0;
+    PROPIEDADES.forEach(p => {
+      const ids = [
+        p.id+'_hip',
+        ...(getQuienPagaBase(p.id+'_gc', p.id, mmGM, yyyyGM)==='yo' ? [p.id+'_gc'] : []),
+        ...GASTOS_PROPIEDAD.filter(g => g.propiedadId===p.id && getQuienPagaVigente(g.id, mmGM, yyyyGM)==='yo').map(g=>g.id)
+      ];
+      ids.forEach(gid => {
+        const pg = PAGOS_PROPIEDAD.find(pg2 =>
+          (pg2['Gasto ID']||'').trim()===gid &&
+          (pg2['Mes']||'').trim()===mesKey &&
+          pg2['Pagado']==='true' &&
+          pg2['Notas']!=='seguimiento'
+        );
+        if (pg) {
+          const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+            : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+          total += toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est;
+        }
+      });
+    });
+    return total;
+  })();
+
+  const gastado = gastadoBanco + gastadoPersonal + gastadoProp;
+
+  // Presupuesto total: suma de límites por categoría para este mes
+  // Usar PRESUPUESTOS_DATA si hay datos por mes, sino getPRESUPUESTOS() (Config/default)
+  let presTot = 0;
+  if (PRESUPUESTOS_DATA.some(p => p.mes === mesKey)) {
+    // Hay límites específicos para este mes
+    const cats = CATEGORIAS_DATA.length > 0 ? CATEGORIAS_DATA : CATEGORIAS_CONFIG;
+    presTot = cats.reduce((s,c) => s + getLimiteMes(c.id, mesKey), 0);
+  } else {
+    // Fallback: usar getPRESUPUESTOS() que viene de Config o default
+    presTot = Object.values(getPRESUPUESTOS()).reduce((a,b) => a+b, 0);
+  }
+  console.log('[debug] mesKey:', mesKey, '| presTot:', presTot, '| PRESUPUESTOS_DATA.length:', PRESUPUESTOS_DATA.length, '| DINAMICOS keys:', Object.keys(PRESUPUESTOS_DINAMICOS));
+
+  // Gastos planificados (estimados, no confirmados) — para mostrar en disponible
+  const planificado = (GASTOS_PERSONALES||[])
+    .filter(g => g.mes === mesKey && !g.confirmado)
+    .reduce((s,g) => s + g.montoEstimado, 0);
+
   const disp = presTot - gastado;
   const pct  = presTot > 0 ? Math.min(100, Math.round(gastado/presTot*100)) : 0;
   const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : 'var(--blue)';
@@ -2970,7 +3633,9 @@ function renderGastosMain() {
   if (bar) { bar.style.width = pct + '%'; bar.style.background = barCol; }
 
   // Renderizar tab activo
-  switchGastosTab(GASTOS_VISTA);
+  if (GASTOS_VISTA === 'resumen') renderGastosResumen();
+  else if (GASTOS_VISTA === 'movs') renderGastosMovsCombinado();
+  else renderGastosResumen(); // fallback
 
   // Badge por revisar
   const sinClasif = (DATA.movimientos||[]).filter(m => !m['Categoría'] || m['Categoría']==='');
@@ -2990,11 +3655,24 @@ function renderGastosCat() {
   const puntuales  = cats.filter(c => c.tipo === 'puntual');
 
   const renderCatRow = (c) => {
-    const movsC = movs.filter(m => (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase());
-    const gastado = movsC.reduce((s,m) => s + toNum(m['Monto']), 0);
-    if (gastado === 0 && c.tipo === 'puntual') return '';
     const { mm: mmG, yyyy: yyyyG } = getMesFiltro();
     const mesKeyG = yyyyG + '-' + String(mmG+1).padStart(2,'0');
+
+    // Movimientos bancarios de esta categoría
+    const movsC = movs.filter(m => (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase());
+    const gastadoBanco = movsC.reduce((s,m) => s + toNum(m['Monto']), 0);
+
+    // Gastos personales confirmados de esta categoría en el mes
+    const gpC = (GASTOS_PERSONALES||[]).filter(g =>
+      g.mes === mesKeyG && g.confirmado &&
+      (g.categoria||'').toLowerCase() === c.nombre.toLowerCase()
+    );
+    const gastadoGP = gpC.reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
+
+    const gastado = gastadoBanco + gastadoGP;
+    const totalMovs = movsC.length + gpC.length;
+
+    if (gastado === 0 && c.tipo === 'puntual') return '';
     const limite = getLimiteMes(c.id, mesKeyG);
     const pct = limite > 0 ? Math.min(100, Math.round(gastado/limite*100)) : 0;
     const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color;
@@ -3004,14 +3682,14 @@ function renderGastosCat() {
         <div style="flex:1;">
           <div style="display:flex;justify-content:space-between;font-size:13px;font-weight:500;color:var(--text);margin-bottom:${limite>0?'4px':'0'};">
             <span>${c.nombre}</span>
-            <span style="font-family:'DM Mono',monospace;color:${c.color};">${fmt(gastado)}</span>
+            <span style="font-family:'DM Mono',monospace;color:${gastado>0?(pct>=100?'var(--red)':pct>85?'var(--amber)':c.color):'var(--text3)'};">${fmt(gastado)}</span>
           </div>
           ${limite > 0 ? `
           <div style="height:3px;background:var(--bg3);border-radius:2px;overflow:hidden;margin-bottom:2px;">
             <div style="width:${pct}%;height:3px;border-radius:2px;background:${barCol};"></div>
           </div>
-          <div style="font-size:9px;color:var(--text3);">${movsC.length} mov. · lím. ${fmt(limite)}</div>` :
-          `<div style="font-size:9px;color:var(--text3);">${movsC.length} movimiento${movsC.length!==1?'s':''} · sin límite</div>`}
+          <div style="font-size:9px;color:var(--text3);">${totalMovs} mov. · lím. ${fmt(limite)}</div>` :
+          `<div style="font-size:9px;color:var(--text3);">${totalMovs} movimiento${totalMovs!==1?'s':''} · sin límite</div>`}
         </div>
         <div style="font-size:13px;color:var(--text3);">›</div>
       </div>`;
@@ -3123,7 +3801,7 @@ function renderGastosRevisar() {
   document.getElementById('gpanel-revisar').innerHTML = html;
 }
 
-// ── REALIZADOS: todos los movimientos del mes (banco + manuales), fecha desc ──
+// ── REALIZADOS: todos los movimientos del mes (banco + manuales + pagos propiedades), fecha desc ──
 function renderGastosRealizados() {
   var flt3 = getMesFiltro();
   var mesKeyRz = flt3.yyyy + '-' + String(flt3.mm+1).padStart(2,'0');
@@ -3143,6 +3821,48 @@ function renderGastosRealizados() {
     return g.mes === mesKeyRz && g.confirmado;
   });
 
+  // Gastos de propiedades pagados del mes — solo los míos (no seguimiento arrendatario)
+  var { mm: mmRz, yyyy: yyyyRz } = getMesFiltro();
+  var movsProp = [];
+  PROPIEDADES.forEach(function(p) {
+    // Hipoteca
+    var hipPago = PAGOS_PROPIEDAD.find(function(pg) {
+      return (pg['Gasto ID']||'').trim() === p.id+'_hip' &&
+             (pg['Mes']||'').trim() === mesKeyRz &&
+             pg['Pagado'] === 'true' && pg['Notas'] !== 'seguimiento';
+    });
+    if (hipPago && p.hipoteca > 0) {
+      var monto = toNum(hipPago['Monto real']) > 0 ? toNum(hipPago['Monto real']) : p.hipoteca;
+      movsProp.push({ desc: 'Hipoteca · '+p.nombre, cat: 'Inversión', monto: monto, fecha: hipPago['Fecha pago']||mesKeyRz, tipo: 'prop' });
+    }
+    // GC si es mío
+    if (p.gcComunes > 0 && getQuienPagaBase(p.id+'_gc', p.id, mmRz, yyyyRz) === 'yo') {
+      var gcPago = PAGOS_PROPIEDAD.find(function(pg) {
+        return (pg['Gasto ID']||'').trim() === p.id+'_gc' &&
+               (pg['Mes']||'').trim() === mesKeyRz &&
+               pg['Pagado'] === 'true' && pg['Notas'] !== 'seguimiento';
+      });
+      if (gcPago) {
+        var monto = toNum(gcPago['Monto real']) > 0 ? toNum(gcPago['Monto real']) : p.gcComunes;
+        movsProp.push({ desc: 'G. comunes · '+p.nombre, cat: 'Inversión', monto: monto, fecha: gcPago['Fecha pago']||mesKeyRz, tipo: 'prop' });
+      }
+    }
+    // Extras míos
+    GASTOS_PROPIEDAD.filter(function(g) {
+      return g.propiedadId === p.id && getQuienPagaVigente(g.id, mmRz, yyyyRz) === 'yo';
+    }).forEach(function(g) {
+      var gPago = PAGOS_PROPIEDAD.find(function(pg) {
+        return (pg['Gasto ID']||'').trim() === g.id &&
+               (pg['Mes']||'').trim() === mesKeyRz &&
+               pg['Pagado'] === 'true' && pg['Notas'] !== 'seguimiento';
+      });
+      if (gPago) {
+        var monto = toNum(gPago['Monto real']) > 0 ? toNum(gPago['Monto real']) : g.montoEstimado;
+        movsProp.push({ desc: g.nombre+' · '+p.nombre, cat: 'Inversión', monto: monto, fecha: gPago['Fecha pago']||mesKeyRz, tipo: 'prop' });
+      }
+    });
+  });
+
   // Unir y ordenar por fecha desc
   var todos = movsB.map(function(m) {
     return {
@@ -3160,7 +3880,7 @@ function renderGastosRealizados() {
       fecha: g.fechaConfirmacion || g.mes,
       tipo:  'manual'
     };
-  }));
+  })).concat(movsProp);
 
   // Parsear fecha dd/MM/yyyy o yyyy-MM-dd para ordenar correctamente
   function parseFechaR(s) {
@@ -3183,9 +3903,12 @@ function renderGastosRealizados() {
       var cc = getCatConfig(t.cat.toLowerCase().replace(/\s+/g,'_'));
       var tipoTag = t.tipo==='manual'
         ? '<span style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:6px;margin-left:4px">Manual</span>'
+        : t.tipo==='prop'
+        ? '<span style="font-size:9px;background:var(--purple-bg);color:var(--purple);padding:1px 5px;border-radius:6px;margin-left:4px">Prop</span>'
         : '';
+      var dotColor = t.tipo==='prop' ? 'var(--purple)' : (cc.color||'var(--text3)');
       html += '<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border)">'
-        +'<div style="width:8px;height:8px;border-radius:50%;background:'+cc.color+';flex-shrink:0"></div>'
+        +'<div style="width:8px;height:8px;border-radius:50%;background:'+dotColor+';flex-shrink:0"></div>'
         +'<div style="flex:1">'
           +'<div style="font-size:12px;font-weight:500;color:var(--text)">'+t.desc+tipoTag+'</div>'
           +'<div style="font-size:10px;color:var(--text3)">'+t.cat+' \xb7 '+t.fecha+'</div>'
@@ -3201,12 +3924,24 @@ function renderGastosRealizados() {
 
 function verDetalleCat(catId) {
   const c = getCatConfig(catId);
-  const movs = movsMes().filter(m =>
-    m['Tipo']==='gasto' && (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase()
-  );
-  const gastado = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
   const { mm: mmD, yyyy: yyyyD } = getMesFiltro();
   const mesKeyD = yyyyD + '-' + String(mmD+1).padStart(2,'0');
+
+  // Movimientos bancarios de esta categoría
+  const movsB = movsMes().filter(m =>
+    m['Tipo']==='gasto' && (m['Categoría']||'').toLowerCase() === c.nombre.toLowerCase()
+  );
+
+  // Gastos personales confirmados de esta categoría
+  const movsGP = (GASTOS_PERSONALES||[]).filter(g =>
+    g.mes === mesKeyD && g.confirmado &&
+    (g.categoria||'').toLowerCase() === c.nombre.toLowerCase()
+  );
+
+  const gastado = movsB.reduce((s,m) => s + toNum(m['Monto']), 0)
+                + movsGP.reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
+  const totalMovs = movsB.length + movsGP.length;
+
   const limite = getLimiteMes(c.id, mesKeyD);
   const pct = limite > 0 ? Math.min(100, Math.round(gastado/limite*100)) : 0;
   const barCol = pct >= 100 ? 'var(--red)' : pct > 85 ? 'var(--amber)' : c.color;
@@ -3219,7 +3954,7 @@ function verDetalleCat(catId) {
       </div>
       <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
         <span style="font-size:12px;color:var(--text3);">Gastado</span>
-        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${c.color};">${fmt(gastado)}</span>
+        <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:600;color:${barCol};">${fmt(gastado)}</span>
       </div>
       ${limite > 0 ? `
       <div style="height:5px;background:var(--bg3);border-radius:3px;overflow:hidden;margin-bottom:6px;">
@@ -3232,18 +3967,32 @@ function verDetalleCat(catId) {
       <div onclick="editarLimiteCat('${catId}')" style="margin-top:10px;text-align:center;font-size:11px;color:var(--blue);cursor:pointer;padding-top:8px;border-top:1px solid var(--border);">Ajustar límite</div>
       ` : `<div onclick="editarLimiteCat('${catId}')" style="font-size:11px;color:var(--blue);cursor:pointer;">+ Agregar límite</div>`}
     </div>
-    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">${movs.length} movimiento${movs.length!==1?'s':''}</div>
+    <div style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px;">${totalMovs} movimiento${totalMovs!==1?'s':''}</div>
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">`;
-  if (movs.length === 0) {
+
+  if (totalMovs === 0) {
     html += '<div style="padding:20px;text-align:center;color:var(--text3);font-size:13px;">Sin movimientos este mes</div>';
   } else {
-    movs.forEach(m => {
+    // Bancarios
+    movsB.forEach(m => {
       html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
         <div style="flex:1;">
           <div style="font-size:12px;font-weight:500;color:var(--text);">${m['Descripción']||m['Comercio']||'—'}</div>
           <div style="font-size:10px;color:var(--text3);">${m['Fecha']||''} · ${m['Banco']||''}</div>
         </div>
         <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(toNum(m['Monto']))}</div>
+      </div>`;
+    });
+    // Gastos personales confirmados
+    movsGP.forEach(g => {
+      const monto = g.montoReal > 0 ? g.montoReal : g.montoEstimado;
+      const tag = `<span style="font-size:9px;background:var(--blue-bg);color:var(--blue);padding:1px 5px;border-radius:4px;margin-left:4px;">Manual</span>`;
+      html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--border);">
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:500;color:var(--text);">${g.descripcion||g.categoria}${tag}</div>
+          <div style="font-size:10px;color:var(--green);">✓ Confirmado · ${g.fechaConfirmacion||g.mes}</div>
+        </div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(monto)}</div>
       </div>`;
     });
   }
@@ -3410,7 +4159,8 @@ function setGastoTipo(tipo) {
 }
 
 function renderGastoChips() {
-  const cats = CATEGORIAS_CONFIG.filter(c => c.tipo === GASTO_TIPO_SELECTED);
+  const source = CATEGORIAS_DATA.length > 0 ? CATEGORIAS_DATA : CATEGORIAS_CONFIG;
+  const cats = source.filter(c => c.tipo === GASTO_TIPO_SELECTED);
   const chips = cats.map(c => {
     const sel = GASTO_CAT_SELECTED === c.id;
     return `<div onclick="selGastoChip('${c.id}')" style="font-size:11px;padding:4px 10px;border-radius:20px;cursor:pointer;border:1px solid ${sel?c.color:' var(--border)'};background:${sel?c.bg:'var(--bg2)'};color:${sel?c.color:'var(--text3)'};">${c.nombre}</div>`;
@@ -3658,86 +4408,29 @@ function runDebug() {
   panel.innerHTML = html;
 }
 
-// ── MODAL SALDO MENSUAL ──────────────────────────────────────
+// ── MODAL SALDO ──────────────────────────────────────────────
 function formatSaldoInput(el) {
-  // Guardar posición del cursor
   const raw = el.value.replace(/\./g,'').replace(/[^\d]/g,'');
   if (!raw) { el.value = ''; return; }
-  const formatted = parseInt(raw).toLocaleString('es-CL');
-  el.value = formatted;
+  el.value = parseInt(raw).toLocaleString('es-CL');
 }
-
-const BANCOS_LISTA = ['Security','BCI','Itaú','Banco Falabella','Mercado Pago','BICE Hipotecaria'];
 
 function abrirModalSaldo() {
   const { mm, yyyy } = getMesFiltro();
-  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`; // formato seguro para Sheets
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
   const mesLabel = new Date(yyyy, mm, 1).toLocaleString('es-CL', { month: 'long', year: 'numeric' });
   document.getElementById('modal-mes-label').textContent =
-    `Saldo al inicio de ${mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1)}`;
+    `Saldo total al inicio de ${mesLabel.charAt(0).toUpperCase() + mesLabel.slice(1)}`;
 
-  const inputsDiv = document.getElementById('saldo-inputs');
-  inputsDiv.innerHTML = DATA.saldos.map(s => {
-    const banco = (s['Banco'] || '').trim();
-    if (!banco) return '';
-    const saldoActual = toNum(s[mesKey] || s['Saldo'] || 0);
-    const style = BANK_STYLE[banco] || { bg: '#333', color: '#aaa', text: banco.slice(0,3).toUpperCase() };
-    const productos = BANK_PRODUCTS[banco] || ['CC'];
-    const inputId = 'inp-' + banco.replace(/[^a-zA-Z0-9]/g,'_');
-    const valorCC = saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '';
+  // Calcular saldo actual sumando todos los bancos
+  const saldoActual = DATA.saldos.reduce((sum, s) => {
+    return sum + (toNum(s[mesKey]) || toNum(s['Saldo']) || 0);
+  }, 0);
 
-    // Generar inputs por producto
-    let inputsHtml = '';
-    productos.forEach(prod => {
-      const pid = `inp_${banco.replace(/[^a-zA-Z0-9]/g,'_')}_${prod}`;
-      const keyDisp = `${banco}_${prod}_disp`;
-      const keyApro = `${banco}_${prod}_apro`;
-      const tagClass = prod === 'CC' ? '#185FA5' : prod === 'LC' ? '#BA7517' : '#7F77DD';
-      const dispVal = prod === 'CC'
-        ? (saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '')
-        : (toNum(s[keyDisp]) > 0 ? Math.round(toNum(s[keyDisp])).toLocaleString('es-CL') : '');
-      const aproVal = toNum(s[keyApro]) > 0 ? Math.round(toNum(s[keyApro])).toLocaleString('es-CL') : '';
-
-      if (prod === 'CC') {
-        inputsHtml += `
-          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">
-            <span style="font-size:8px;padding:1px 5px;border-radius:4px;font-weight:500;background:rgba(96,165,250,0.15);color:var(--blue);width:24px;text-align:center;">CC</span>
-            <span style="font-size:11px;color:var(--text2);flex:1;">Saldo</span>
-            <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_disp"
-              placeholder="0" value="${dispVal}" oninput="formatSaldoInput(this)" style="width:100px;">
-          </div>`;
-      } else {
-        inputsHtml += `
-          <div style="border-bottom:1px solid var(--border);padding:5px 0;">
-            <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
-              <span style="font-size:8px;padding:1px 5px;border-radius:4px;font-weight:500;background:rgba(251,191,36,0.15);color:var(--amber);width:24px;text-align:center;${prod==='TC'?'background:rgba(167,139,250,0.15);color:var(--purple);':''}">${prod}</span>
-              <span style="font-size:11px;color:var(--text2);flex:1;">Disponible</span>
-              <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_disp"
-                placeholder="0" value="${dispVal}" oninput="formatSaldoInput(this)" style="width:100px;">
-            </div>
-            <div style="display:flex;align-items:center;gap:6px;">
-              <span style="width:24px;"></span>
-              <span style="font-size:11px;color:var(--text3);flex:1;">Aprobado</span>
-              <input class="saldo-bank-input" type="text" inputmode="numeric" id="${pid}_apro"
-                placeholder="0" value="${aproVal}" oninput="formatSaldoInput(this)" style="width:100px;">
-            </div>
-          </div>`;
-      }
-    });
-
-    return `
-      <div class="saldo-input-row" style="flex-direction:column;align-items:stretch;gap:0;">
-        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-          <div class="saldo-bank-badge" style="background:${style.bg};">
-            <span style="font-size:${style.text.length>2?'8':'10'}px;font-weight:700;color:${style.color};">${style.text}</span>
-          </div>
-          <span class="saldo-bank-name">${banco}</span>
-        </div>
-        ${inputsHtml}
-      </div>`;
-  }).join('');
-
+  const inp = document.getElementById('inp-saldo-total');
+  inp.value = saldoActual > 0 ? Math.round(saldoActual).toLocaleString('es-CL') : '';
   document.getElementById('modal-saldo').classList.remove('hidden');
+  setTimeout(() => { inp.focus(); inp.select(); }, 150);
 }
 
 function cerrarModal() {
@@ -3746,73 +4439,59 @@ function cerrarModal() {
 
 async function guardarSaldos() {
   const { mm, yyyy } = getMesFiltro();
-  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`; // formato seguro para Sheets
-  const hoy = new Date().toLocaleDateString('es-CL');
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
+  const inp = document.getElementById('inp-saldo-total');
+  const total = parseInt((inp.value||'').replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
+  if (total === 0) { cerrarModal(); return; }
+
   const btn = document.querySelector('.modal-save-btn');
   btn.textContent = 'Guardando...';
   btn.disabled = true;
 
-  // Actualizar DATA.saldos localmente
   const now2 = new Date();
   const hoyFmt = String(now2.getDate()).padStart(2,'0') + '/' +
-                 String(now2.getMonth()+1).padStart(2,'0') + '/' +
-                 now2.getFullYear();
-  DATA.saldos.forEach(s => {
-    const banco = (s['Banco'] || '').trim();
-    if (!banco) return;
-    const productos = BANK_PRODUCTS[banco] || ['CC'];
-    productos.forEach(prod => {
-      const pid = `inp_${banco.replace(/[^a-zA-Z0-9]/g,'_')}_${prod}`;
-      const inpDisp = document.getElementById(pid + '_disp');
-      if (inpDisp) {
-        const val = parseInt(inpDisp.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
-        if (val > 0) {
-          s[`${banco}_${prod}_disp`] = val;
-          if (prod === 'CC') { s[mesKey] = val; s['Saldo'] = val; }
-        }
-      }
-      if (prod !== 'CC') {
-        const inpApro = document.getElementById(pid + '_apro');
-        if (inpApro) {
-          const val = parseInt(inpApro.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0;
-          if (val > 0) s[`${banco}_${prod}_apro`] = val;
-        }
-      }
-    });
-    s['Fecha actualización'] = hoyFmt;
-  });
+                 String(now2.getMonth()+1).padStart(2,'0') + '/' + now2.getFullYear();
 
-  // Guardar en Sheets via API — incluir CC, LC y TC por banco
+  // Actualizar memoria local — primer banco recibe total, resto 0
+  if (DATA.saldos.length === 0) {
+    DATA.saldos.push({ 'Banco': 'Total', [mesKey]: total, 'Saldo': total, 'Fecha actualización': hoyFmt });
+  } else {
+    DATA.saldos[0][mesKey] = total;
+    DATA.saldos[0]['Saldo'] = total;
+    DATA.saldos[0]['Fecha actualización'] = hoyFmt;
+    for (let i = 1; i < DATA.saldos.length; i++) {
+      DATA.saldos[i][mesKey] = 0;
+      DATA.saldos[i]['Saldo'] = 0;
+    }
+  }
+
+  // Guardar en Sheet usando setSaldos (acción existente en el Apps Script)
+  let guardadoOk = false;
   try {
-    const saldosPayload = DATA.saldos.map(s => {
-      const banco = (s['Banco'] || '').trim();
-      const productos = BANK_PRODUCTS[banco] || ['CC'];
-      const item = { banco, cc: 0, lc_disp: 0, lc_apro: 0, tc_disp: 0, tc_apro: 0 };
-
-      productos.forEach(prod => {
-        const pid = `inp_${banco.replace(/[^a-zA-Z0-9]/g,'_')}_${prod}`;
-        const inpDisp = document.getElementById(pid + '_disp');
-        const inpApro = document.getElementById(pid + '_apro');
-        const valDisp = inpDisp ? (parseInt(inpDisp.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0) : 0;
-        const valApro = inpApro ? (parseInt(inpApro.value.replace(/\./g,'').replace(/[^\d]/g,'')) || 0) : 0;
-        if (prod === 'CC') item.cc = valDisp;
-        if (prod === 'LC') { item.lc_disp = valDisp; item.lc_apro = valApro; }
-        if (prod === 'TC') { item.tc_disp = valDisp; item.tc_apro = valApro; }
-      });
-      return item;
-    });
-
-    await fetch(API_URL, {
+    const saldosPayload = DATA.saldos.map((s, idx) => ({
+      banco: (s['Banco'] || '').trim(),
+      cc: idx === 0 ? total : 0,
+      lc_disp: 0, lc_apro: 0, tc_disp: 0, tc_apro: 0
+    }));
+    const resp = await fetch(API_URL, {
       method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'setSaldos', mesKey, saldos: saldosPayload })
     });
-  } catch(e) { /* guardado local igual */ }
+    guardadoOk = true;
+  } catch(e) {
+    console.warn('Error guardando saldo:', e);
+  }
 
-  btn.textContent = 'Guardar saldos';
+  btn.textContent = guardadoOk ? '✓ Guardado' : '✓ Guardado (local)';
   btn.disabled = false;
-  cerrarModal();
-  renderHome();
-  renderPresupuesto();
+  setTimeout(() => {
+    btn.textContent = 'Guardar';
+    cerrarModal();
+    renderHome();
+    renderPresupuesto();
+  }, 600);
 }
 
 // Cerrar modal al tocar fuera
@@ -3825,25 +4504,12 @@ function toggleBcard(id) {
   if (card) card.classList.toggle('open');
 }
 
-
-// ── MODAL SALDO MENSUAL ──────────────────────────────────────
-
-
-
-// Cerrar modal al tocar fuera
-document.getElementById('modal-saldo').addEventListener('click', function(e) {
-  if (e.target === this) cerrarModal();
-});
-
-
-// Iniciar PIN al cargar
+// Iniciar al cargar
 document.addEventListener('DOMContentLoaded', () => {
   cargarDatos();
 });
 
 </script>
-</body>
-</html>
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 </body>
 </html>
