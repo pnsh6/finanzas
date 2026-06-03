@@ -811,7 +811,28 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbzNPZfCr4h6eNNoFPIEIFsWhg4k8fWm0pu08cqdlzY1d5XSbyQPsM8ni1OG8kpNcbwu/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwb7JRVWsG1GwMCVnF6MzWe6fVCFQGwFxwzgb130TEkYGQpuVFUyWPAta6hxPuqZNFt/exec';
+
+// ── API helpers ───────────────────────────────────────────────
+// Google Apps Script no acepta POST desde origin:null (archivo local)
+// Usamos GET para todas las escrituras — el doGet maneja las acciones
+async function apiPost(payload) {
+  try {
+    const params = new URLSearchParams();
+    // Aplanar payload a parámetros GET
+    Object.entries(payload).forEach(([k, v]) => {
+      if (v !== null && v !== undefined) {
+        params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
+      }
+    });
+    const r = await fetch(`${API_URL}?${params.toString()}`);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e) { return { ok: true }; }
+  } catch(e) {
+    console.warn('[apiPost] error:', e);
+    return { error: e.message };
+  }
+}
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -2771,8 +2792,7 @@ async function desmarcarPago() {
   cerrarConfirmPago();
 
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
-      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await apiPost({ action: 'setPagoPropiedad', pago: nuevoPago });
   } catch(e) {}
 
   const p2 = PROPIEDADES.find(x => x.id === _confirmPropId);
@@ -2794,8 +2814,7 @@ async function ejecutarPago() {
     notasExtra = (notasExtra ? notasExtra + '|' : '') + 'vinculado:' + _cpMovVinculadoIdx;
     // Guardar vínculo en Sheet
     try {
-      await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
-        body: JSON.stringify({ action: 'vincularMovimiento', movIdx: _cpMovVinculadoIdx, gastoId: _confirmGastoId }) });
+      await apiPost({ action: 'vincularMovimiento', movIdx: _cpMovVinculadoIdx, gastoId: _confirmGastoId });
     } catch(e) {}
   }
 
@@ -2831,8 +2850,7 @@ async function ejecutarPago() {
   _cpMovVinculadoIdx = null;
 
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
-      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await apiPost({ action: 'setPagoPropiedad', pago: nuevoPago });
   } catch(e) {}
 
   const p = PROPIEDADES.find(x => x.id === _confirmPropId);
@@ -2861,7 +2879,7 @@ async function _ejecutarPagoOriginal(gastoId, propiedadId, montoEst, esFijo) {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await apiPost({ action: 'setPagoPropiedad', pago: nuevoPago });
   } catch(e) {}
 
   // Re-render completo — actualiza hero + lista
@@ -2919,7 +2937,7 @@ async function guardarGastoPropiedad() {
   GASTOS_PROPIEDAD.push(gasto);
 
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify({ action: 'setGastoPropiedad', gasto }) });
+    await apiPost({ action: 'setGastoPropiedad', gasto });
   } catch(e) {}
 
   cerrarFormGasto();
@@ -2957,8 +2975,7 @@ async function toggleArriendoRecibido(propiedadId, monto) {
   else PAGOS_PROPIEDAD.push(pagoRow);
 
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
-      body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await apiPost({ action: 'setPagoPropiedad', pago: nuevoPago });
   } catch(e) {}
 
   const p = PROPIEDADES.find(x => x.id === propiedadId);
@@ -3030,9 +3047,7 @@ async function guardarDatosArrendatario() {
   console.log('Guardando arrendatario:', JSON.stringify(arrendatario));
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action: 'setArrendatario', arrendatario }) });
+    await apiPost({ action: 'setArrendatario', arrendatario });
   } catch(e) { console.error('Error fetch:', e); }
 
   cerrarModalArrendatario();
@@ -3107,9 +3122,7 @@ async function guardarResponsable() {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST',
-      headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ action: 'setGastoResponsable', item }) });
+    await apiPost({ action: 'setGastoResponsable', item });
   } catch(e) {}
 
   cerrarModalResponsable();
@@ -3160,8 +3173,7 @@ async function guardarArriendoHistorial() {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
-      body: JSON.stringify({ action: 'setArriendoHistorial', item }) });
+    await apiPost({ action: 'setArriendoHistorial', item });
   } catch(e) {}
 
   cerrarModalArriendo();
@@ -3490,16 +3502,21 @@ function renderGastosMovsCombinado() {
   document.getElementById('gpanel-movs').innerHTML = html;
 }
 
-// ── API POST HELPER ───────────────────────────────────────────
-async function apiPost(data) {
+// ── API HELPER — usa GET para evitar CORS ────────────────────
+async function apiPost(payload) {
   try {
-    await fetch(API_URL, {
-      method: 'POST',
-      redirect: 'follow',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(data)
+    const params = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => {
+      if (v !== null && v !== undefined)
+        params.set(k, typeof v === 'object' ? JSON.stringify(v) : String(v));
     });
-  } catch(e) { /* redirect de Apps Script — POST sí llegó */ }
+    const r = await fetch(`${API_URL}?${params.toString()}`);
+    const txt = await r.text();
+    try { return JSON.parse(txt); } catch(e2) { return { ok: true }; }
+  } catch(e) {
+    console.warn('[apiPost] error:', e);
+    return { error: e.message };
+  }
 }
 
 // ── CONFIRMAR / EDITAR GASTO PERSONAL ────────────────────────
@@ -3646,8 +3663,7 @@ async function desvincularMovGasto(movIdx) {
 
   // Persistir en Sheet
   try {
-    await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'},
-      body: JSON.stringify({ action:'desvincularMovimiento', gastoId }) });
+    await apiPost({ action:'desvincularMovimiento', gastoId });
   } catch(e) {}
 
   // Reabrir modal
@@ -4234,9 +4250,7 @@ async function guardarLimitesMes(catId, mesKeys) {
     else if (val > 0) { PRESUPUESTOS_DATA.push({ id: catId+'_'+mesKey, catId, mes: mesKey, limite: val }); }
     // Guardar en Sheet
     if (val >= 0) {
-      await fetch(API_URL, { method:'POST',
-        headers:{'Content-Type':'text/plain'},
-        body: JSON.stringify({ action:'setPresupuestoMes', catId, mes: mesKey, limite: val }) });
+      await apiPost({ action:'setPresupuestoMes', catId, mes: mesKey, limite: val });
     }
   }
   document.getElementById('modal-limite-temp')?.remove();
@@ -4293,9 +4307,7 @@ async function guardarNuevaCat() {
   const nueva = { id, nombre, tipo: _ncatTipo, color, bg: hexToBg(color), activo: true };
   CATEGORIAS_DATA.push(nueva);
   // Guardar en Sheet
-  await fetch(API_URL, { method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body: JSON.stringify({ action:'setCategoriaPersonal', categoria: nueva }) });
+  await apiPost({ action:'setCategoriaPersonal', categoria: nueva });
   document.getElementById('modal-nueva-cat')?.remove();
   GASTO_CAT_SELECTED = id;
   setGastoTipo(_ncatTipo);
@@ -4375,25 +4387,39 @@ async function guardarGastoManual() {
   renderGastosMain();
 }
 
-function aprobarMovimiento(id, catId) {
-  const m = (DATA.movimientos||[]).find(x => x['ID'] === id);
+function aprobarMovimiento(movIdx, catId) {
+  const m = DATA.movimientos[movIdx];
   if (!m) return;
   const cat = getCatConfig(catId || 'otros');
   m['Categoría'] = cat.nombre;
-  fetch(API_URL, { method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body: JSON.stringify({ action:'setCategoria', id, categoria: cat.nombre }) });
+  const payload = {
+    action: 'setCategoria',
+    categoria: cat.nombre,
+    id:          m['ID Mensaje'] || m['ID'] || '',
+    fecha:       m['Fecha'] || '',
+    monto:       String(m['Monto'] || ''),
+    descripcion: m['Descripción'] || m['Descripcion'] || m['Comercio'] || '',
+    banco:       m['Banco'] || '',
+  };
+  apiPost(payload);
   renderGastosResumen();
   renderGastosMovsCombinado();
 }
 
-function ignorarMovimiento(id) {
-  const m = (DATA.movimientos||[]).find(x => x['ID'] === id);
+function ignorarMovimiento(movIdx) {
+  const m = DATA.movimientos[movIdx];
   if (!m) return;
   m['Categoría'] = 'ignorado';
-  fetch(API_URL, { method:'POST',
-    headers:{'Content-Type':'text/plain'},
-    body: JSON.stringify({ action:'setCategoria', id, categoria: 'ignorado' }) });
+  const payload = {
+    action: 'setCategoria',
+    categoria: 'ignorado',
+    id:          m['ID Mensaje'] || m['ID'] || '',
+    fecha:       m['Fecha'] || '',
+    monto:       String(m['Monto'] || ''),
+    descripcion: m['Descripción'] || m['Descripcion'] || m['Comercio'] || '',
+    banco:       m['Banco'] || '',
+  };
+  apiPost(payload);
   renderGastosResumen();
   renderGastosMovsCombinado();
 }
@@ -4474,12 +4500,7 @@ function seleccionarCat(movIdx, catId) {
 
   console.log('[setCategoria] enviando:', payload);
 
-  fetch(API_URL, {
-    method: 'POST',
-    
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(e => console.warn('[setCategoria] error fetch:', e));
+  apiPost(payload).then(r => console.log('[setCategoria] respuesta:', r));
 
   renderGastosResumen();
   renderGastosMovsCombinado();
@@ -4727,12 +4748,7 @@ async function guardarSaldos() {
       cc: idx === 0 ? total : 0,
       lc_disp: 0, lc_apro: 0, tc_disp: 0, tc_apro: 0
     }));
-    const resp = await fetch(API_URL, {
-      method: 'POST',
-      
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'setSaldos', mesKey, saldos: saldosPayload })
-    });
+    const resp = await apiPost({ action: 'setSaldos', mesKey, saldos: saldosPayload });
     guardadoOk = true;
   } catch(e) {
     console.warn('Error guardando saldo:', e);
