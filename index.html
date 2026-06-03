@@ -811,7 +811,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbxsNL6HX_tJSaoFV_gd5EtcWq0-FW1bPYgcUmcTlVAl037Y7pEC2L2SZrqJ2wXb1IjG/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbxQy2YSpOybpvn-H1HASXiCvIkld3TW0duEzzUnjX4IhsHRrGsRMG9j8jQyqLfoIqOC/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -1052,6 +1052,7 @@ async function cargarDatos() {
     DATA.movimientos = movs;
     DATA.saldos      = saldos;
     DATA.loaded      = true;
+    if (movs && movs[0]) console.log('[debug] Movimiento keys:', Object.keys(movs[0]), '| sample:', JSON.stringify(movs[0]).slice(0,200));
 
     // Cargar propiedades desde Sheet
     PROPIEDADES = propRows
@@ -1956,13 +1957,28 @@ function showProp(id) {
     detMesEl.textContent = s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  // Calcular montos
-  const montoHip = getMontoEfectivo(p.id+'_hip', p.hipoteca);
-  const montoGC  = getMontoEfectivo(p.id+'_gc',  p.gcComunes);
+  // Calcular montos — usar real si pagado, estimado si pendiente
+  const { mm: mmSP2, yyyy: yyyySP2 } = getMesFiltro();
+  const mesKeySP = `${yyyySP2}-${String(mmSP2+1).padStart(2,'0')}`;
+  const gcEsDuenoProp = getQuienPagaBase(p.id+'_gc', p.id, mmSP2, yyyySP2) === 'yo';
+
+  const getMontoPagadoOEst = (gid, estimado) => {
+    const pg = PAGOS_PROPIEDAD.find(r =>
+      (r['Gasto ID']||'').trim() === gid &&
+      (r['Mes']||'').trim() === mesKeySP &&
+      String(r['Pagado']||'').toLowerCase() === 'true' &&
+      (r['Notas']||'') !== 'seguimiento'
+    );
+    if (pg) return toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : estimado;
+    return estimado;
+  };
+
+  const hipotecaMia = getMontoPagadoOEst(p.id+'_hip', p.hipoteca);
+  const gcMio       = gcEsDuenoProp ? getMontoPagadoOEst(p.id+'_gc', p.gcComunes) : 0;
   const extrasEgreso = GASTOS_PROPIEDAD
-    .filter(g => g.propiedadId === p.id && (g.quienPaga||'yo').toLowerCase() === 'yo')
-    .reduce((s, g) => s + getMontoEfectivo(g.id, g.montoEstimado), 0);
-  const egreso = montoHip + montoGC + extrasEgreso;
+    .filter(g => g.propiedadId === p.id && getQuienPagaVigente(g.id, mmSP2, yyyySP2) === 'yo')
+    .reduce((s, g) => s + getMontoPagadoOEst(g.id, g.montoEstimado), 0);
+  const egreso = hipotecaMia + gcMio + extrasEgreso;
   const { mm: mmSP, yyyy: yyyySP } = getMesFiltro();
   const arriendoVigenteShow = getArriendoVigente(p.id, mmSP, yyyySP);
   const neto = arriendoVigenteShow - egreso;
@@ -1980,8 +1996,7 @@ function showProp(id) {
   })();
 
   // Aporta arrendatario (suma de gastoArr + GC si es del arrendatario)
-  const { mm: mmSP2, yyyy: yyyySP2 } = getMesFiltro();
-  const gcEsArrSP = getQuienPagaBase(p.id+'_gc', p.id, mmSP2, yyyySP2) !== 'yo';
+  const gcEsArrSP = !gcEsDuenoProp; // gcEsDuenoProp ya calculado arriba
   const aportaArrendatario = (() => {
     let total = gcEsArrSP ? p.gcComunes : 0;
     GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id)
@@ -2136,7 +2151,7 @@ function showProp(id) {
       <div style="background:#FFF5F5;border-radius:8px;padding:10px 10px;">
         <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Mis gastos</div>
         <div style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--red);">${misGastosEst>0?fmtK(misGastosEst):'—'}</div>
-        <div style="font-size:9px;color:var(--text3);margin-top:2px;">presupuesto</div>
+        <div style="font-size:9px;color:var(--text3);margin-top:2px;">${egreso > 0 ? 'real / estimado' : 'presupuesto'}</div>
       </div>
       <div style="background:${netoPresupuestado>=0?'#EDFAF3':'#FEF2F2'};border-radius:8px;padding:10px 10px;">
         <div style="font-size:9px;color:var(--text3);margin-bottom:3px;">Neto</div>
@@ -3381,16 +3396,17 @@ function renderGastosMovsCombinado() {
   // Construir lista unificada
   const items = [];
 
-  todosMovs.forEach((m, idx) => {
+  todosMovs.forEach((m) => {
     const cat = (m['Categoría']||m['Categoria']||'').trim();
     const sinCat = !cat || cat.toLowerCase() === 'sin categoría' || cat.toLowerCase() === 'sin categoria';
+    const realIdx = DATA.movimientos.indexOf(m); // índice real en el array global
     items.push({
       fecha: m['Fecha']||'',
       desc: (m['Descripción']||m['Descripcion']||m['Comercio']||'—').trim(),
       cat: cat || '—',
       monto: toNum(m['Monto']),
       tipo: sinCat ? 'sincat' : 'banco',
-      movIdx: idx,
+      movId: realIdx,  // usar índice real, no el campo ID del Sheet
       id: null,
     });
   });
@@ -3425,21 +3441,15 @@ function renderGastosMovsCombinado() {
     html += `<div style="font-size:10px;font-weight:600;color:var(--red);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;">Sin clasificar · ${sinCat.length}</div>`;
     html += `<div style="background:var(--bg2);border:1px solid rgba(220,38,38,0.2);border-radius:var(--radius);overflow:hidden;margin-bottom:10px;padding:0 14px;">`;
     sinCat.forEach(item => {
-      const movIdx = DATA.movimientos.findIndex((m,i) => {
-        const f = String(m['Fecha']||'');
-        const mmov = f.length>=7?(f.indexOf('/')>=0?f.slice(6,10)+'-'+f.slice(3,5):f.slice(0,7)):'';
-        const desc = (m['Descripción']||m['Descripcion']||m['Comercio']||'').trim();
-        return mmov===mesKey && desc===item.desc && Math.abs(toNum(m['Monto'])-item.monto)<1;
-      });
       html += `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
         <div style="width:7px;height:7px;border-radius:50%;background:var(--red);flex-shrink:0;"></div>
         <div style="flex:1;"><div style="font-size:12px;font-weight:500;color:var(--text);">${item.desc}</div><div style="font-size:10px;color:var(--text3);">${item.fecha}</div></div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">${fmt(item.monto)}</div>
-          <div style="display:flex;gap:4px;margin-top:3px;">
-            <span onclick="event.stopPropagation();abrirCambiarCat(${movIdx})" style="font-size:10px;color:var(--blue);cursor:pointer;">Clasificar</span>
+          <div style="display:flex;gap:4px;margin-top:3px;justify-content:flex-end;">
+            <span onclick="event.stopPropagation();abrirCambiarCat('${item.movId}')" style="font-size:10px;color:var(--blue);cursor:pointer;">Clasificar</span>
             <span style="font-size:10px;color:var(--text3);">·</span>
-            <span onclick="event.stopPropagation();ignorarMovimiento(${movIdx})" style="font-size:10px;color:var(--text3);cursor:pointer;">Ignorar</span>
+            <span onclick="event.stopPropagation();ignorarMovimiento('${item.movId}')" style="font-size:10px;color:var(--text3);cursor:pointer;">Ignorar</span>
           </div>
         </div>
       </div>`;
@@ -3460,12 +3470,16 @@ function renderGastosMovsCombinado() {
         ? `<span style="font-size:9px;background:var(--bg3);color:var(--text3);padding:1px 5px;border-radius:4px;margin-left:4px;">Pendiente</span>`
         : '';
       const onclick = item.id ? `onclick="abrirConfirmarGasto('${item.id}')"` : '';
+      const catBtn = item.tipo === 'banco'
+        ? `<div onclick="event.stopPropagation();abrirCambiarCat('${item.movId}')" style="flex-shrink:0;padding:3px 8px;border-radius:6px;border:1px solid var(--border);font-size:10px;color:var(--text3);cursor:pointer;">cat.</div>`
+        : '';
       html += `<div ${onclick} style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);${item.id?'cursor:pointer;':''}">
         <div style="width:7px;height:7px;border-radius:50%;background:${dotColor};flex-shrink:0;"></div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:12px;font-weight:500;color:${item.tipo==='pendiente'?'var(--text2)':'var(--text)'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${item.desc}${tipoTag}</div>
           <div style="font-size:10px;color:var(--text3);">${item.cat} · ${item.fecha}</div>
         </div>
+        ${catBtn}
         <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${montoColor};flex-shrink:0;">${item.estimado?'~':''}${fmt(item.monto)}</div>
       </div>`;
     });
@@ -4214,10 +4228,8 @@ function aprobarMovimiento(id, catId) {
   fetch(API_URL, { method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ action:'setCategoria', id, categoria: cat.nombre }) });
-  renderGastosRevisar();
-  renderGastosCat();
-  var rz2=document.getElementById('gpanel-realizados');if(rz2&&rz2.style.display!=='none')renderGastosRealizados();
-  var rz=document.getElementById('gpanel-realizados');if(rz&&rz.style.display!=='none')renderGastosRealizados();
+  renderGastosResumen();
+  renderGastosMovsCombinado();
 }
 
 function ignorarMovimiento(id) {
@@ -4227,17 +4239,104 @@ function ignorarMovimiento(id) {
   fetch(API_URL, { method:'POST', mode:'no-cors',
     headers:{'Content-Type':'application/json'},
     body: JSON.stringify({ action:'setCategoria', id, categoria: 'ignorado' }) });
-  renderGastosRevisar();
+  renderGastosResumen();
+  renderGastosMovsCombinado();
+}
+
+// ── MODAL CAMBIAR CATEGORÍA ───────────────────────────────────
+function abrirCambiarCat(movIdOrIdx) {
+  const existing = document.getElementById('modal-cambiar-cat');
+  if (existing) existing.remove();
+
+  // Aceptar tanto ID de string como índice numérico
+  let movIdx = -1;
+  let m = null;
+  if (typeof movIdOrIdx === 'number' || /^\d+$/.test(String(movIdOrIdx))) {
+    movIdx = parseInt(movIdOrIdx);
+    m = DATA.movimientos[movIdx];
+  } else {
+    movIdx = DATA.movimientos.findIndex(x => x['ID'] === movIdOrIdx || x['id'] === movIdOrIdx);
+    m = DATA.movimientos[movIdx];
+  }
+  if (!m) return;
+
+  const cats = CATEGORIAS_DATA.length > 0 ? CATEGORIAS_DATA : CATEGORIAS_CONFIG;
+  const catActual = (m['Categoría']||m['Categoria']||'').trim();
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-cambiar-cat';
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal-sheet" style="max-height:80vh;overflow-y:auto;">
+      <div class="modal-handle"></div>
+      <div class="modal-title">Cambiar categoría</div>
+      <div style="font-size:12px;color:var(--text2);margin-bottom:12px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 8px;">
+        ${(m['Descripción']||m['Descripcion']||m['Comercio']||'').trim()} · ${fmt(toNum(m['Monto']))}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:8px;">
+        ${cats.map(c => {
+          const isActive = c.nombre.toLowerCase() === catActual.toLowerCase();
+          return `<div onclick="seleccionarCat(${movIdx},'${c.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);background:${isActive?'var(--blue-bg)':'var(--bg3)'};border:1px solid ${isActive?'var(--blue)':'transparent'};cursor:pointer;">
+            <div style="width:8px;height:8px;border-radius:50%;background:${c.color};flex-shrink:0;"></div>
+            <span style="font-size:13px;font-weight:${isActive?'500':'400'};color:${isActive?'var(--blue)':'var(--text)'};">${c.nombre}</span>
+            ${isActive?'<span style="margin-left:auto;font-size:11px;color:var(--blue);">✓</span>':''}
+          </div>`;
+        }).join('')}
+        <div onclick="seleccionarCat(${movIdx},'ignorar')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:var(--radius-sm);background:var(--bg3);cursor:pointer;">
+          <div style="width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;"></div>
+          <span style="font-size:13px;color:var(--text3);">Ignorar movimiento</span>
+        </div>
+      </div>
+      <div onclick="cerrarCambiarCat()" style="text-align:center;font-size:13px;color:var(--text3);cursor:pointer;padding:8px;">Cancelar</div>
+    </div>`;
+
+  modal.addEventListener('click', e => { if (e.target === modal) cerrarCambiarCat(); });
+  document.body.appendChild(modal);
+}
+
+function seleccionarCat(movIdx, catId) {
+  cerrarCambiarCat();
+  const m = DATA.movimientos[movIdx];
+  if (!m) return;
+
+  const nuevaCat = catId === 'ignorar' ? 'ignorado' : getCatConfig(catId).nombre;
+
+  // Actualizar en memoria inmediatamente
+  m['Categoría'] = nuevaCat;
+  if (m['Categoria'] !== undefined) m['Categoria'] = nuevaCat;
+
+  // Guardar en Sheet — enviar todos los campos identificadores posibles
+  const payload = {
+    action: 'setCategoria',
+    categoria: nuevaCat,
+    id:           m['ID Mensaje'] || m['ID'] || m['id'] || '',
+    fecha:        m['Fecha'] || '',
+    monto:        String(m['Monto'] || ''),
+    descripcion:  m['Descripción'] || m['Descripcion'] || m['Comercio'] || m['descripcion'] || '',
+    banco:        m['Banco'] || '',
+    tipo:         m['Tipo']  || '',
+  };
+
+  console.log('[setCategoria] enviando:', payload);
+
+  fetch(API_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(e => console.warn('[setCategoria] error fetch:', e));
+
+  renderGastosResumen();
+  renderGastosMovsCombinado();
+}
+
+function cerrarCambiarCat() {
+  const modal = document.getElementById('modal-cambiar-cat');
+  if (modal) modal.remove();
 }
 
 function cambiarCatMovimiento(id) {
-  const cats = CATEGORIAS_CONFIG.map((c,i) => (i+1)+'. '+c.nombre).join('\n');
-  const resp = prompt('Elige categoría:\n' + cats);
-  if (!resp) return;
-  const idx = parseInt(resp) - 1;
-  if (idx >= 0 && idx < CATEGORIAS_CONFIG.length) {
-    aprobarMovimiento(id, CATEGORIAS_CONFIG[idx].id);
-  }
+  abrirCambiarCat(id);
 }
 
 
