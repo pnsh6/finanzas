@@ -1708,68 +1708,59 @@ function calcBarraCard(p) {
   const isPagado = (r) => String(r['Pagado']||'').trim().toLowerCase() === 'true'
     && (r['Notas']||'').trim() !== 'seguimiento';
 
-  // Solo gastos que son MÍOS en este mes (según historial responsable)
   const esHabitadaB = p.tipo === 'habitada';
+
+  // Construir lista completa de ítems a trackear (mismos para barra y pendientes)
+  const items = [];
+
+  // Mis gastos (hipoteca + GC si es mío + extras míos)
   const misGastosIds = [
     ...(esHabitadaB || getQuienPagaBase(p.id+'_hip', p.id, mmB, yyyyB) === 'yo' ? [p.id+'_hip'] : []),
     ...(esHabitadaB || getQuienPagaBase(p.id+'_gc',  p.id, mmB, yyyyB) === 'yo' ? [p.id+'_gc']  : []),
     ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
       (esHabitadaB || getQuienPagaVigente(g.id, mmB, yyyyB) === 'yo')).map(g => g.id)
   ];
-
-  const totalEst = misGastosIds.reduce((s, gid) => {
-    if (gid === p.id+'_hip') return s + p.hipoteca;
-    if (gid === p.id+'_gc')  return s + p.gcComunes;
-    return s + (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
-  }, 0);
-
-  let pagados = 0, pendientes = 0;
   misGastosIds.forEach(gid => {
+    const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+      : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
     const pg = PAGOS_PROPIEDAD.find(r =>
       (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagado(r));
-    if (pg) {
-      const est = gid===p.id+'_hip'?p.hipoteca:gid===p.id+'_gc'?p.gcComunes
-        :(GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
-      pagados += toNum(pg['Monto real'])>0?toNum(pg['Monto real']):est;
-    } else {
-      pendientes++;
-    }
+    items.push({ tipo: 'egreso', est, pagado: !!pg,
+      real: pg ? (toNum(pg['Monto real'])>0 ? toNum(pg['Monto real']) : est) : 0 });
   });
 
-  // Arriendo pendiente — para propiedades en arriendo
-  let arrPendiente = 0;
-  if (p.tipo !== 'habitada') {
+  // Arriendo (ingreso) — para propiedades en arriendo
+  if (!esHabitadaB) {
     const arriendoV = getArriendoVigente(p.id, mmB, yyyyB);
     if (arriendoV > 0) {
       const arrPg = PAGOS_PROPIEDAD.find(r =>
         (r['Gasto ID']||'').trim()===p.id+'_arriendo' &&
         (r['Mes']||'').trim()===mesKey && isPagado(r));
-      if (!arrPg) arrPendiente = 1;
-      else pagados += arriendoV; // sumar arriendo recibido al progreso
-      if (arrPg) totalEst; // ya está en denominador implícito
+      items.push({ tipo: 'ingreso', est: arriendoV, pagado: !!arrPg,
+        real: arrPg ? (toNum(arrPg['Monto real'])>0 ? toNum(arrPg['Monto real']) : arriendoV) : 0 });
     }
-  }
 
-  // Gastos del arrendatario pendientes
-  let arrPendientesGastos = 0;
-  if (!esHabitadaB) {
+    // Gastos arrendatario pendientes
     const gastosArrIds = [
       ...(getQuienPagaBase(p.id+'_gc', p.id, mmB, yyyyB) !== 'yo' ? [p.id+'_gc'] : []),
       ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
         getQuienPagaVigente(g.id, mmB, yyyyB) !== 'yo').map(g => g.id)
     ];
-    arrPendientesGastos = gastosArrIds.filter(gid =>
-      !PAGOS_PROPIEDAD.find(r =>
-        (r['Gasto ID']||'').trim()===gid &&
-        (r['Mes']||'').trim()===mesKey && isPagado(r))
-    ).length;
+    gastosArrIds.forEach(gid => {
+      const est = gid===p.id+'_gc' ? p.gcComunes
+        : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+      const pg = PAGOS_PROPIEDAD.find(r =>
+        (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagado(r));
+      items.push({ tipo: 'arrendatario', est, pagado: !!pg, real: 0 });
+    });
   }
 
-  const totalPend = pendientes + arrPendiente + arrPendientesGastos;
-  // Barra: % de gastos PROPIOS pagados sobre total estimado
-  const pctBar = totalEst > 0 ? Math.min(100, Math.round(pagados/totalEst*100)) : 0;
-  const barCol = pctBar >= 100 ? 'var(--green)' : pctBar > 85 ? 'var(--amber)' : 'var(--blue)';
-  const efectivoPend = totalPend;
+  // Calcular barra: % de ítems pagados sobre total
+  const totalItems = items.length;
+  const pagadosItems = items.filter(i => i.pagado).length;
+  const pctBar = totalItems > 0 ? Math.round(pagadosItems / totalItems * 100) : 0;
+  const efectivoPend = totalItems - pagadosItems;
+  const barCol = pctBar >= 100 ? 'var(--green)' : pctBar > 66 ? 'var(--amber)' : 'var(--blue)';
 
   return {
     pctBar, barCol, efectivoPend,
