@@ -1417,7 +1417,12 @@ function renderHome() {
     if (m['Tipo'] === 'ingreso') ingMes += monto; else gasMes += monto;
   });
 
-  // Sumar arriendos recibidos del mes (marcados en PAGOS_PROPIEDAD como _arriendo)
+  // Sumar gastos personales confirmados (excluir los vinculados a movimiento bancario)
+  const gastadoPersonalH = (GASTOS_PERSONALES||[])
+    .filter(g => g.mes === mesKey && g.confirmado)
+    .filter(g => !DATA.movimientos.some(m => (m['Vinculado']||'') === g.id))
+    .reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
+  gasMes += gastadoPersonalH;
   const ingArriendoRecibido = PROPIEDADES.filter(p => p.tipo !== 'habitada').reduce((sum, p) => {
     const gastoId = p.id + '_arriendo';
     const pago = PAGOS_PROPIEDAD.find(pg => {
@@ -1702,11 +1707,11 @@ function txnRow(m) {
 
 // ── INVERSIONES ──────────────────────────────────────────────
 function calcBarraCard(p) {
-  const mesKey = getMesKeyActual();
   const { mm: mmB, yyyy: yyyyB } = getMesFiltro();
+  const mesKey = `${yyyyB}-${String(mmB+1).padStart(2,'0')}`;
 
-  const isPagado = (r) => String(r['Pagado']||'').trim().toLowerCase() === 'true'
-    && (r['Notas']||'').trim() !== 'seguimiento';
+  const isPagado = (r) => String(r['Pagado']||'').trim().toLowerCase() === 'true';
+  const isPagadoMio = (r) => isPagado(r) && (r['Notas']||'').trim() !== 'seguimiento';
 
   const esHabitadaB = p.tipo === 'habitada';
 
@@ -1724,7 +1729,7 @@ function calcBarraCard(p) {
     const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
       : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
     const pg = PAGOS_PROPIEDAD.find(r =>
-      (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagado(r));
+      (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagadoMio(r));
     items.push({ tipo: 'egreso', est, pagado: !!pg,
       real: pg ? (toNum(pg['Monto real'])>0 ? toNum(pg['Monto real']) : est) : 0 });
   });
@@ -1740,7 +1745,7 @@ function calcBarraCard(p) {
         real: arrPg ? (toNum(arrPg['Monto real'])>0 ? toNum(arrPg['Monto real']) : arriendoV) : 0 });
     }
 
-    // Gastos arrendatario pendientes
+    // Gastos arrendatario — seguimiento cuenta como completado
     const gastosArrIds = [
       ...(getQuienPagaBase(p.id+'_gc', p.id, mmB, yyyyB) !== 'yo' ? [p.id+'_gc'] : []),
       ...GASTOS_PROPIEDAD.filter(g => g.propiedadId === p.id &&
@@ -1749,6 +1754,7 @@ function calcBarraCard(p) {
     gastosArrIds.forEach(gid => {
       const est = gid===p.id+'_gc' ? p.gcComunes
         : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+      if (est === 0) return; // ignorar ítems sin monto
       const pg = PAGOS_PROPIEDAD.find(r =>
         (r['Gasto ID']||'').trim()===gid && (r['Mes']||'').trim()===mesKey && isPagado(r));
       items.push({ tipo: 'arrendatario', est, pagado: !!pg, real: 0 });
@@ -3500,29 +3506,83 @@ async function apiPost(data) {
 function abrirConfirmarGasto(gastoId) {
   const g = GASTOS_PERSONALES.find(x => x.id === gastoId);
   if (!g) return;
-  const modal = document.createElement('div');
-  modal.className = 'modal-overlay';
-  modal.id = 'modal-confirmar-gasto';
+
+  const { mm, yyyy } = getMesFiltro();
+  const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
   const montoFmt = g.confirmado && g.montoReal > 0
     ? Math.round(g.montoReal).toLocaleString('es-CL')
     : Math.round(g.montoEstimado).toLocaleString('es-CL');
+
+  // Movimientos bancarios del mes sin vincular — ordenados por similitud de monto
+  const montoEst = g.montoEstimado;
+  const movsVinculables = (DATA.movimientos||[]).map((m, i) => ({ m, i })).filter(({ m }) => {
+    if ((m['Tipo']||'').toLowerCase() !== 'gasto') return false;
+    if ((m['Vinculado']||'') !== '') return false;
+    const f = String(m['Fecha']||'');
+    const mmov = f.length>=7 ? (f.indexOf('/')>=0 ? f.slice(6,10)+'-'+f.slice(3,5) : f.slice(0,7)) : '';
+    return mmov === mesKey;
+  }).sort((a, b) => Math.abs(toNum(a.m['Monto'])-montoEst) - Math.abs(toNum(b.m['Monto'])-montoEst));
+
+  // Movimiento ya vinculado a este gasto
+  const vinculadoIdx = (DATA.movimientos||[]).findIndex(m => (m['Vinculado']||'') === gastoId);
+  const vinculadoMov = vinculadoIdx >= 0 ? DATA.movimientos[vinculadoIdx] : null;
+
+  const movListHtml = movsVinculables.slice(0, 8).map(({ m, i }) => {
+    const desc = (m['Descripción']||m['Descripcion']||m['Comercio']||'—').trim();
+    const monto = toNum(m['Monto']);
+    const similar = Math.abs(monto - montoEst) / (montoEst||1) < 0.15;
+    return `<div id="vlink-${i}" onclick="toggleVinculoGasto(${i},'${gastoId}')"
+      style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--border);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;">
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${desc}</div>
+        <div style="font-size:10px;color:var(--text3);">${m['Fecha']||''} · ${m['Banco']||''}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:${similar?'var(--green)':'var(--text2)'};">${fmt(monto)}</div>
+        ${similar?'<div style="font-size:9px;color:var(--green);">Similar</div>':''}
+      </div>
+      <div class="vlink-check" style="width:16px;font-size:12px;color:var(--blue);font-weight:600;flex-shrink:0;text-align:center;"></div>
+    </div>`;
+  }).join('');
+
+  const vinculadoHtml = vinculadoMov ? `
+    <div style="background:var(--blue-bg);border:1px solid var(--blue);border-radius:var(--radius-sm);padding:8px 12px;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:11px;font-weight:500;color:var(--blue);">Vinculado a movimiento bancario</div>
+        <div style="font-size:10px;color:var(--text3);">${(vinculadoMov['Descripción']||vinculadoMov['Descripcion']||'—').trim()} · ${fmt(toNum(vinculadoMov['Monto']))}</div>
+      </div>
+      <div onclick="desvincularMovGasto(${vinculadoIdx})" style="font-size:10px;color:var(--red);cursor:pointer;">Quitar</div>
+    </div>` : '';
+
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.id = 'modal-confirmar-gasto';
   modal.innerHTML = `
-    <div class="modal-sheet">
+    <div class="modal-sheet" style="max-height:88vh;overflow-y:auto;">
       <div class="modal-handle"></div>
       <div class="modal-title">${g.descripcion}</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:12px;">${g.categoria} · ${g.mes}</div>
+      ${vinculadoHtml}
       <div style="margin-bottom:10px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Monto ${g.confirmado?'real':'estimado'}</div>
         <input id="conf-monto-inp" type="text" inputmode="numeric" value="${montoFmt}"
           oninput="formatSaldoInput(this)"
           style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:20px;font-family:'DM Mono',monospace;font-weight:600;color:var(--text);outline:none;text-align:right;">
       </div>
-      <div style="margin-bottom:14px;">
+      <div style="margin-bottom:${movsVinculables.length>0?'10':'14'}px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:4px;">Notas (opcional)</div>
         <input id="conf-notas-inp" type="text" placeholder="Ej: pagué con efectivo..."
           value="${g.notas||''}"
           style="width:100%;background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:13px;color:var(--text);outline:none;">
       </div>
+      ${movsVinculables.length > 0 && !vinculadoMov ? `
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+          <div style="font-size:11px;color:var(--text3);">Vincular a movimiento bancario</div>
+          <div style="font-size:10px;color:var(--text3);">evita doble conteo</div>
+        </div>
+        <div style="background:var(--bg3);border-radius:8px;overflow:hidden;max-height:160px;overflow-y:auto;">${movListHtml}</div>
+      </div>` : ''}
       ${g.confirmado ? `
         <button class="modal-save-btn" onclick="confirmarGasto('${gastoId}',true)">Actualizar</button>
         <div onclick="confirmarGasto('${gastoId}',false)" style="text-align:center;margin-top:8px;padding:10px;font-size:13px;font-weight:500;color:var(--red);cursor:pointer;border:1px solid var(--red);border-radius:8px;">Desmarcar — no realizado</div>
@@ -3533,7 +3593,62 @@ function abrirConfirmarGasto(gastoId) {
       <div style="text-align:center;margin-top:10px;font-size:13px;color:var(--text3);cursor:pointer;" onclick="document.getElementById('modal-confirmar-gasto').remove()">Cancelar</div>
       <div onclick="eliminarGastoPersonal('${gastoId}')" style="text-align:center;margin-top:8px;font-size:11px;color:var(--red);cursor:pointer;">Eliminar gasto</div>
     </div>`;
+
+  // Restaurar vínculo seleccionado si ya estaba
+  modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
   document.body.appendChild(modal);
+
+  // Marcar movimiento ya vinculado si existe
+  if (vinculadoIdx >= 0) {
+    setTimeout(() => marcarVlinkActivo(vinculadoIdx, gastoId), 50);
+  }
+}
+
+let _gpVinculadoIdx = null; // índice en DATA.movimientos seleccionado para vincular
+
+function toggleVinculoGasto(movIdx, gastoId) {
+  const yaSeleccionado = _gpVinculadoIdx === movIdx;
+  _gpVinculadoIdx = yaSeleccionado ? null : movIdx;
+
+  // Limpiar todos
+  document.querySelectorAll('[id^="vlink-"]').forEach(el => {
+    el.style.background = 'transparent';
+    el.style.borderLeft = '3px solid transparent';
+    el.querySelector('.vlink-check').textContent = '';
+  });
+
+  if (!yaSeleccionado) {
+    marcarVlinkActivo(movIdx, gastoId);
+    // Autocompletar monto
+    const m = DATA.movimientos[movIdx];
+    if (m) {
+      const inp = document.getElementById('conf-monto-inp');
+      if (inp) inp.value = Math.round(toNum(m['Monto'])).toLocaleString('es-CL');
+    }
+  }
+}
+
+function marcarVlinkActivo(movIdx, gastoId) {
+  const el = document.getElementById('vlink-' + movIdx);
+  if (el) {
+    el.style.background = 'var(--blue-bg)';
+    el.style.borderLeft = '3px solid var(--blue)';
+    el.querySelector('.vlink-check').textContent = '✓';
+  }
+}
+
+function desvincularMovGasto(movIdx) {
+  const m = DATA.movimientos[movIdx];
+  if (m) m['Vinculado'] = '';
+  _gpVinculadoIdx = null;
+  // Reabrir modal para reflejar cambio
+  const modal = document.getElementById('modal-confirmar-gasto');
+  if (modal) {
+    const title = modal.querySelector('.modal-title');
+    const gastoId = title ? GASTOS_PERSONALES.find(g => g.descripcion === title.textContent)?.id : null;
+    modal.remove();
+    if (gastoId) abrirConfirmarGasto(gastoId);
+  }
 }
 
 async function confirmarGasto(gastoId, confirmado) {
@@ -3542,10 +3657,34 @@ async function confirmarGasto(gastoId, confirmado) {
   const montoRaw = document.getElementById('conf-monto-inp')?.value || '';
   const monto = parseInt(montoRaw.split('.').join('').replace(/[^0-9]/g,'')) || 0;
   const notas = document.getElementById('conf-notas-inp')?.value || '';
-  g.confirmado          = confirmado;
-  g.montoReal           = confirmado ? monto : 0;
-  g.notas               = notas;
-  g.fechaConfirmacion   = confirmado ? new Date().toISOString().split('T')[0] : '';
+
+  // Vincular movimiento bancario si fue seleccionado
+  if (confirmado && _gpVinculadoIdx !== null) {
+    const m = DATA.movimientos[_gpVinculadoIdx];
+    if (m) {
+      m['Vinculado'] = gastoId;
+      // Guardar vínculo en Sheet
+      try {
+        await fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ action:'vincularMovimiento',
+            fecha: m['Fecha']||'', monto: String(m['Monto']||''),
+            descripcion: m['Descripción']||m['Descripcion']||m['Comercio']||'',
+            banco: m['Banco']||'', gastoId }) });
+      } catch(e) {}
+    }
+  }
+
+  // Si tiene movimiento vinculado, el monto real es 0 (ya está contado en bancarios)
+  const tieneVinculo = _gpVinculadoIdx !== null ||
+    DATA.movimientos.some(m => (m['Vinculado']||'') === gastoId);
+
+  g.confirmado        = confirmado;
+  g.montoReal         = confirmado ? (tieneVinculo ? monto : monto) : 0;
+  g.notas             = tieneVinculo ? (notas ? notas + ' [vinculado]' : '[vinculado]') : notas;
+  g.fechaConfirmacion = confirmado ? new Date().toISOString().split('T')[0] : '';
+
+  _gpVinculadoIdx = null;
+
   await apiPost({ action:'setGastoPersonal', gasto: g });
   document.getElementById('modal-confirmar-gasto')?.remove();
   renderGastosMain();
@@ -3576,6 +3715,7 @@ function renderGastosMain() {
   const gastadoBanco = movs.reduce((s,m) => s + toNum(m['Monto']), 0);
   const gastadoPersonal = (GASTOS_PERSONALES||[])
     .filter(g => g.mes === mesKey && g.confirmado)
+    .filter(g => !DATA.movimientos.some(m => (m['Vinculado']||'') === g.id)) // excluir vinculados
     .reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
 
   // Pagos de propiedades marcados como míos y pagados (no seguimiento)
