@@ -811,7 +811,7 @@
 </nav>
 
 <script>// Presupuestos — se cargan desde Sheet, fallback a valores por defecto
-const API_URL = 'https://script.google.com/macros/s/AKfycbxQy2YSpOybpvn-H1HASXiCvIkld3TW0duEzzUnjX4IhsHRrGsRMG9j8jQyqLfoIqOC/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbzNPZfCr4h6eNNoFPIEIFsWhg4k8fWm0pu08cqdlzY1d5XSbyQPsM8ni1OG8kpNcbwu/exec';
 
 // Colores e iniciales por banco
 const BANK_STYLE = {
@@ -2771,7 +2771,7 @@ async function desmarcarPago() {
   cerrarConfirmPago();
 
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
@@ -2794,7 +2794,7 @@ async function ejecutarPago() {
     notasExtra = (notasExtra ? notasExtra + '|' : '') + 'vinculado:' + _cpMovVinculadoIdx;
     // Guardar vínculo en Sheet
     try {
-      await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+      await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
         body: JSON.stringify({ action: 'vincularMovimiento', movIdx: _cpMovVinculadoIdx, gastoId: _confirmGastoId }) });
     } catch(e) {}
   }
@@ -2831,7 +2831,7 @@ async function ejecutarPago() {
   _cpMovVinculadoIdx = null;
 
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
@@ -2861,7 +2861,7 @@ async function _ejecutarPagoOriginal(gastoId, propiedadId, montoEst, esFijo) {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
   // Re-render completo — actualiza hero + lista
@@ -2919,7 +2919,7 @@ async function guardarGastoPropiedad() {
   GASTOS_PROPIEDAD.push(gasto);
 
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ action: 'setGastoPropiedad', gasto }) });
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'}, body: JSON.stringify({ action: 'setGastoPropiedad', gasto }) });
   } catch(e) {}
 
   cerrarFormGasto();
@@ -2957,7 +2957,7 @@ async function toggleArriendoRecibido(propiedadId, monto) {
   else PAGOS_PROPIEDAD.push(pagoRow);
 
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({ action: 'setPagoPropiedad', pago: nuevoPago }) });
   } catch(e) {}
 
@@ -3030,7 +3030,7 @@ async function guardarDatosArrendatario() {
   console.log('Guardando arrendatario:', JSON.stringify(arrendatario));
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors',
+    await fetch(API_URL, { method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ action: 'setArrendatario', arrendatario }) });
   } catch(e) { console.error('Error fetch:', e); }
@@ -3107,7 +3107,7 @@ async function guardarResponsable() {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors',
+    await fetch(API_URL, { method: 'POST',
       headers: {'Content-Type':'application/json'},
       body: JSON.stringify({ action: 'setGastoResponsable', item }) });
   } catch(e) {}
@@ -3160,7 +3160,7 @@ async function guardarArriendoHistorial() {
 
   // Guardar en Sheet
   try {
-    await fetch(API_URL, { method: 'POST', mode: 'no-cors', headers: {'Content-Type':'application/json'},
+    await fetch(API_URL, { method: 'POST', headers: {'Content-Type':'text/plain'},
       body: JSON.stringify({ action: 'setArriendoHistorial', item }) });
   } catch(e) {}
 
@@ -3637,15 +3637,22 @@ function marcarVlinkActivo(movIdx, gastoId) {
   }
 }
 
-function desvincularMovGasto(movIdx) {
+async function desvincularMovGasto(movIdx) {
   const m = DATA.movimientos[movIdx];
-  if (m) m['Vinculado'] = '';
+  if (!m) return;
+  const gastoId = m['Vinculado'] || '';
+  m['Vinculado'] = '';
   _gpVinculadoIdx = null;
-  // Reabrir modal para reflejar cambio
+
+  // Persistir en Sheet
+  try {
+    await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain'},
+      body: JSON.stringify({ action:'desvincularMovimiento', gastoId }) });
+  } catch(e) {}
+
+  // Reabrir modal
   const modal = document.getElementById('modal-confirmar-gasto');
   if (modal) {
-    const title = modal.querySelector('.modal-title');
-    const gastoId = title ? GASTOS_PERSONALES.find(g => g.descripcion === title.textContent)?.id : null;
     modal.remove();
     if (gastoId) abrirConfirmarGasto(gastoId);
   }
@@ -3663,14 +3670,31 @@ async function confirmarGasto(gastoId, confirmado) {
     const m = DATA.movimientos[_gpVinculadoIdx];
     if (m) {
       m['Vinculado'] = gastoId;
-      // Guardar vínculo en Sheet
+      const vinPayload = {
+        action: 'vincularMovimiento',
+        rowIndex: _gpVinculadoIdx + 2, // +1 header +1 base-0→base-1
+        fecha:        m['Fecha'] || '',
+        monto:        String(m['Monto'] || ''),
+        descripcion:  m['Descripción'] || m['Descripcion'] || m['Comercio'] || '',
+        banco:        m['Banco'] || '',
+        gastoId
+      };
       try {
-        await fetch(API_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'},
-          body: JSON.stringify({ action:'vincularMovimiento',
-            fecha: m['Fecha']||'', monto: String(m['Monto']||''),
-            descripcion: m['Descripción']||m['Descripcion']||m['Comercio']||'',
-            banco: m['Banco']||'', gastoId }) });
-      } catch(e) {}
+        // Reutilizar setCategoria (ya funciona) para también guardar el vínculo
+        const vinPayload = {
+          action: 'setVinculado',
+          rowIndex: _gpVinculadoIdx + 2,
+          fecha:        m['Fecha'] || '',
+          monto:        String(m['Monto'] || ''),
+          descripcion:  m['Descripción'] || m['Descripcion'] || m['Comercio'] || '',
+          banco:        m['Banco'] || '',
+          gastoId
+        };
+        const params = new URLSearchParams(vinPayload);
+        const r = await fetch(`${API_URL}?${params.toString()}`);
+        const txt = await r.text();
+        console.log('[vincular] respuesta:', txt);
+      } catch(e) { console.warn('[vincular] error:', e); }
     }
   }
 
@@ -4210,8 +4234,8 @@ async function guardarLimitesMes(catId, mesKeys) {
     else if (val > 0) { PRESUPUESTOS_DATA.push({ id: catId+'_'+mesKey, catId, mes: mesKey, limite: val }); }
     // Guardar en Sheet
     if (val >= 0) {
-      await fetch(API_URL, { method:'POST', mode:'no-cors',
-        headers:{'Content-Type':'application/json'},
+      await fetch(API_URL, { method:'POST',
+        headers:{'Content-Type':'text/plain'},
         body: JSON.stringify({ action:'setPresupuestoMes', catId, mes: mesKey, limite: val }) });
     }
   }
@@ -4269,8 +4293,8 @@ async function guardarNuevaCat() {
   const nueva = { id, nombre, tipo: _ncatTipo, color, bg: hexToBg(color), activo: true };
   CATEGORIAS_DATA.push(nueva);
   // Guardar en Sheet
-  await fetch(API_URL, { method:'POST', mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
+  await fetch(API_URL, { method:'POST',
+    headers:{'Content-Type':'text/plain'},
     body: JSON.stringify({ action:'setCategoriaPersonal', categoria: nueva }) });
   document.getElementById('modal-nueva-cat')?.remove();
   GASTO_CAT_SELECTED = id;
@@ -4356,8 +4380,8 @@ function aprobarMovimiento(id, catId) {
   if (!m) return;
   const cat = getCatConfig(catId || 'otros');
   m['Categoría'] = cat.nombre;
-  fetch(API_URL, { method:'POST', mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
+  fetch(API_URL, { method:'POST',
+    headers:{'Content-Type':'text/plain'},
     body: JSON.stringify({ action:'setCategoria', id, categoria: cat.nombre }) });
   renderGastosResumen();
   renderGastosMovsCombinado();
@@ -4367,8 +4391,8 @@ function ignorarMovimiento(id) {
   const m = (DATA.movimientos||[]).find(x => x['ID'] === id);
   if (!m) return;
   m['Categoría'] = 'ignorado';
-  fetch(API_URL, { method:'POST', mode:'no-cors',
-    headers:{'Content-Type':'application/json'},
+  fetch(API_URL, { method:'POST',
+    headers:{'Content-Type':'text/plain'},
     body: JSON.stringify({ action:'setCategoria', id, categoria: 'ignorado' }) });
   renderGastosResumen();
   renderGastosMovsCombinado();
@@ -4452,7 +4476,7 @@ function seleccionarCat(movIdx, catId) {
 
   fetch(API_URL, {
     method: 'POST',
-    mode: 'no-cors',
+    
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload)
   }).catch(e => console.warn('[setCategoria] error fetch:', e));
@@ -4705,7 +4729,7 @@ async function guardarSaldos() {
     }));
     const resp = await fetch(API_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ action: 'setSaldos', mesKey, saldos: saldosPayload })
     });
