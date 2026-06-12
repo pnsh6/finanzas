@@ -317,18 +317,14 @@
       <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:8px;">
         <div style="font-size:11px;color:var(--text3);margin-bottom:2px;">Saldo disponible</div>
         <div id="total-disponible" style="font-family:'DM Mono',monospace;font-size:30px;font-weight:500;color:var(--text);letter-spacing:-1px;line-height:1.1;margin-bottom:10px;">--</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;padding-top:10px;border-top:1px solid var(--border);">
+        <div style="display:grid;grid-template-columns:1fr 1fr;padding-top:10px;border-top:1px solid var(--border);">
           <div>
             <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Ingresos</div>
             <div id="home-ingresos" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--green);">--</div>
           </div>
-          <div style="text-align:center;">
+          <div style="text-align:right;">
             <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Gastos</div>
             <div id="home-gastado" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--red);">--</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:10px;color:var(--text3);margin-bottom:2px;">Neto</div>
-            <div id="total-delta" style="font-family:'DM Mono',monospace;font-size:12px;font-weight:500;">--</div>
           </div>
         </div>
       </div>
@@ -942,11 +938,13 @@ function toNum(str) {
 }
 
 function fmt(n) {
-  return '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
+  const abs = Math.round(Math.abs(n));
+  return (n < 0 ? '-' : '') + '$' + abs.toLocaleString('es-CL');
 }
 
 function fmtK(n) {
-  return fmt(Math.round(Math.abs(n)));
+  const abs = Math.round(Math.abs(n));
+  return (n < 0 ? '-' : '') + '$' + abs.toLocaleString('es-CL');
 }
 
 function parseFecha(str) {
@@ -1432,31 +1430,93 @@ function renderHome() {
   const { mm, yyyy } = getMesFiltro();
   const mesKey = `${yyyy}-${String(mm+1).padStart(2,'0')}`;
   const movsMesActual = movsMes();
-  let ingMes = 0, gasMes = 0;
-  movsMesActual.forEach(m => {
-    const monto = toNum(m['Monto']);
-    if (m['Tipo'] === 'ingreso') ingMes += monto; else gasMes += monto;
-  });
 
-  // Sumar gastos personales confirmados (excluir los vinculados a movimiento bancario)
-  const gastadoPersonalH = (GASTOS_PERSONALES||[])
-    .filter(g => g.mes === mesKey && g.confirmado)
-    .filter(g => !DATA.movimientos.some(m => (m['Vinculado']||'') === g.id))
-    .reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
-  gasMes += gastadoPersonalH;
+  // ── INGRESOS ─────────────────────────────────────────────
+  // 1. Saldo manual ingresado (sum de DATA.saldos para el mes)
+  const saldoManual = DATA.saldos.reduce((s, b) => {
+    const banco = (b['Banco']||'').trim();
+    if (!banco) return s;
+    return s + (toNum(b[mesKey]) || toNum(b['Saldo']) || 0);
+  }, 0);
+
+  // 2. Arriendos recibidos (PAGOS_PROPIEDAD con _arriendo + Pagado=true)
   const ingArriendoRecibido = PROPIEDADES.filter(p => p.tipo !== 'habitada').reduce((sum, p) => {
-    const gastoId = p.id + '_arriendo';
-    const pago = PAGOS_PROPIEDAD.find(pg => {
-      const pgId  = (pg['Gasto ID']||'').trim();
-      const pgMes = (pg['Mes']||'').trim();
-      const pgPag = String(pg['Pagado']||'').trim().toLowerCase();
-      return pgId === gastoId && pgMes === mesKey && pgPag === 'true';
-    });
+    const pago = PAGOS_PROPIEDAD.find(pg =>
+      (pg['Gasto ID']||'').trim() === p.id + '_arriendo' &&
+      (pg['Mes']||'').trim() === mesKey &&
+      String(pg['Pagado']||'').toLowerCase() === 'true'
+    );
     if (!pago) return sum;
     const montoReal = toNum(pago['Monto real']);
     return sum + (montoReal > 0 ? montoReal : p.arriendo);
   }, 0);
-  ingMes += ingArriendoRecibido;
+
+  const totalIngresos = saldoManual + ingArriendoRecibido;
+
+  // ── GASTOS ────────────────────────────────────────────────
+  // 1. Movimientos bancarios del mes (gastos, excluyendo vinculados)
+  const gasBanco = movsMesActual
+    .filter(m => m['Tipo'] === 'gasto')
+    .reduce((s, m) => s + toNum(m['Monto']), 0);
+
+  // 2. Gastos de propiedades pagados (míos, no seguimiento)
+  const { mm: mmGM, yyyy: yyyyGM } = getMesFiltro();
+  const gasPropiedades = (() => {
+    let total = 0;
+    PROPIEDADES.forEach(p => {
+      const ids = [
+        p.id+'_hip',
+        ...(getQuienPagaBase(p.id+'_gc', p.id, mmGM, yyyyGM)==='yo' ? [p.id+'_gc'] : []),
+        ...GASTOS_PROPIEDAD.filter(g => g.propiedadId===p.id && getQuienPagaVigente(g.id, mmGM, yyyyGM)==='yo').map(g=>g.id)
+      ];
+      ids.forEach(gid => {
+        const pg = PAGOS_PROPIEDAD.find(pg2 =>
+          (pg2['Gasto ID']||'').trim()===gid &&
+          (pg2['Mes']||'').trim()===mesKey &&
+          String(pg2['Pagado']||'').toLowerCase()==='true' &&
+          (pg2['Notas']||'')!=='seguimiento'
+        );
+        if (pg) {
+          const est = gid===p.id+'_hip' ? p.hipoteca : gid===p.id+'_gc' ? p.gcComunes
+            : (GASTOS_PROPIEDAD.find(g=>g.id===gid)||{montoEstimado:0}).montoEstimado;
+          total += toNum(pg['Monto real']) > 0 ? toNum(pg['Monto real']) : est;
+        }
+      });
+    });
+    return total;
+  })();
+
+  // 3. Gastos personales confirmados no vinculados a movimiento bancario
+  const gasPersonales = (GASTOS_PERSONALES||[])
+    .filter(g => g.mes === mesKey && g.confirmado)
+    .filter(g => !DATA.movimientos.some(m => (m['Vinculado']||'') === g.id))
+    .reduce((s,g) => s + (g.montoReal > 0 ? g.montoReal : g.montoEstimado), 0);
+
+  const totalGastos = gasBanco + gasPropiedades + gasPersonales;
+
+  // ── SALDO DISPONIBLE ──────────────────────────────────────
+  const saldoDisponible = totalIngresos - totalGastos;
+
+  // ── RENDER ────────────────────────────────────────────────
+  const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
+
+  setEl('total-disponible', fmt(saldoDisponible));
+  document.getElementById('total-disponible').style.color =
+    saldoDisponible >= 0 ? 'var(--text)' : 'var(--red)';
+
+  // Ingresos
+  const ingEl = document.getElementById('home-ingresos');
+  if (ingEl) {
+    ingEl.textContent = '+' + fmt(totalIngresos);
+    ingEl.style.color = 'var(--green)';
+  }
+
+  // Gastos
+  const gastEl = document.getElementById('home-gastado');
+  if (gastEl) {
+    gastEl.textContent = '-' + fmt(totalGastos);
+    gastEl.style.color = 'var(--red)';
+  }
 
   // Fecha
   const fechaEl = document.getElementById('home-fecha-lbl');
@@ -1467,241 +1527,152 @@ function renderHome() {
     fechaEl.textContent = `${dias[hoy.getDay()]} ${hoy.getDate()} ${meses[hoy.getMonth()]}`;
   }
 
-  // Saldo total — leer columna del mes actual del Sheet
-  let totalSaldoInicial = 0;
-  const mesKeyBase = (() => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; })();
-  const ingresoArriendoMensual = PROPIEDADES.filter(p => p.tipo !== 'habitada').reduce((s,p) => s+p.arriendo, 0);
-  const egresoRecurrenteMensual = GASTOS_PROPIEDAD.filter(g => (g.quienPaga||'yo').toLowerCase()==='yo').reduce((s,g) => s+g.montoEstimado,0)
-    + PROPIEDADES.reduce((s,p) => s+p.hipoteca+p.gcComunes, 0);
-  DATA.saldos.forEach(s => {
-    const banco = (s['Banco']||'').trim();
-    if (!banco) return;
-    // Para mes actual: leer columna del mes (ej: 2026-06), fallback a Saldo
-    // Para mes futuro: proyectar desde el mes actual
-    const saldoMesActual = toNum(s[mesKeyBase]) || toNum(s['Saldo']) || 0;
-    const saldoMesFiltro = toNum(s[mesKey]) || toNum(s['Saldo']) || 0;
-    if (MES_OFFSET > 0) {
-      // Proyección: saldo base + flujo recurrente por cada mes adelante
-      const proyDelta = ingresoArriendoMensual - egresoRecurrenteMensual;
-      totalSaldoInicial += saldoMesActual + proyDelta * MES_OFFSET;
-    } else {
-      totalSaldoInicial += saldoMesFiltro;
-    }
-  });
-  const totalReal = totalSaldoInicial + ingMes - gasMes;
-
-  const setEl = (id, v) => { const e = document.getElementById(id); if (e) e.textContent = v; };
-  setEl('total-disponible', fmt(totalReal));
-
-  // Neto
-  const delta = ingMes - gasMes;
-  const deltaEl = document.getElementById('total-delta');
-  if (deltaEl) {
-    if (MES_OFFSET > 0) {
-      const p = ingresoArriendoMensual - egresoRecurrenteMensual;
-      deltaEl.textContent = (p >= 0 ? '+' : '') + fmtK(p);
-      deltaEl.style.color = p >= 0 ? 'var(--green)' : 'var(--red)';
-    } else {
-      deltaEl.textContent = (delta >= 0 ? '+' : '') + fmtK(delta);
-      deltaEl.style.color = delta >= 0 ? 'var(--green)' : 'var(--red)';
-    }
-  }
-
-  // Ingresos / Gastos
-  const ingEl = document.getElementById('home-ingresos');
-  if (ingEl) { ingEl.textContent = ingMes > 0 ? '+'+fmtK(ingMes) : '—'; ingEl.style.color = ingMes>0?'var(--green)':'var(--text3)'; }
-  const gastEl = document.getElementById('home-gastado');
-  if (gastEl) { gastEl.textContent = gasMes > 0 ? '−'+fmtK(gasMes) : '—'; gastEl.style.color = gasMes>0?'var(--red)':'var(--text3)'; }
-
-  // Health pill
+  // Health pill (basado en presupuesto de gastos personales)
   const totalPres = Object.values(getPRESUPUESTOS()).reduce((a,b) => a+b, 0);
-  const pct = totalPres > 0 ? gasMes / totalPres : 0;
-  const barCol = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)';
+  const pct = totalPres > 0 ? gasBanco / totalPres : 0;
   const healthDot = document.getElementById('health-dot');
   const healthTxt = document.getElementById('health-txt');
   const pill = document.getElementById('home-health-pill');
   if (healthDot && healthTxt && pill) {
-    if (pct > 1) {
-      healthDot.style.background = 'var(--red)'; healthTxt.style.color = 'var(--red)'; healthTxt.textContent = 'Sobre presupuesto';
-      pill.style.background = 'rgba(220,38,38,0.08)';
+    if (saldoDisponible < 0) {
+      healthDot.style.background='var(--red)'; healthTxt.style.color='var(--red)';
+      healthTxt.textContent='Saldo negativo'; pill.style.background='rgba(220,38,38,0.08)';
     } else if (pct > 0.85) {
-      healthDot.style.background = 'var(--amber)'; healthTxt.style.color = 'var(--amber)'; healthTxt.textContent = 'Cerca del límite';
-      pill.style.background = 'rgba(180,83,9,0.08)';
+      healthDot.style.background='var(--amber)'; healthTxt.style.color='var(--amber)';
+      healthTxt.textContent='Cerca del límite'; pill.style.background='rgba(180,83,9,0.08)';
     } else {
-      healthDot.style.background = 'var(--green)'; healthTxt.style.color = 'var(--green)'; healthTxt.textContent = 'Al día';
-      pill.style.background = 'rgba(34,197,94,0.08)';
+      healthDot.style.background='var(--green)'; healthTxt.style.color='var(--green)';
+      healthTxt.textContent='Al día'; pill.style.background='rgba(34,197,94,0.08)';
     }
   }
 
-  // Presupuesto bar
-  const pctNum = Math.min(100, Math.round(pct * 100));
-  const now = new Date();
+  // Presupuesto bar (gastos bancarios vs presupuesto)
+  const barCol = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)';
+  const pctNum = Math.min(100, Math.round(pct*100));
   const mesNombre = new Date(yyyy, mm, 1).toLocaleString('es-CL', {month:'long'});
   setEl('pres-mes-lbl', mesNombre);
-  setEl('pres-gastado', fmtK(gasMes));
-  setEl('pres-total', totalPres > 0 ? fmtK(totalPres) : '—');
+  setEl('pres-gastado', fmt(gasBanco));
+  setEl('pres-total', totalPres > 0 ? fmt(totalPres) : '—');
   const fill = document.getElementById('pres-fill');
-  if (fill) { fill.style.width = pctNum + '%'; fill.style.background = barCol; }
+  if (fill) { fill.style.width = pctNum+'%'; fill.style.background = barCol; }
   const pctLbl = document.getElementById('pres-pct-lbl');
-  if (pctLbl) { pctLbl.textContent = pctNum + '% usado'; pctLbl.style.color = pct > 1 ? 'var(--red)' : pct > 0.85 ? 'var(--amber)' : 'var(--blue)'; }
+  if (pctLbl) { pctLbl.textContent = pctNum+'% usado'; pctLbl.style.color = pct>1?'var(--red)':pct>0.85?'var(--amber)':'var(--blue)'; }
+  const now = new Date();
   const diasMes = new Date(yyyy, mm+1, 0).getDate();
   const diasRest = diasMes - now.getDate();
-  setEl('pres-libre-lbl', totalPres > 0 ? `${fmtK(totalPres - gasMes)} libre · ${diasRest} días` : '');
+  setEl('pres-libre-lbl', totalPres > 0 ? `${fmt(totalPres - gasBanco)} libre · ${diasRest} días` : '');
 
-  // ── Categorías barras ──────────────────────────────────────
+  // Categorías chart
   const catsMesEl = document.getElementById('home-mes-cat-lbl');
   if (catsMesEl) catsMesEl.textContent = mesNombre;
-
   const presupuestos = getPRESUPUESTOS();
   const porCat = {};
-  movsMesActual.filter(m => m['Tipo'] === 'gasto').forEach(m => {
-    const cat = m['Categoría'] || m['Categoria'] || 'Otros';
-    porCat[cat] = (porCat[cat] || 0) + toNum(m['Monto']);
+  movsMesActual.filter(m => m['Tipo']==='gasto').forEach(m => {
+    const cat = m['Categoría']||m['Categoria']||'Otros';
+    porCat[cat] = (porCat[cat]||0) + toNum(m['Monto']);
   });
-  // También incluir gastos personales confirmados del mes
   (GASTOS_PERSONALES||[]).filter(g => g.mes===mesKey && g.confirmado).forEach(g => {
-    const cat = g.categoria || 'Otros';
-    porCat[cat] = (porCat[cat]||0) + (g.montoReal > 0 ? g.montoReal : g.montoEstimado);
+    const cat = g.categoria||'Otros';
+    porCat[cat] = (porCat[cat]||0) + (g.montoReal>0?g.montoReal:g.montoEstimado);
   });
-
   const catColors = ['var(--blue)','var(--green)','var(--amber)','var(--purple,#7c3aed)','var(--red)'];
-  const topCats = Object.entries(porCat).sort((a,b) => b[1]-a[1]).slice(0, 5);
+  const topCats = Object.entries(porCat).sort((a,b)=>b[1]-a[1]).slice(0,5);
   const catsEl = document.getElementById('home-cats-bars');
   if (catsEl) {
-    if (topCats.length === 0) {
-      catsEl.innerHTML = `<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">Sin movimientos este mes</div>`;
+    if (topCats.length===0) {
+      catsEl.innerHTML=`<div style="font-size:12px;color:var(--text3);text-align:center;padding:8px 0;">Sin movimientos este mes</div>`;
     } else {
-      catsEl.innerHTML = topCats.map(([cat, v], i) => {
-        const lim = presupuestos[cat] || 0;
-        const pctCat = lim > 0 ? Math.min(100, Math.round(v/lim*100)) : null;
-        const sobre = lim > 0 && v > lim;
-        const col = sobre ? 'var(--red)' : catColors[i % catColors.length];
-        const limTxt = lim > 0 ? ` <span style="color:var(--text3);font-weight:400;">/ ${fmtK(lim)}</span>` : '';
-        const pctTxt = pctCat !== null ? `<span style="font-size:10px;color:${sobre?'var(--red)':col};margin-left:4px;">${pctCat}%</span>` : '';
+      catsEl.innerHTML = topCats.map(([cat,v],i) => {
+        const lim = presupuestos[cat]||0;
+        const pctCat = lim>0?Math.min(100,Math.round(v/lim*100)):null;
+        const sobre = lim>0 && v>lim;
+        const col = sobre?'var(--red)':catColors[i%catColors.length];
+        const limTxt = lim>0?` <span style="color:var(--text3);font-weight:400;">/ ${fmt(lim)}</span>`:'';
+        const pctTag = pctCat!==null?`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:${sobre?'var(--red-bg)':'var(--bg3)'};color:${col};margin-left:4px;">${pctCat}%</span>`:'';
         return `<div>
           <div style="display:flex;justify-content:space-between;margin-bottom:3px;align-items:center;">
             <div style="display:flex;align-items:center;gap:5px;">
               <span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block;flex-shrink:0;"></span>
-              <span style="font-size:11px;color:var(--text);">${cat}</span>${pctTxt}
+              <span style="font-size:11px;color:var(--text);">${cat}</span>${pctTag}
             </div>
-            <span style="font-size:11px;font-family:'DM Mono',monospace;color:${sobre?'var(--red)':'var(--text2)'};">${fmtK(v)}${limTxt}</span>
+            <span style="font-size:11px;font-family:'DM Mono',monospace;color:${sobre?'var(--red)':'var(--text2)'};">${fmt(v)}${limTxt}</span>
           </div>
           <div style="height:4px;background:var(--bg3);border-radius:2px;overflow:hidden;">
-            <div style="height:4px;border-radius:2px;width:${pctCat||Math.min(100,Math.round(v/gasMes*100))}%;background:${col};transition:width 0.5s;"></div>
+            <div style="height:4px;border-radius:2px;width:${pctCat||Math.min(100,Math.round(v/gasBanco*100))}%;background:${col};transition:width 0.5s;"></div>
           </div>
         </div>`;
       }).join('');
     }
   }
 
-  // ── Gráfico diario ──────────────────────────────────────────
+  // Gráfico diario
   const diaHoy = now.getDate();
-  const diasData = Array.from({length: diaHoy}, (_, i) => i + 1);
+  const diasData = Array.from({length: diaHoy}, (_, i) => i+1);
   const gastosDia = {};
-  movsMesActual.filter(m => m['Tipo']==='gasto').forEach(m => {
+  movsMesActual.filter(m=>m['Tipo']==='gasto').forEach(m => {
     const f = String(m['Fecha']||'');
     let dia = 0;
-    if (f.indexOf('/') >= 0) dia = parseInt(f.split('/')[0]) || 0;
-    else if (f.length >= 10) dia = parseInt(f.split('-')[2]) || 0;
-    if (dia > 0) gastosDia[dia] = (gastosDia[dia]||0) + toNum(m['Monto']);
+    if (f.indexOf('/')>=0) dia = parseInt(f.split('/')[0])||0;
+    else if (f.length>=10) dia = parseInt(f.split('-')[2])||0;
+    if (dia>0) gastosDia[dia] = (gastosDia[dia]||0) + toNum(m['Monto']);
   });
-  const dataD = diasData.map(d => gastosDia[d] || 0);
-  const dataAcum = dataD.reduce((acc, v) => { acc.push((acc[acc.length-1]||0) + v); return acc; }, []);
-
-  setEl('home-chart-desde', '1 ' + mesNombre.slice(0,3));
-
+  const dataD = diasData.map(d => gastosDia[d]||0);
+  const dataAcum = dataD.reduce((acc,v) => { acc.push((acc[acc.length-1]||0)+v); return acc; }, []);
+  setEl('home-chart-desde', '1 '+mesNombre.slice(0,3));
   const canvas = document.getElementById('home-chart-gastos');
   if (canvas && window.Chart) {
     if (canvas._chartInstance) canvas._chartInstance.destroy();
     const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const gridC = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-    const textC = isDark ? '#888' : '#999';
+    const gridC = isDark?'rgba(255,255,255,0.06)':'rgba(0,0,0,0.05)';
+    const textC = isDark?'#888':'#999';
     canvas._chartInstance = new Chart(canvas, {
-      type: 'line',
-      data: {
+      type:'line',
+      data:{
         labels: diasData,
-        datasets: [
-          {
-            label: 'Diario',
-            data: dataD,
-            borderColor: '#185FA5',
-            backgroundColor: isDark ? 'rgba(24,95,165,0.1)' : 'rgba(24,95,165,0.07)',
-            borderWidth: 1.5,
-            pointRadius: dataD.map(v => v > 0 ? 2.5 : 0),
-            pointBackgroundColor: '#185FA5',
-            fill: true,
-            tension: 0.35,
-            yAxisID: 'y',
-          },
-          {
-            label: 'Acumulado',
-            data: dataAcum,
-            borderColor: '#BA7517',
-            borderWidth: 1.5,
-            borderDash: [4, 3],
-            pointRadius: 0,
-            fill: false,
-            tension: 0.3,
-            yAxisID: 'y2',
-          }
+        datasets:[
+          { label:'Diario', data:dataD, borderColor:'#185FA5', backgroundColor:isDark?'rgba(24,95,165,0.1)':'rgba(24,95,165,0.07)', borderWidth:1.5, pointRadius:dataD.map(v=>v>0?2.5:0), pointBackgroundColor:'#185FA5', fill:true, tension:0.35, yAxisID:'y' },
+          { label:'Acumulado', data:dataAcum, borderColor:'#BA7517', borderWidth:1.5, borderDash:[4,3], pointRadius:0, fill:false, tension:0.3, yAxisID:'y2' }
         ]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              title: ctx => `Día ${ctx[0].label}`,
-              label: ctx => ctx.dataset.label + ': ' + fmtK(Math.round(ctx.parsed.y))
-            }
-          }
-        },
-        scales: {
-          x: {
-            ticks: { color: textC, font: { size: 9 }, maxTicksLimit: 5, maxRotation: 0, autoSkip: true },
-            grid: { color: gridC },
-            border: { display: false }
-          },
-          y: {
-            position: 'left',
-            ticks: { color: textC, font: { size: 9 }, maxTicksLimit: 3, callback: v => fmtK(v) },
-            grid: { color: gridC },
-            border: { display: false }
-          },
-          y2: {
-            position: 'right',
-            ticks: { color: '#BA7517', font: { size: 9 }, maxTicksLimit: 3, callback: v => fmtK(v) },
-            grid: { display: false },
-            border: { display: false }
-          }
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{ legend:{display:false}, tooltip:{ callbacks:{ title:ctx=>`Día ${ctx[0].label}`, label:ctx=>ctx.dataset.label+': '+fmt(Math.round(ctx.parsed.y)) }}},
+        scales:{
+          x:{ticks:{color:textC,font:{size:9},maxTicksLimit:5,maxRotation:0},grid:{color:gridC},border:{display:false}},
+          y:{position:'left',ticks:{color:textC,font:{size:9},maxTicksLimit:3,callback:v=>fmt(v)},grid:{color:gridC},border:{display:false}},
+          y2:{position:'right',ticks:{color:'#BA7517',font:{size:9},maxTicksLimit:3,callback:v=>fmt(v)},grid:{display:false},border:{display:false}}
         }
       }
     });
+  }
+
+  // Timestamp actualización
+  const updEl = document.getElementById('home-last-update');
+  if (updEl) {
+    const h = String(now.getHours()).padStart(2,'0');
+    const mi = String(now.getMinutes()).padStart(2,'0');
+    updEl.textContent = `Actualizado ${h}:${mi}`;
   }
 
   // Alertas
   const alertas = generarAlertas(movsMesActual);
   const cont = document.getElementById('alertas-container');
   if (!cont) return;
-  if (alertas.length === 0) {
-    cont.innerHTML = '';
+  if (alertas.length===0) {
+    cont.innerHTML='';
   } else {
-    const tipo = alertas.some(a => a.tipo === 'red') ? 'warn' : 'blue-s';
+    const tipo = alertas.some(a=>a.tipo==='red')?'warn':'blue-s';
     const stripId = 'alert-strip-main';
-    cont.innerHTML = `<div class="alert-strip ${tipo} expanded" id="${stripId}">
+    cont.innerHTML=`<div class="alert-strip ${tipo} expanded" id="${stripId}">
       <div class="alert-strip-head" onclick="document.getElementById('${stripId}').classList.toggle('expanded')">
         <div class="alert-strip-dot"></div>
         <span class="alert-strip-txt">${alertas.length} alerta${alertas.length>1?'s':''}</span>
         <span class="alert-strip-chev">›</span>
       </div>
-      <div class="alert-items">${alertas.map(a => `<div class="alert-item-row ${a.tipo==='blue'?'blue':''}" ${a.accion?`onclick="${a.accion}" style="cursor:pointer"`:''}>· ${a.titulo} — ${a.sub}</div>`).join('')}</div>
+      <div class="alert-items">${alertas.map(a=>`<div class="alert-item-row ${a.tipo==='blue'?'blue':''}" ${a.accion?`onclick="${a.accion}" style="cursor:pointer"`:''}>· ${a.titulo} — ${a.sub}</div>`).join('')}</div>
     </div>`;
   }
 }
-
-
 
 
 // ── RENDER GASTOS ─────────────────────────────────────────────
@@ -1905,7 +1876,7 @@ function renderInversiones() {
         </div>
         <div class="prop-foot">
           <span class="prop-foot-l">Neto del mes</span>
-          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${(neto>=0?'+':'-')+fmt(Math.abs(neto))}</span>
+          <span class="prop-foot-v" style="color:${neto>=0?'var(--green)':'var(--red)'}">${(neto>=0?'+':'')+fmt(neto)}</span>
         </div>
         ${calcBarraCard(p).html}
       </div>`;
@@ -1930,7 +1901,7 @@ function renderInversiones() {
   document.getElementById('inv-egresos').textContent   = fmt(totalEgresos);
   document.getElementById('inv-egresos').style.color   = 'var(--red)';
   const resEl = document.getElementById('inv-resultado');
-  resEl.textContent = (resultado>=0?'+':'-') + fmt(Math.abs(resultado));
+  resEl.textContent = (resultado>=0?'+':'')+fmt(resultado);
   resEl.style.color = resultado >= 0 ? 'var(--green)' : 'var(--red)';
   // Actualizar label del mes — sincronizado con selector global
   const invMesEl = document.getElementById('inv-mes-label');
@@ -2139,7 +2110,7 @@ function showProp(id) {
     const colNetoD = din.netoReal >= 0 ? 'var(--green)' : 'var(--red)';
     const bgNetoD  = din.netoReal >= 0 ? '#EDFAF3' : '#FEF2F2';
     const netoLabelD = din.netoReal !== 0
-      ? (din.netoReal >= 0 ? '+' : '-') + fmtK(Math.abs(din.netoReal))
+      ? (din.netoReal >= 0 ? '+' : '') + fmtK(din.netoReal)
       : '—';
 
     // Neto presupuestado = arriendo vigente - mis gastos estimados (lo que debería ser)
@@ -3812,7 +3783,7 @@ function renderGastosMain() {
   const setEl = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
   setEl('g-gastado',     fmt(gastado));
   setEl('g-presupuesto', presTot > 0 ? fmt(presTot) : '—');
-  setEl('g-disponible',  presTot > 0 ? (disp >= 0 ? '+' : '') + fmt(Math.abs(disp)) : '—');
+  setEl('g-disponible',  presTot > 0 ? (disp >= 0 ? '+' : '') + fmt(disp) : '—');
   setEl('g-pct',         pct + '%');
   const bar = document.getElementById('g-bar');
   if (bar) { bar.style.width = pct + '%'; bar.style.background = barCol; }
