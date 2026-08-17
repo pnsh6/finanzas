@@ -2,89 +2,183 @@
 <html>
   <head>
     <base target="_top">
-    <!-- Carga la librería de lectura de códigos de barras / QR -->
-    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <!-- Carga la librería de lectura de códigos de barras / QR (versión fija para evitar roturas) -->
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
     <style>
       body { font-family: Arial, sans-serif; padding: 15px; margin: 0; background: #f4f6f8; }
-      .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+      .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        margin-bottom: 15px; }
       #reader { width: 100%; max-width: 400px; margin: 0 auto; }
-      button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; margin-top: 10px; }
-      select { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; }
+      button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px;
+        font-size: 16px; font-weight: bold; margin-top: 10px; }
+      button:disabled { background: #9bbfe0; }
+      select, input[type="text"] { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; box-sizing: border-box; }
+      select:disabled { background: #eee; color: #777; }
       .hidden { display: none; }
       .info { font-size: 14px; margin-bottom: 8px; }
+      .campo { margin-bottom: 12px; }
+      .nota { font-size: 12px; color: #888; margin-top: 4px; }
+      .error-box { background: #fdecea; color: #b3261e; padding: 10px; border-radius: 6px; margin-bottom: 10px; font-size: 14px; }
     </style>
   </head>
   <body>
     <h2>Escáner de Juguetes</h2>
 
+    <!-- Mensaje de error visible (evita la pantalla en blanco) -->
+    <div id="error-box" class="error-box hidden"></div>
+
     <!-- Contenedor del Visor de Cámara -->
-    <div class="card">
+    <div class="card" id="reader-card">
       <div id="reader"></div>
     </div>
 
     <!-- Resultados y Formulario de Actualización -->
     <div id="form-container" class="card hidden">
       <h3>Detalle del Juguete</h3>
-      <p class="info"><strong>Código:</strong> <span id="txt-codigo"></span></p>
-      <p class="info"><strong>Nombre:</strong> <span id="txt-nombre"></span></p>
-      
-      <label for="select-estado"><strong>Estado:</strong></label>
-      <select id="select-estado">
-        <option value="Disponible">Disponible</option>
-        <option value="Prestado">Prestado</option>
-        <option value="En Reparación">En Reparación</option>
-        <option value="Baja/Perdido">Baja/Perdido</option>
-      </select>
+      <p class="info"><strong>ID Juguete:</strong> <span id="txt-codigo"></span></p>
+      <p class="info"><strong>Nombre del Material:</strong> <span id="txt-nombre"></span></p>
+      <p class="info"><strong>Tipo de Material:</strong> <span id="txt-tipo"></span></p>
+      <p class="info"><strong>Última limpieza:</strong> <span id="txt-fecha-limpieza">-</span></p>
+      <p class="info"><strong>Último responsable:</strong> <span id="txt-responsable-actual">-</span></p>
 
-      <button id="btn-guardar" onclick="guardarCambios()">Actualizar Estado</button>
+      <div class="campo">
+        <label for="select-ubicacion"><strong>Sala/Ubicación Actual:</strong></label>
+        <select id="select-ubicacion">
+          <option value="Bodega">Bodega</option>
+          <option value="Sala 302">Sala 302</option>
+          <option value="Sala 303">Sala 303</option>
+          <option value="Sala 304">Sala 304</option>
+          <option value="Sala 305">Sala 305</option>
+          <option value="Sala 306">Sala 306</option>
+          <option value="Sala 307">Sala 307</option>
+          <option value="Sala 308">Sala 308</option>
+          <option value="Sala 309">Sala 309</option>
+          <option value="Sala 310">Sala 310</option>
+        </select>
+        <div class="nota" id="nota-ubicacion"></div>
+      </div>
+
+      <div class="campo">
+        <label for="select-estado"><strong>Estado:</strong></label>
+        <select id="select-estado">
+          <option value="Disponible">Disponible</option>
+          <option value="En Uso">En Uso</option>
+          <option value="Pendiente de Limpieza">Pendiente de Limpieza</option>
+          <option value="Dañado">Dañado</option>
+        </select>
+      </div>
+
+      <div class="campo">
+        <label for="input-responsable"><strong>Responsable:</strong></label>
+        <input type="text" id="input-responsable" placeholder="Nombre de quien actualiza">
+      </div>
+
+      <p class="nota">La fecha y hora de limpieza se registra automáticamente al guardar.</p>
+
+      <button id="btn-guardar" onclick="guardarCambios()">Actualizar</button>
       <button style="background: #6c757d;" onclick="reiniciarEscaner()">Escanear Otro</button>
     </div>
 
     <script>
       let html5QrcodeScanner;
       let filaActual = null;
+      let estadoOriginal = null;
+
+      function mostrarError(mensaje) {
+        const box = document.getElementById('error-box');
+        box.innerText = mensaje;
+        box.classList.remove('hidden');
+      }
+
+      function ocultarError() {
+        document.getElementById('error-box').classList.add('hidden');
+      }
 
       function onScanSuccess(decodedText, decodedResult) {
         // Detiene el lector cuando encuentra un código
-        html5QrcodeScanner.clear();
-        
-        // Consulta los datos al servidor mediante Apps Script
-        google.script.run.withSuccessHandler(mostrarJuguete).buscarJuguete(decodedText);
+        try { html5QrcodeScanner.clear(); } catch (e) {}
+        ocultarError();
+
+        google.script.run
+          .withSuccessHandler(mostrarJuguete)
+          .withFailureHandler(function (error) {
+            mostrarError('Ocurrió un error al buscar el juguete: ' + (error && error.message ? error.message : error));
+            reiniciarEscaner();
+          })
+          .buscarJuguete(decodedText);
       }
 
       function mostrarJuguete(resultado) {
         if (resultado.exito) {
           filaActual = resultado.fila;
+          estadoOriginal = resultado.estadoActual;
+
           document.getElementById('txt-codigo').innerText = resultado.codigo;
           document.getElementById('txt-nombre').innerText = resultado.nombre;
+          document.getElementById('txt-tipo').innerText = resultado.tipoMaterial || '-';
+          document.getElementById('txt-fecha-limpieza').innerText = resultado.fechaLimpieza || '-';
+          document.getElementById('txt-responsable-actual').innerText = resultado.responsable || '-';
+
           document.getElementById('select-estado').value = resultado.estadoActual;
+
+          const selectUbicacion = document.getElementById('select-ubicacion');
+          selectUbicacion.value = resultado.ubicacion;
+
+          const notaUbicacion = document.getElementById('nota-ubicacion');
+          if (resultado.estadoActual === 'Disponible') {
+            selectUbicacion.disabled = false;
+            notaUbicacion.innerText = '';
+          } else {
+            selectUbicacion.disabled = true;
+            notaUbicacion.innerText = 'Solo se puede cambiar la ubicación cuando el estado es "Disponible".';
+          }
+
+          document.getElementById('input-responsable').value = '';
+          document.getElementById('reader-card').classList.add('hidden');
           document.getElementById('form-container').classList.remove('hidden');
         } else {
-          alert('El código ' + resultado.codigo + ' no está registrado en la base de datos.');
+          mostrarError(resultado.mensaje || 'El código escaneado no está registrado en la base de datos.');
           reiniciarEscaner();
         }
       }
 
       function guardarCambios() {
         const nuevoEstado = document.getElementById('select-estado').value;
-        document.getElementById('btn-guardar').disabled = true;
+        const nuevaUbicacion = document.getElementById('select-ubicacion').value;
+        const responsable = document.getElementById('input-responsable').value.trim();
 
-        google.script.run.withSuccessHandler(function(res) {
-          document.getElementById('btn-guardar').disabled = false;
-          if (res.exito) {
-            alert('¡Estado actualizado correctamente!');
-            reiniciarEscaner();
-          } else {
-            alert('Error al guardar: ' + res.error);
-          }
-        }).actualizarEstado(filaActual, nuevoEstado);
+        if (!responsable) {
+          alert('Debes indicar el responsable antes de guardar.');
+          return;
+        }
+
+        document.getElementById('btn-guardar').disabled = true;
+        ocultarError();
+
+        google.script.run
+          .withSuccessHandler(function (res) {
+            document.getElementById('btn-guardar').disabled = false;
+            if (res.exito) {
+              alert('¡Actualizado correctamente!');
+              reiniciarEscaner();
+            } else {
+              mostrarError('Error al guardar: ' + res.error);
+            }
+          })
+          .withFailureHandler(function (error) {
+            document.getElementById('btn-guardar').disabled = false;
+            mostrarError('Error al guardar: ' + (error && error.message ? error.message : error));
+          })
+          .actualizarJuguete(filaActual, nuevoEstado, nuevaUbicacion, responsable, estadoOriginal);
       }
 
       function iniciarEscaner() {
         document.getElementById('form-container').classList.add('hidden');
+        document.getElementById('reader-card').classList.remove('hidden');
+        ocultarError();
         html5QrcodeScanner = new Html5QrcodeScanner(
-          "reader", 
-          { fps: 10, qrbox: { width: 250, height: 150 } }, 
+          "reader",
+          { fps: 10, qrbox: { width: 250, height: 150 } },
           /* verbose= */ false
         );
         html5QrcodeScanner.render(onScanSuccess);
@@ -94,7 +188,7 @@
         iniciarEscaner();
       }
 
-      // Inicializa el escaner cuando carga la página
+      // Inicializa el escáner cuando carga la página
       window.onload = iniciarEscaner;
     </script>
   </body>
