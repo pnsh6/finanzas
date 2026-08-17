@@ -1,1 +1,101 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <!-- Carga la librería de lectura de códigos de barras / QR -->
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+      body { font-family: Arial, sans-serif; padding: 15px; margin: 0; background: #f4f6f8; }
+      .card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px; }
+      #reader { width: 100%; max-width: 400px; margin: 0 auto; }
+      button { width: 100%; padding: 12px; background: #007bff; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; margin-top: 10px; }
+      select { width: 100%; padding: 10px; font-size: 16px; margin-top: 5px; }
+      .hidden { display: none; }
+      .info { font-size: 14px; margin-bottom: 8px; }
+    </style>
+  </head>
+  <body>
+    <h2>Escáner de Juguetes</h2>
 
+    <!-- Contenedor del Visor de Cámara -->
+    <div class="card">
+      <div id="reader"></div>
+    </div>
+
+    <!-- Resultados y Formulario de Actualización -->
+    <div id="form-container" class="card hidden">
+      <h3>Detalle del Juguete</h3>
+      <p class="info"><strong>Código:</strong> <span id="txt-codigo"></span></p>
+      <p class="info"><strong>Nombre:</strong> <span id="txt-nombre"></span></p>
+      
+      <label for="select-estado"><strong>Estado:</strong></label>
+      <select id="select-estado">
+        <option value="Disponible">Disponible</option>
+        <option value="Prestado">Prestado</option>
+        <option value="En Reparación">En Reparación</option>
+        <option value="Baja/Perdido">Baja/Perdido</option>
+      </select>
+
+      <button id="btn-guardar" onclick="guardarCambios()">Actualizar Estado</button>
+      <button style="background: #6c757d;" onclick="reiniciarEscaner()">Escanear Otro</button>
+    </div>
+
+    <script>
+      let html5QrcodeScanner;
+      let filaActual = null;
+
+      function onScanSuccess(decodedText, decodedResult) {
+        // Detiene el lector cuando encuentra un código
+        html5QrcodeScanner.clear();
+        
+        // Consulta los datos al servidor mediante Apps Script
+        google.script.run.withSuccessHandler(mostrarJuguete).buscarJuguete(decodedText);
+      }
+
+      function mostrarJuguete(resultado) {
+        if (resultado.exito) {
+          filaActual = resultado.fila;
+          document.getElementById('txt-codigo').innerText = resultado.codigo;
+          document.getElementById('txt-nombre').innerText = resultado.nombre;
+          document.getElementById('select-estado').value = resultado.estadoActual;
+          document.getElementById('form-container').classList.remove('hidden');
+        } else {
+          alert('El código ' + resultado.codigo + ' no está registrado en la base de datos.');
+          reiniciarEscaner();
+        }
+      }
+
+      function guardarCambios() {
+        const nuevoEstado = document.getElementById('select-estado').value;
+        document.getElementById('btn-guardar').disabled = true;
+
+        google.script.run.withSuccessHandler(function(res) {
+          document.getElementById('btn-guardar').disabled = false;
+          if (res.exito) {
+            alert('¡Estado actualizado correctamente!');
+            reiniciarEscaner();
+          } else {
+            alert('Error al guardar: ' + res.error);
+          }
+        }).actualizarEstado(filaActual, nuevoEstado);
+      }
+
+      function iniciarEscaner() {
+        document.getElementById('form-container').classList.add('hidden');
+        html5QrcodeScanner = new Html5QrcodeScanner(
+          "reader", 
+          { fps: 10, qrbox: { width: 250, height: 150 } }, 
+          /* verbose= */ false
+        );
+        html5QrcodeScanner.render(onScanSuccess);
+      }
+
+      function reiniciarEscaner() {
+        iniciarEscaner();
+      }
+
+      // Inicializa el escaner cuando carga la página
+      window.onload = iniciarEscaner;
+    </script>
+  </body>
+</html>
