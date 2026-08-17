@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <base target="_top">
     <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js" type="text/javascript"></script>
     <style>
@@ -20,53 +21,59 @@
   </head>
   <body>
     <h2>Escáner de Juguetes</h2>
+
     <div id="error-box" class="error-box hidden"></div>
-    <div class="card" id="reader-card"><div id="reader"></div></div>
+
+    <div class="card" id="reader-card">
+      <div id="reader"></div>
+    </div>
 
     <div id="form-container" class="card hidden">
       <h3>Detalle del Juguete</h3>
       <p class="info"><strong>ID Juguete:</strong> <span id="txt-codigo"></span></p>
       <p class="info"><strong>Nombre del Material:</strong> <span id="txt-nombre"></span></p>
       <p class="info"><strong>Tipo de Material:</strong> <span id="txt-tipo"></span></p>
-      <p class="info"><strong>Última limpieza:</strong> <span id="txt-fecha-limpieza">-</span></p>
-      <p class="info"><strong>Último responsable:</strong> <span id="txt-responsable-actual">-</span></p>
+      <p class="info"><strong>Última limpieza:</strong> <span id="txt-fecha-limpieza"></span></p>
+      <p class="info"><strong>Último responsable:</strong> <span id="txt-responsable-actual"></span></p>
 
       <div class="campo">
-        <label for="select-ubicacion"><strong>Sala/Ubicación Actual:</strong></label>
-        <select id="select-ubicacion">
-          <option value="Bodega">Bodega</option>
-          <option value="Sala 302">Sala 302</option>
-          <option value="Sala 303">Sala 303</option>
-          <option value="Sala 304">Sala 304</option>
-          <option value="Sala 305">Sala 305</option>
-          <option value="Sala 306">Sala 306</option>
-          <option value="Sala 307">Sala 307</option>
-          <option value="Sala 308">Sala 308</option>
-          <option value="Sala 309">Sala 309</option>
-          <option value="Sala 310">Sala 310</option>
-        </select>
+        <label>Sala/Ubicación Actual:
+          <select id="select-ubicacion">
+            <option value="Bodega">Bodega</option>
+            <option value="Sala 302">Sala 302</option>
+            <option value="Sala 303">Sala 303</option>
+            <option value="Sala 304">Sala 304</option>
+            <option value="Sala 305">Sala 305</option>
+            <option value="Sala 306">Sala 306</option>
+            <option value="Sala 307">Sala 307</option>
+            <option value="Sala 308">Sala 308</option>
+            <option value="Sala 309">Sala 309</option>
+            <option value="Sala 310">Sala 310</option>
+          </select>
+        </label>
         <div class="nota" id="nota-ubicacion"></div>
       </div>
 
       <div class="campo">
-        <label for="select-estado"><strong>Estado:</strong></label>
-        <select id="select-estado">
-          <option value="Disponible">Disponible</option>
-          <option value="En Uso">En Uso</option>
-          <option value="Pendiente de Limpieza">Pendiente de Limpieza</option>
-          <option value="Dañado">Dañado</option>
-        </select>
+        <label>Estado:
+          <select id="select-estado">
+            <option value="Disponible">Disponible</option>
+            <option value="En Uso">En Uso</option>
+            <option value="Pendiente de Limpieza">Pendiente de Limpieza</option>
+            <option value="Dañado">Dañado</option>
+          </select>
+        </label>
       </div>
 
       <div class="campo">
-        <label for="input-responsable"><strong>Responsable:</strong></label>
-        <input type="text" id="input-responsable" placeholder="Nombre de quien actualiza">
+        <label>Responsable:
+          <input type="text" id="input-responsable" placeholder="Nombre de quien actualiza">
+        </label>
+        <div class="nota">La fecha y hora de limpieza se registra automáticamente al guardar.</div>
       </div>
 
-      <p class="nota">La fecha y hora de limpieza se registra automáticamente al guardar.</p>
-
-      <button id="btn-guardar" onclick="guardarCambios()">Actualizar</button>
-      <button style="background: #6c757d;" onclick="reiniciarEscaner()">Escanear Otro</button>
+      <button id="btn-guardar">Actualizar</button>
+      <button id="btn-otro" style="background:#555;">Escanear Otro</button>
     </div>
 
     <script>
@@ -78,4 +85,153 @@
 
       function llamarAPI(params) {
         return new Promise((resolve, reject) => {
-          const cbName = 'cb_' + Math.random(
+          const cbName = 'cb_' + Math.random().toString(36).slice(2);
+          const script = document.createElement('script');
+          let timeoutId;
+
+          function limpiar() {
+            clearTimeout(timeoutId);
+            delete window[cbName];
+            if (script.parentNode) script.remove();
+          }
+
+          window[cbName] = function(data) {
+            limpiar();
+            resolve(data);
+          };
+
+          timeoutId = setTimeout(function() {
+            limpiar();
+            reject(new Error('Tiempo de espera agotado al contactar el servidor.'));
+          }, 15000);
+
+          const query = new URLSearchParams(params);
+          query.set('callback', cbName);
+          script.src = API_URL + '?' + query.toString();
+          script.onerror = function() {
+            limpiar();
+            reject(new Error('No se pudo conectar con el servidor.'));
+          };
+          document.body.appendChild(script);
+        });
+      }
+
+      function mostrarError(msg) {
+        const box = document.getElementById('error-box');
+        box.textContent = msg;
+        box.classList.remove('hidden');
+      }
+
+      function ocultarError() {
+        document.getElementById('error-box').classList.add('hidden');
+      }
+
+      function onScanSuccess(decodedText) {
+        html5QrcodeScanner.pause();
+        ocultarError();
+        llamarAPI({ accion: 'buscar', codigo: decodedText })
+          .then(function(data) {
+            if (!data.exito) {
+              mostrarError(data.error || 'Juguete no encontrado.');
+              html5QrcodeScanner.resume();
+              return;
+            }
+            mostrarDetalle(data);
+          })
+          .catch(function(err) {
+            mostrarError(err.message);
+            html5QrcodeScanner.resume();
+          });
+      }
+
+      function mostrarDetalle(data) {
+        filaActual = data.fila;
+        estadoOriginal = data.estadoActual;
+
+        document.getElementById('txt-codigo').textContent = data.codigo;
+        document.getElementById('txt-nombre').textContent = data.nombre;
+        document.getElementById('txt-tipo').textContent = data.tipoMaterial;
+        document.getElementById('txt-fecha-limpieza').textContent = data.fechaLimpieza || '(sin registro)';
+        document.getElementById('txt-responsable-actual').textContent = data.responsable || '(sin registro)';
+
+        const selectUbicacion = document.getElementById('select-ubicacion');
+        const notaUbicacion = document.getElementById('nota-ubicacion');
+        selectUbicacion.value = data.ubicacion || 'Bodega';
+
+        const selectEstado = document.getElementById('select-estado');
+        selectEstado.value = data.estadoActual || 'Disponible';
+
+        if (data.estadoActual === 'Disponible') {
+          selectUbicacion.disabled = false;
+          notaUbicacion.textContent = 'Puedes cambiar la ubicación porque el juguete está disponible.';
+        } else {
+          selectUbicacion.disabled = true;
+          notaUbicacion.textContent = 'La ubicación no se puede cambiar porque el juguete no está disponible. Solo puedes actualizar el estado.';
+        }
+
+        document.getElementById('input-responsable').value = '';
+        document.getElementById('reader-card').classList.add('hidden');
+        document.getElementById('form-container').classList.remove('hidden');
+      }
+
+      document.getElementById('btn-guardar').addEventListener('click', function() {
+        const estado = document.getElementById('select-estado').value;
+        const ubicacion = document.getElementById('select-ubicacion').value;
+        const responsable = document.getElementById('input-responsable').value.trim();
+
+        if (!responsable) {
+          mostrarError('Debes indicar el nombre del responsable.');
+          return;
+        }
+
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = 'Guardando...';
+
+        llamarAPI({
+          accion: 'actualizar',
+          fila: filaActual,
+          estado: estado,
+          ubicacion: ubicacion,
+          responsable: responsable,
+          estadoOriginal: estadoOriginal
+        }).then(function(data) {
+          btn.disabled = false;
+          btn.textContent = 'Actualizar';
+          if (!data.exito) {
+            mostrarError(data.error || 'No se pudo actualizar.');
+            return;
+          }
+          ocultarError();
+          reiniciarEscaner();
+        }).catch(function(err) {
+          btn.disabled = false;
+          btn.textContent = 'Actualizar';
+          mostrarError(err.message);
+        });
+      });
+
+      document.getElementById('btn-otro').addEventListener('click', reiniciarEscaner);
+
+      function reiniciarEscaner() {
+        document.getElementById('form-container').classList.add('hidden');
+        document.getElementById('reader-card').classList.remove('hidden');
+        ocultarError();
+        if (html5QrcodeScanner) {
+          html5QrcodeScanner.resume();
+        }
+      }
+
+      window.addEventListener('load', function() {
+        html5QrcodeScanner = new Html5Qrcode('reader');
+        html5QrcodeScanner.start(
+          { facingMode: 'environment' },
+          { fps: 10, qrbox: 250 },
+          onScanSuccess
+        ).catch(function(err) {
+          mostrarError('No se pudo iniciar la cámara: ' + err);
+        });
+      });
+    </script>
+  </body>
+</html>
