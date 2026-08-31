@@ -151,7 +151,7 @@ let D = { movimientos:[], saldos:[], propiedades:[], gastosProp:[], pagosProp:[]
           arriendos:[], responsables:[], arrendatarios:[], categorias:[], presupuestos:[],
           gastosPersonales:[], config:{} };
 let UI = { tab:'inicio', prop:null, mesOffset:0, saldoAbierto:true, ahorroFactor:1,
-           ahorroProgramado:false, cargando:true, error:'' };
+           ahorroProgramado:false, cargando:true, error:'', diag:[] };
 
 /* ── utilidades ─────────────────────────────────────────── */
 const $ = id => document.getElementById(id);
@@ -189,9 +189,22 @@ function toast(msg){
 
 /* ── red ────────────────────────────────────────────────── */
 async function fetchSheet(nombre){
+  /* Sin chequeo de r.ok: Apps Script redirige a googleusercontent y puede responder
+     con códigos raros aunque el cuerpo sea válido — v1 tampoco lo miraba. */
   const r = await fetch(API_URL+'?sheet='+encodeURIComponent(nombre));
-  if(!r.ok) throw new Error('HTTP '+r.status+' en '+nombre);
-  return r.json();
+  const t = await r.text();
+  let j;
+  try{ j=JSON.parse(t); }
+  catch(e){ throw new Error('Respuesta no válida en '+nombre+': '+t.slice(0,80)); }
+  if(j && j.error) throw new Error(j.error);
+  /* El Apps Script envuelve las filas en {rows:[…]}; algunas hojas responden el array pelado. */
+  if(Array.isArray(j)) return j;
+  return j && Array.isArray(j.rows) ? j.rows : [];
+}
+/* Ninguna hoja individual puede tumbar la carga completa. */
+async function hoja(nombre, fallidas){
+  try{ return await fetchSheet(nombre); }
+  catch(e){ fallidas.push(nombre); UI.diag.push(nombre+': '+(e&&e.message?e.message:e)); return []; }
 }
 async function apiPost(payload){
   const p=new URLSearchParams();
@@ -206,6 +219,10 @@ async function apiPost(payload){
 }
 
 /* ── carga: caché primero, red después ──────────────────── */
+function mensajeSinConexion(){
+  if(D.movimientos.length) return 'No se pudo actualizar. Estás viendo la última versión guardada.';
+  return 'No hubo respuesta del Apps Script. Revisa que el despliegue esté publicado como “cualquier persona” y que la URL de /exec sea la vigente.';
+}
 function leerCache(){
   try{
     const raw=localStorage.getItem(CACHE_KEY);
@@ -220,24 +237,24 @@ function guardarCache(){
 
 async function cargar({silencioso=false}={}){
   if(!silencioso) UI.cargando = !D.movimientos.length;
+  const fallidas=[];
+  UI.diag=[];
   try{
-    const nada=()=>[];
+    const F=n=>hoja(n,fallidas);
     const [movs,saldos,props,config,gastos,pagos,arriendos,resp,arrend,cats,pres,gp] = await Promise.all([
-      fetchSheet('Movimientos'), fetchSheet('Saldos'), fetchSheet('Propiedades'), fetchSheet('Config'),
-      fetchSheet('GastosPropiedad'), fetchSheet('PagosPropiedad'),
-      fetchSheet('ArriendoHistorial').catch(nada), fetchSheet('GastosResponsable').catch(nada),
-      fetchSheet('Arrendatarios').catch(nada), fetchSheet('Categorias').catch(nada),
-      fetchSheet('Presupuestos').catch(nada), fetchSheet('GastosPersonales').catch(nada)
+      F('Movimientos'), F('Saldos'), F('Propiedades'), F('Config'),
+      F('GastosPropiedad'), F('PagosPropiedad'), F('ArriendoHistorial'), F('GastosResponsable'),
+      F('Arrendatarios'), F('Categorias'), F('Presupuestos'), F('GastosPersonales')
     ]);
+    if(fallidas.length===12){
+      UI.cargando=false; UI.error=mensajeSinConexion(); render(); return;
+    }
     normalizar({movs,saldos,props,config,gastos,pagos,arriendos,resp,arrend,cats,pres,gp});
-    UI.cargando=false; UI.error='';
+    UI.cargando=false;
+    UI.error = fallidas.length ? 'No cargaron estas hojas: '+fallidas.join(', ')+'. El resto está al día.' : '';
     guardarCache(); render();
   }catch(e){
-    UI.cargando=false;
-    UI.error = D.movimientos.length
-      ? 'No se pudo actualizar. Estás viendo la última versión guardada.'
-      : 'No se pudo conectar con la hoja de cálculo. Revisa que esté compartida como "cualquier persona con el enlace".';
-    render();
+    UI.cargando=false; UI.error=mensajeSinConexion(); render();
   }
 }
 
@@ -588,10 +605,21 @@ function avisoMesPasado(){
 }
 function bannerError(){
   if(!UI.error) return '';
+  const detalle = UI.diag.length
+    ? '<details style="margin-top:8px"><summary style="font-size:12px;font-weight:800;cursor:pointer">Ver detalle técnico</summary>'+
+      '<div style="font-size:11px;font-family:ui-monospace,monospace;margin-top:6px;line-height:1.6;word-break:break-word">'+
+      esc(UI.diag.slice(0,4).join(' · '))+'</div>'+
+      '<div class="muted" style="font-size:11px;margin-top:6px">Origen: '+esc(location.protocol)+'</div></details>'
+    : '';
+  const local = location.protocol==='file:'
+    ? '<div style="font-size:13px;margin-top:8px;font-weight:600">Estás abriendo el archivo directamente desde el disco. Google bloquea esas peticiones: súbelo a GitHub Pages o sírvelo con un servidor local.</div>'
+    : '';
   return '<div class="pad alerttint" style="border-bottom:2px solid var(--divider)">'+
     '<div class="kicker alerttext" style="margin-bottom:4px">SIN CONEXIÓN</div>'+
-    '<div style="font-size:13px">'+esc(UI.error)+'</div></div>';
+    '<div style="font-size:13px">'+esc(UI.error)+'</div>'+local+detalle+
+    '<div style="margin-top:10px"><button onclick="reintentar()" class="btnsec">Reintentar</button></div></div>';
 }
+function reintentar(){ UI.error=''; UI.cargando=true; render(); cargar(); }
 
 function vistaInicio(){
   const cuentas=saldoPorCuenta(), total=saldoTotal(), pend=porConciliar();
