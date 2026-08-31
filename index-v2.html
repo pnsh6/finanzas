@@ -142,11 +142,13 @@ input{font:inherit;color:inherit}
    · saldo auditable por cuenta          · conciliación como bandeja
    · compromisos unificados              · pintado inmediato desde caché
    ══════════════════════════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbwb7JRVWsG1GwMCVnF6MzWe6fVCFQGwFxwzgb130TEkYGQpuVFUyWPAta6hxPuqZNFt/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbwOwx6uXJa3JuVrxYOVb4xX9MdsJZigyL2baOshmtv8h5njr8um0YC2t1OKZ6YApZC-/exec';
 const CACHE_KEY = 'finanzas_v2_cache_2';
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
 /* ── estado ─────────────────────────────────────────────── */
+/* Declarado antes de normalizar(), que lo invalida en cada carga. */
+let CONFIG_IDX=null;
 let D = { movimientos:[], saldos:[], propiedades:[], gastosProp:[], pagosProp:[],
           arriendos:[], responsables:[], arrendatarios:[], categorias:[], presupuestos:[],
           gastosPersonales:[], config:{} };
@@ -170,8 +172,10 @@ function mesKey(){ const d=mesRef(); return d.getFullYear()+'-'+String(d.getMont
 function mesLabel(){ const d=mesRef(); return MESES[d.getMonth()].slice(0,3).toUpperCase()+' '+d.getFullYear(); }
 function mesNombre(){ return MESES[mesRef().getMonth()]; }
 function esMesActual(){ return UI.mesOffset===0; }
+function esMesFuturo(){ return UI.mesOffset>0; }
 function diasDelMes(){ const d=mesRef(); return new Date(d.getFullYear(),d.getMonth()+1,0).getDate(); }
-function diaHoy(){ return esMesActual()? new Date().getDate() : diasDelMes(); }
+/* En un mes futuro no ha transcurrido ningún día: ritmos y proyecciones no aplican. */
+function diaHoy(){ return esMesFuturo() ? 0 : (esMesActual() ? new Date().getDate() : diasDelMes()); }
 function mesDeFecha(f){
   const s=String(f||''); if(s.length<7) return '';
   return s.indexOf('/')>=0 ? s.slice(6,10)+'-'+s.slice(3,5) : s.slice(0,7);
@@ -343,19 +347,28 @@ function normalizar(r){
       confirmado:String(g['Confirmado']).toLowerCase()==='true',
       notas:String(g['Notas']||'').trim() };
   });
-  D.config={};
+  D.config={}; CONFIG_IDX=null;
   (r.config||[]).forEach(c=>{ const k=String(c['Clave']||'').trim(); if(k) D.config[k]=c['Valor']; });
 }
 
 /* ── reglas de negocio ──────────────────────────────────── */
+/* Las claves de Config vienen con may\u00fascula y acento ("presupuesto_Suscripci\u00f3n")
+   y Categorias las escribe sin acento: la b\u00fasqueda ignora ambos. */
+function normClave(s){
+  return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+}
 function limiteCat(nombre){
   const k=mesKey();
-  const cat=D.categorias.find(c=>c.nombre.toLowerCase()===String(nombre).toLowerCase());
+  const cat=D.categorias.find(c=>normClave(c.nombre)===normClave(nombre));
   if(cat){
     const p=D.presupuestos.find(x=>x.catId===cat.id&&x.mes===k);
     if(p) return p.limite;
   }
-  const v=D.config['presupuesto_'+String(nombre).toLowerCase()];
+  if(!CONFIG_IDX){
+    CONFIG_IDX={};
+    Object.keys(D.config).forEach(key=>{ CONFIG_IDX[normClave(key)]=D.config[key]; });
+  }
+  const v=CONFIG_IDX['presupuesto_'+normClave(nombre)];
   return v!==undefined?toNum(v):0;
 }
 function movsDelMes(){ const k=mesKey(); return D.movimientos.filter(m=>mesDeFecha(m.fecha)===k); }
@@ -450,11 +463,25 @@ function saldoPorCuenta(){
     dias:diasDesde(s.fecha)
   }));
 }
+/* La hoja entrega la fecha en dd/mm/yyyy o como string de Date completo. */
+function parseFecha(f){
+  if(!f) return null;
+  const s=String(f).trim();
+  const p=s.split('/');
+  if(p.length===3){
+    const d=new Date(+p[2], +p[1]-1, +p[0]);
+    return isNaN(d)?null:d;
+  }
+  const d=new Date(s);
+  return isNaN(d)?null:d;
+}
+function fechaCorta(f){
+  const d=parseFecha(f);
+  return d?d.toLocaleDateString('es-CL'):'';
+}
 function diasDesde(f){
-  if(!f) return 999;
-  const p=String(f).split('/');
-  if(p.length!==3) return 999;
-  const d=new Date(p[2],p[1]-1,p[0]);
+  const d=parseFecha(f);
+  if(!d) return 999;
   return Math.floor((new Date()-d)/86400000);
 }
 function saldoTotal(){ return saldoPorCuenta().reduce((a,c)=>a+c.monto,0); }
@@ -589,19 +616,26 @@ async function nuevoGasto({monto,desc,cat,fecha}){
 
 /* ── vistas ─────────────────────────────────────────────── */
 function topbar(titulo, extra){
-  const futuro = UI.mesOffset>=0;
   return '<div class="topbar"><span class="brand">'+esc(titulo)+'</span>'+
+    '<div style="display:flex;align-items:center;gap:10px">'+
     '<div class="mespick">'+
-      '<button onclick="cambiarMes(-1)" aria-label="Mes anterior">‹</button>'+
+      '<button onclick="cambiarMes(-1)" '+(UI.mesOffset<=-24?'disabled':'')+' aria-label="Mes anterior">‹</button>'+
       '<span class="mesval">'+mesLabel()+'</span>'+
-      '<button onclick="cambiarMes(1)" '+(futuro?'disabled':'')+' aria-label="Mes siguiente">›</button>'+
+      '<button onclick="cambiarMes(1)" '+(UI.mesOffset>=12?'disabled':'')+' aria-label="Mes siguiente">›</button>'+
+    '</div>'+
+    '<button onclick="ir(\'ajustes\')" aria-label="Ajustes" style="padding:6px;display:flex">'+
+      '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">'+
+      '<path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>'+
+      '<circle cx="12" cy="12" r="3"/></svg></button>'+
     '</div></div>'+(extra||'');
 }
 function avisoMesPasado(){
   if(esMesActual()) return '';
+  const txt = esMesFuturo()
+    ? 'Estás planificando '+mesNombre()+'. Los montos son los esperados, no los reales.'
+    : 'Estás viendo '+mesNombre()+', no el mes en curso.';
   return '<div class="pad" style="background:var(--surface);border-bottom:2px solid var(--divider);font-size:13px;font-weight:600">'+
-    'Estás viendo '+mesNombre()+', no el mes en curso.'+
-    ' <button onclick="irAlMesActual()" class="alerttext" style="font-weight:800;text-decoration:underline">Volver a hoy</button></div>';
+    txt+' <button onclick="irAlMesActual()" class="alerttext" style="font-weight:800;text-decoration:underline">Volver a hoy</button></div>';
 }
 function bannerError(){
   if(!UI.error) return '';
@@ -636,13 +670,32 @@ function vistaInicio(){
 
   let h=topbar('FINANZAS')+bannerError()+avisoMesPasado();
 
+  /* Planificación: el saldo de hoy no es el de un mes futuro, así que no se muestra. */
+  if(esMesFuturo()){
+    const compF=compromisos().filter(c=>c.mio);
+    const salidas=compF.filter(c=>!c.ingreso).reduce((a,c)=>a+c.monto,0);
+    const entradas=compF.filter(c=>c.ingreso).reduce((a,c)=>a+c.monto,0);
+    h+='<div class="block pad">'+
+      '<div class="kicker" style="margin-bottom:6px">BALANCE PLANIFICADO</div>'+
+      '<div class="big">'+((entradas-salidas)>=0?'+':'')+fmt(entradas-salidas)+'</div>'+
+      '<div style="font-size:13px;color:var(--n700);margin-top:8px">'+fmt(entradas)+' por recibir · '+fmt(salidas)+' comprometidos</div></div>';
+    h+='<div class="block grid2">'+
+      '<button onclick="ir(\'compromisos\')" class="pad"><div class="kicker" style="margin-bottom:6px">COMPROMISOS</div>'+
+        '<div class="mid">'+compF.filter(c=>!c.ingreso).length+'</div>'+
+        '<div class="muted" style="font-size:12px;margin-top:4px">ver y ajustar</div></button>'+
+      '<button onclick="ir(\'gastos\')" class="pad"><div class="kicker" style="margin-bottom:6px">PRESUPUESTO</div>'+
+        '<div class="mid">'+(presu>0?fmt(presu):'—')+'</div>'+
+        '<div class="muted" style="font-size:12px;margin-top:4px">'+(presu>0?(presu>=salidas?fmt(presu-salidas)+' libres':fmt(salidas-presu)+' sobregiro'):'sin definir')+'</div></button></div>';
+    return h;
+  }
+
   h+='<div class="block"><div class="pad">'+
     '<div class="kicker" style="margin-bottom:6px">SALDO DISPONIBLE</div>'+
     '<div class="big'+(UI.cargando?' skel':'')+'">'+fmt(total)+'</div>'+
     '<button onclick="toggleSaldo()" style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--n700)">'+
       '<span style="width:8px;height:8px;background:var(--text);display:block"></span>'+
       (UI.saldoAbierto
-        ? cuentas.length+' cuentas'+(desactualizadas?' · '+desactualizadas+' sin actualizar':'')
+        ? cuentas.length+(cuentas.length===1?' cuenta':' cuentas')+(desactualizadas?' · '+desactualizadas+' sin actualizar':'')
         : 'Ver de dónde sale')+
     '</button></div></div>';
 
@@ -655,16 +708,23 @@ function vistaInicio(){
       h+='<button onclick="abrirSaldos()" class="row" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:11px 18px;'+(alerta?'background:var(--a100)':'')+'">'+
         '<span><span style="font-size:14px;font-weight:600">'+esc(c.banco)+'</span>'+
         '<span style="display:block;font-size:11px;'+(alerta?'font-weight:600;color:var(--a700)':'color:var(--n600)')+'">'+
-          (c.fecha?('actualizado '+esc(c.fecha)+(alerta?' · hace '+c.dias+' días':'')):'sin fecha')+'</span></span>'+
+          (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)+(alerta?' · hace '+c.dias+' días':'')):'sin fecha')+'</span></span>'+
         '<span class="num" style="font-size:15px;align-self:center;'+(alerta?'color:var(--a700)':'')+'">'+fmt(c.monto)+'</span></button>';
     });
     const ingresos=comp.filter(c=>c.ingreso&&c.pagado).reduce((a,c)=>a+c.monto,0);
-    h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px">'+
+    /* El titular es la suma de las cuentas y nada más: la fila de total lo demuestra. */
+    h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px;background:var(--surface)">'+
+      '<span style="font-size:13px;font-weight:800;letter-spacing:.04em">TOTAL EN CUENTAS</span>'+
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(total)+'</span></div></div>';
+    /* Arriendos y gastos no son sumandos del saldo — sección aparte, sin insinuar aritmética. */
+    h+='<div class="block"><div class="secthead"><span>MOVIMIENTO DEL MES</span></div>'+
+      '<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px">'+
       '<span style="font-size:14px;color:var(--n700)">Arriendos recibidos</span>'+
-      '<span class="num" style="font-size:15px;align-self:center">+'+fmt(ingresos)+'</span></div>'+
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(ingresos)+'</span></div>'+
       '<button onclick="ir(\'gastos\')" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:11px 18px">'+
       '<span style="font-size:14px;color:var(--n700)">Gastos del mes · '+gastosBanco().length+' movimientos</span>'+
-      '<span class="num alerttext" style="font-size:15px;align-self:center">'+fmt(-gastado)+'</span></button></div>';
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(gastado)+'</span></button>'+
+      '<div class="pad muted" style="font-size:11px">Ya reflejados en los saldos de arriba cuando el banco los registró.</div></div>';
   }
 
   h+='<div class="block grid2">'+
@@ -676,7 +736,7 @@ function vistaInicio(){
     '<button onclick="ir(\'gastos\')" class="pad">'+
       '<div class="kicker" style="margin-bottom:6px">PRESUPUESTO</div>'+
       '<div class="mid">'+pctPres+'%</div>'+
-      '<div class="muted" style="font-size:12px;margin-top:4px">'+(presu>0?fmt(presu-gastado)+' libres':'sin límites definidos')+'</div>'+
+      '<div class="muted" style="font-size:12px;margin-top:4px">'+(presu>0?(presu>=gastado?fmt(presu-gastado)+' libres':fmt(gastado-presu)+' sobregiro'):'sin límites definidos')+'</div>'+
     '</button></div>';
 
   if(esMesActual()){
@@ -725,6 +785,38 @@ function vistaGastos(){
   const proy=diaHoy()>0?Math.round(gastado/diaHoy()*diasDelMes()):0;
 
   let h=topbar('GASTOS')+bannerError()+avisoMesPasado();
+
+  /* Un mes futuro no tiene gasto ejecutado: lo que importa es lo ya comprometido. */
+  if(esMesFuturo()){
+    const comp=compromisos().filter(c=>!c.ingreso&&c.mio);
+    const comprometido=comp.reduce((a,c)=>a+c.monto,0);
+    h+='<div class="block pad">'+
+      '<div class="kicker" style="margin-bottom:6px">YA COMPROMETIDO EN '+mesNombre().toUpperCase()+'</div>'+
+      '<div class="big" style="font-size:44px">'+fmt(comprometido)+'</div>'+
+      '<div style="font-size:13px;color:var(--n700);margin-top:8px">'+
+        (presu>0
+          ? (comprometido>presu
+              ? 'Supera el presupuesto de '+fmt(presu)+' en '+fmt(comprometido-presu)+'.'
+              : 'Te quedan '+fmt(presu-comprometido)+' de presupuesto libre.')
+          : 'Sin presupuesto definido para este mes.')+
+      '</div></div>';
+    if(presu>0){
+      const pctc=Math.min(100,Math.round(comprometido/presu*100));
+      h+='<div class="block pad"><div class="bar'+(comprometido>presu?' over':'')+'"><div style="width:'+pctc+'%"></div></div>'+
+        '<div class="muted" style="font-size:12px;margin-top:6px">'+pctc+'% del presupuesto ya tiene destino</div></div>';
+    }
+    h+='<div class="block"><div class="secthead"><span>COMPROMISOS DE '+mesNombre().toUpperCase()+'</span></div>';
+    if(!comp.length) h+='<div class="pad muted" style="font-size:13px">Nada planificado todavía para este mes.</div>';
+    comp.sort((a,b)=>(a.dia||99)-(b.dia||99)).forEach(c=>{
+      h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:12px 18px">'+
+        '<span><span style="display:block;font-size:15px;font-weight:600">'+esc(c.nombre)+'</span>'+
+        '<span class="muted" style="font-size:11px">'+esc(c.meta)+'</span></span>'+
+        '<span class="num" style="font-size:16px;align-self:center">'+fmt(c.monto)+'</span></div>';
+    });
+    h+='</div>';
+    h+='<div class="block pad"><button onclick="abrirNuevoGasto()" class="btnprim" style="width:100%">+ Planificar un gasto</button></div>';
+    return h;
+  }
 
   h+='<div class="block pad">'+
     '<div style="display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:12px">'+
@@ -875,12 +967,12 @@ function vistaPropDetalle(){
         (arr.contacto?'<div style="font-size:13px;color:var(--n700);margin-top:3px">'+esc(arr.contacto)+'</div>':'')+
         '<div style="font-size:13px;color:var(--n700)">'+fmt(arriendoVigente(p.id))+' mensual</div>'+
         (arr.garantia>0?'<div class="muted" style="font-size:12px;margin-top:5px">Garantía '+fmt(arr.garantia)+'</div>':'')+
-        (arr.hasta?'<div class="muted" style="font-size:12px">Contrato hasta '+arr.hasta.toLocaleDateString('es-CL')+'</div>':'')+
+        (arr.hasta?'<div class="muted" style="font-size:12px">Contrato hasta '+esc(fechaCorta(arr.hasta))+'</div>':'')+
       '</div>'+
       (meses!==null?'<div style="text-align:right"><div class="num" style="font-size:28px;letter-spacing:-.02em;line-height:1;'+(porVencer?'color:var(--a700)':'')+'">'+meses+'</div>'+
         '<div style="font-size:11px;font-weight:800;letter-spacing:.06em;margin-top:2px;'+(porVencer?'color:var(--a700)':'color:var(--n600)')+'">MESES DE<br>CONTRATO</div></div>':'')+
       '</div>'+
-      (porVencer?'<div class="alertfill" style="padding:10px 18px;font-size:13px;font-weight:800">Renovar o avisar antes de '+arr.hasta.toLocaleDateString('es-CL')+'</div>':'')+
+      (porVencer?'<div class="alertfill" style="padding:10px 18px;font-size:13px;font-weight:800">Renovar o avisar antes de '+esc(fechaCorta(arr.hasta))+'</div>':'')+
       '</div>';
   }
 
@@ -935,14 +1027,10 @@ function vistaCompromisos(){
     '<div class="pad"><div class="kicker" style="margin-bottom:6px">YA PAGADO</div>'+
       '<div class="mid" style="font-size:32px">'+fmt(pagado)+'</div>'+
       '<div class="muted" style="font-size:12px;margin-top:4px">'+nPagado+' compromisos</div></div></div>';
-  if(ingPend.length){
-    h+='<div class="block pad" style="display:flex;justify-content:space-between;align-items:baseline">'+
-      '<span style="font-size:13px;font-weight:600">'+ingPend.length+(ingPend.length===1?' arriendo por recibir':' arriendos por recibir')+'</span>'+
-      '<span class="num" style="font-size:15px">+'+fmt(ingMonto)+'</span></div>';
-  }
 
   const fila=(c,gris)=>{
-    const urgente = !gris && c.dia && esMesActual() && (c.dia-hoy)<=3;
+    /* Sin monto o sin ser tuyo, no hay atraso posible. */
+    const urgente = !gris && c.mio && c.monto>0 && c.dia && esMesActual() && (c.dia-hoy)<=3;
     const dias = c.dia? (c.dia-hoy) : null;
     const aviso = gris ? '' : (urgente ? (dias<0?'ATRASADO':(dias===0?'HOY':'EN '+dias+(dias===1?' DÍA':' DÍAS'))) : (c.estimadoVar?'estimado':''));
     return '<button onclick="marcarCompromiso(\''+esc(c.id)+'\')" class="row" style="display:grid;grid-template-columns:52px 1fr auto;width:100%;'+(urgente?'background:var(--a100)':'')+'">'+
@@ -958,14 +1046,42 @@ function vistaCompromisos(){
       '</span></button>';
   };
 
+  /* La lista usa el mismo filtro que el conteo; seguimiento e ingresos van aparte. */
+  const pendDeuda=pend.filter(c=>!c.ingreso&&c.mio);
+  const pendSeg=pend.filter(c=>!c.ingreso&&!c.mio);
   h+='<div class="block"><div class="secthead"><span>PENDIENTES</span></div>';
-  if(!pend.length) h+='<div class="pad muted" style="font-size:13px">Nada pendiente este mes.</div>';
-  pend.sort((a,b)=>(a.dia||99)-(b.dia||99)).forEach(c=>{ h+=fila(c,false); });
+  if(!pendDeuda.length) h+='<div class="pad muted" style="font-size:13px">Nada pendiente este mes.</div>';
+  pendDeuda.sort((a,b)=>(a.dia||99)-(b.dia||99)).forEach(c=>{ h+=fila(c,false); });
   h+='</div>';
+  if(ingPend.length){
+    h+='<div class="block"><div class="secthead"><span>POR RECIBIR</span><span class="muted">+'+fmt(ingMonto)+'</span></div>';
+    ingPend.sort((a,b)=>(a.dia||99)-(b.dia||99)).forEach(c=>{ h+=fila(c,false); });
+    h+='</div>';
+  }
+  if(pendSeg.length){
+    h+='<div class="block"><div class="secthead"><span>SEGUIMIENTO · NO ES TU GASTO</span></div>';
+    pendSeg.sort((a,b)=>(a.dia||99)-(b.dia||99)).forEach(c=>{ h+=fila(c,true); });
+    h+='</div>';
+  }
+  /* Misma partición que PENDIENTES: deuda, ingresos y seguimiento en bloques propios. */
+  const pagDeuda=pag.filter(c=>!c.ingreso&&c.mio);
+  const pagIng=pag.filter(c=>c.ingreso);
+  const pagSeg=pag.filter(c=>!c.ingreso&&!c.mio);
+  const pagIngMonto=pagIng.reduce((a,c)=>a+c.monto,0);
   h+='<div class="block"><div class="secthead"><span>PAGADOS</span></div>';
-  if(!pag.length) h+='<div class="pad muted" style="font-size:13px">Todavía nada pagado este mes.</div>';
-  pag.forEach(c=>{ h+=fila(c,true); });
+  if(!pagDeuda.length) h+='<div class="pad muted" style="font-size:13px">Todavía nada pagado este mes.</div>';
+  pagDeuda.forEach(c=>{ h+=fila(c,true); });
   h+='</div>';
+  if(pagIng.length){
+    h+='<div class="block"><div class="secthead"><span>RECIBIDOS</span><span class="muted">+'+fmt(pagIngMonto)+'</span></div>';
+    pagIng.forEach(c=>{ h+=fila(c,true); });
+    h+='</div>';
+  }
+  if(pagSeg.length){
+    h+='<div class="block"><div class="secthead"><span>SEGUIMIENTO · YA PAGADO POR OTRO</span></div>';
+    pagSeg.forEach(c=>{ h+=fila(c,true); });
+    h+='</div>';
+  }
   return h;
 }
 
@@ -1028,11 +1144,258 @@ function submitGasto(){
     fecha:new Date($('ng-fecha').value+'T12:00').toLocaleDateString('es-CL') });
 }
 
+/* ── ajustes: cuentas, categorías y presupuestos ─────────── */
+/* Grupos: la hoja ya trae una columna Tipo, la usamos como agrupador.
+   Para las categorías que aún no lo declaran, se infiere del nombre. */
+const GRUPOS=['Esenciales','Variables','Fijos','Otros'];
+const INFERIR=[
+  [/supermercado|salud|farmac|transporte|bencin|combustib|educaci/,'Esenciales'],
+  [/restaurant|entreten|ropa|hogar|regalo|tecnolog|liga/,'Variables'],
+  [/credito|tarjeta|seguro|suscripci|casa|auto|arriendo|dividendo/,'Fijos']
+];
+function grupoDe(c){
+  const t=String(c.tipo||'').trim();
+  const hit=GRUPOS.find(g=>normClave(g)===normClave(t));
+  if(hit) return hit;
+  const n=normClave(c.nombre);
+  for(const [re,g] of INFERIR) if(re.test(n)) return g;
+  return 'Otros';
+}
+
+function vistaAjustes(){
+  const cuentas=saldoPorCuenta();
+  const k=mesKey();
+
+  let h=topbar('AJUSTES')+bannerError();
+  h+='<button onclick="ir(\'inicio\')" class="row" style="display:block;width:100%;padding:12px 18px;font-size:12px;font-weight:800;letter-spacing:.06em">‹ VOLVER AL INICIO</button>';
+  h+='<div class="pad" style="border-bottom:2px solid var(--divider)">'+
+    '<div style="font-size:13px;color:var(--n700)">Todo lo que edites acá se guarda en la hoja de cálculo.</div></div>';
+
+  /* CUENTAS */
+  h+='<div class="block"><div class="secthead"><span>CUENTAS · '+mesLabel()+'</span>'+
+    '<button onclick="editarCuenta()" style="font-size:11px;font-weight:800;letter-spacing:.08em">+ AGREGAR</button></div>';
+  if(!cuentas.length) h+='<div class="pad muted" style="font-size:13px">Sin cuentas. Agrega la primera.</div>';
+  cuentas.forEach(c=>{
+    const alerta=c.dias>5;
+    h+='<button onclick="editarCuenta(\''+esc(c.banco)+'\')" class="row" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:12px 18px">'+
+      '<span><span style="display:block;font-size:15px;font-weight:600">'+esc(c.banco)+'</span>'+
+      '<span style="display:block;font-size:11px;'+(alerta?'font-weight:600;color:var(--a700)':'color:var(--n600)')+'">'+
+        (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)):'sin fecha')+'</span></span>'+
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(c.monto)+'</span></button>';
+  });
+  h+='</div>';
+
+  /* CATEGORÍAS Y LÍMITES */
+  const usadas={};
+  D.movimientos.forEach(m=>{ if(m.cat) usadas[normClave(m.cat)]=(usadas[normClave(m.cat)]||0)+1; });
+  const usos=c=>usadas[normClave(c.nombre)]||0;
+
+  /* Limpieza: duplicadas y sin uso, cada una con su acción de un toque. */
+  const idxDupes=[]; const yaVisto={};
+  D.categorias.forEach((c,i)=>{
+    const n=normClave(c.nombre);
+    if(yaVisto[n]!==undefined) idxDupes.push({idx:i, nombre:c.nombre, hacia:D.categorias[yaVisto[n]].nombre});
+    else yaVisto[n]=i;
+  });
+  const idxVacias=D.categorias.map((c,i)=>({c,i})).filter(x=>usos(x.c)===0 && !idxDupes.some(d=>d.idx===x.i));
+
+  if(idxDupes.length||idxVacias.length){
+    h+='<div class="block"><div class="secthead"><span>LIMPIAR</span></div>';
+    if(idxDupes.length){
+      h+='<div class="pad" style="padding-bottom:8px"><div class="kicker alerttext" style="margin-bottom:4px">'+idxDupes.length+' DUPLICADA'+(idxDupes.length===1?'':'S')+'</div>'+
+        '<div style="font-size:13px;color:var(--n700)">Queda una sola y los movimientos no se mueven de sitio.</div></div>';
+      idxDupes.forEach(d=>{
+        h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:10px 18px">'+
+          '<span style="font-size:14px;font-weight:600">'+esc(d.nombre)+'</span>'+
+          '<button onclick="fusionarCat('+d.idx+',\''+esc(d.hacia)+'\')" class="btnsec" style="padding:6px 12px;font-size:12px">Unificar</button></div>';
+      });
+      h+='<div class="pad" style="padding-top:10px"><button onclick="unificarTodas()" class="btnprim" style="width:100%">Unificar las '+idxDupes.length+'</button></div>';
+    }
+    if(idxVacias.length){
+      h+='<div class="pad" style="border-top:1px solid var(--rule);padding-bottom:8px"><div class="kicker" style="margin-bottom:4px">'+idxVacias.length+' SIN USO</div>'+
+        '<div style="font-size:13px;color:var(--n700)">Ningún movimiento las usa. Puedes quitarlas de la lista.</div></div>';
+      idxVacias.forEach(x=>{
+        h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;align-items:center;padding:10px 18px">'+
+          '<span style="font-size:14px;font-weight:600">'+esc(x.c.nombre)+'</span>'+
+          '<button onclick="desactivarCat('+x.i+')" class="btnsec" style="padding:6px 12px;font-size:12px">Quitar</button></div>';
+      });
+    }
+    h+='</div>';
+  }
+
+  h+='<div class="block"><div class="secthead"><span>CATEGORÍAS Y LÍMITES</span>'+
+    '<button onclick="editarCategoria()" style="font-size:11px;font-weight:800;letter-spacing:.08em">+ AGREGAR</button></div>';
+  GRUPOS.forEach(g=>{
+    const enGrupo=D.categorias.map((c,i)=>({c,i})).filter(x=>grupoDe(x.c)===g);
+    if(!enGrupo.length) return;
+    const suma=enGrupo.reduce((a,x)=>a+limiteCat(x.c.nombre),0);
+    h+='<div class="row" style="display:flex;justify-content:space-between;align-items:baseline;padding:10px 18px;background:var(--surface)">'+
+      '<span style="font-size:11px;font-weight:800;letter-spacing:.08em">'+g.toUpperCase()+'</span>'+
+      '<span class="muted" style="font-size:11px;font-weight:800">'+(suma>0?fmt(suma):'sin límites')+'</span></div>';
+    enGrupo.forEach(x=>{
+      const lim=limiteCat(x.c.nombre), n=usos(x.c);
+      const dup=idxDupes.some(d=>normClave(d.nombre)===normClave(x.c.nombre));
+      h+='<button onclick="editarCategoria('+x.i+')" class="row" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:12px 18px;'+(dup?'background:var(--a100)':'')+'">'+
+        '<span><span style="display:block;font-size:15px;font-weight:600">'+esc(x.c.nombre)+'</span>'+
+        '<span class="muted" style="display:block;font-size:11px">'+n+' movimiento'+(n===1?'':'s')+'</span></span>'+
+        '<span class="num'+(lim>0?'':' muted')+'" style="font-size:14px;align-self:center">'+(lim>0?fmt(lim):'sin límite')+'</span></button>';
+    });
+  });
+  h+='<div class="pad"><button onclick="copiarLimites()" class="btnsec" style="width:100%">Copiar límites del mes anterior</button></div></div>';
+  return h;
+}
+
+async function unificarTodas(){
+  const yaVisto={}, aQuitar=[];
+  D.categorias.forEach((c,i)=>{
+    const n=normClave(c.nombre);
+    if(yaVisto[n]!==undefined) aQuitar.push({idx:i, desde:c.nombre, hacia:D.categorias[yaVisto[n]].nombre});
+    else yaVisto[n]=i;
+  });
+  /* De mayor a menor índice: así cada splice no corre los que faltan. */
+  aQuitar.sort((a,b)=>b.idx-a.idx).forEach(x=>{ D.categorias.splice(x.idx,1); });
+  CONFIG_IDX=null; guardarCache(); render();
+  toast(aQuitar.length+' unificada'+(aQuitar.length===1?'':'s'));
+  for(const x of aQuitar) await apiPost({ action:'fusionarCategorias', desde:x.desde, hacia:x.hacia });
+  cargar({silencioso:true});
+}
+async function desactivarCat(idx){
+  const c=D.categorias[idx];
+  if(!c) return;
+  D.categorias.splice(idx,1);
+  CONFIG_IDX=null; guardarCache(); render(); toast('«'+c.nombre+'» quitada');
+  await apiPost({ action:'setCategoriaPersonal', categoria:{ id:c.id, nombre:c.nombre, tipo:c.tipo||'', color:'#888780', activo:false } });
+}
+
+function editarCuenta(banco){
+  const c=saldoPorCuenta().find(x=>x.banco===banco);
+  const nuevo=!c;
+  let h='<div class="secthead"><span>'+(nuevo?'NUEVA CUENTA':'EDITAR CUENTA')+'</span>'+
+    '<button onclick="cerrarSheet()" style="font-size:11px;font-weight:800;letter-spacing:.08em">CERRAR</button></div>'+
+    '<div class="field"><label>BANCO</label><input class="input" id="ac-banco" value="'+esc(c?c.banco:'')+'" placeholder="Banco de Chile"></div>'+
+    '<div class="field"><label>SALDO EN '+mesLabel()+'</label><input class="input" id="ac-saldo" inputmode="numeric" style="font-size:24px;font-weight:800" value="'+(c?Math.round(c.monto).toLocaleString('es-CL'):'')+'" placeholder="0"></div>'+
+    '<div class="pad"><button class="btnprim" style="width:100%" onclick="guardarCuenta('+(c?'\''+esc(c.banco)+'\'':'null')+')">Guardar</button></div>';
+  if(c) h+='<div class="pad" style="padding-top:0"><button class="btnsec" style="width:100%" onclick="borrarCuenta(\''+esc(c.banco)+'\')">Eliminar cuenta</button></div>';
+  abrirSheet(h);
+}
+async function guardarCuenta(anterior){
+  const banco=$('ac-banco').value.trim();
+  if(!banco){ toast('Falta el nombre del banco'); return; }
+  const saldo=toNum($('ac-saldo').value);
+  const k=mesKey(), hoy=new Date().toLocaleDateString('es-CL');
+  let s=D.saldos.find(x=>x.banco===(anterior||banco));
+  if(!s){ s={banco, fecha:hoy, raw:{Banco:banco}}; D.saldos.push(s); }
+  s.banco=banco; s.fecha=hoy; s.raw['Banco']=banco; s.raw[k]=saldo; s.raw['Saldo']=saldo;
+  s.raw['Fecha actualización']=hoy;
+  cerrarSheet(); guardarCache(); render(); toast('Cuenta guardada');
+  const r=await apiPost({ action:'setCuenta', cuenta:{ banco, bancoAnterior:anterior||'', saldo, mes:k } });
+  if(r&&r.error) toast('No se pudo guardar en la hoja');
+}
+async function borrarCuenta(banco){
+  D.saldos=D.saldos.filter(x=>x.banco!==banco);
+  cerrarSheet(); guardarCache(); render(); toast('Cuenta eliminada');
+  await apiPost({ action:'eliminarCuenta', cuenta:{ banco } });
+}
+
+/* La identidad es el índice del arreglo: la hoja repite ids entre homónimas. */
+function editarCategoria(idx){
+  const tiene = idx!==undefined && idx!==null;
+  const c = tiene ? D.categorias[idx] : null;
+  const lim = c ? limiteCat(c.nombre) : 0;
+  let h='<div class="secthead"><span>'+(c?'EDITAR CATEGORÍA':'NUEVA CATEGORÍA')+'</span>'+
+    '<button onclick="cerrarSheet()" style="font-size:11px;font-weight:800;letter-spacing:.08em">CERRAR</button></div>'+
+    '<div class="field"><label>NOMBRE</label><input class="input" id="ec-nombre" value="'+esc(c?c.nombre:'')+'" placeholder="Supermercado"></div>'+
+    '<div class="field"><label>LÍMITE MENSUAL EN '+mesLabel()+'</label><input class="input" id="ec-limite" inputmode="numeric" style="font-size:24px;font-weight:800" value="'+(lim>0?Math.round(lim).toLocaleString('es-CL'):'')+'" placeholder="sin límite"></div>';
+  /* El grupo es parte del formulario: va antes del botón, no después. */
+  const gActual = c ? grupoDe(c) : 'Otros';
+  h+='<div class="field"><label>GRUPO</label><div id="ec-grupos" style="display:flex;gap:6px;flex-wrap:wrap">';
+  GRUPOS.forEach(g=>{
+    h+='<button onclick="pickCat(this)" data-cat="'+esc(g)+'" class="tag"'+
+      (g===gActual?' style="background:var(--text);color:var(--bg);font-weight:800"':'')+'>'+esc(g)+'</button>';
+  });
+  h+='</div></div>';
+  h+='<div class="pad"><button class="btnprim" style="width:100%" onclick="guardarCategoria('+(c?idx:'null')+')">Guardar</button></div>';
+  if(c){
+    const gemela = D.categorias.some((x,i)=>i!==idx && normClave(x.nombre)===normClave(c.nombre));
+    h+='<div class="field" style="border-top:2px solid var(--divider);margin-top:8px"><label>'+(gemela?'FUSIONAR ESTA COPIA':'O FUSIONAR CON OTRA')+'</label>'+
+      '<div class="muted" style="font-size:12px;margin-bottom:8px">'+
+        (gemela
+          ? 'Hay otra categoría con este mismo nombre. Al fusionar queda una sola y los movimientos no se mueven de sitio.'
+          : 'Los movimientos de «'+esc(c.nombre)+'» pasan a la categoría que elijas, y esta se desactiva.')+
+      '</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+    D.categorias.forEach((o,i)=>{
+      if(i===idx) return;
+      const esGemela = normClave(o.nombre)===normClave(c.nombre);
+      h+='<button onclick="fusionarCat('+idx+',\''+esc(o.nombre)+'\')" class="tag"'+
+        (esGemela?' style="background:var(--accent);color:var(--bg);font-weight:800"':'')+'>'+
+        esc(o.nombre)+(esGemela?' · la copia':'')+'</button>';
+    });
+    h+='</div></div>';
+  }
+  abrirSheet(h);
+}
+async function guardarCategoria(idx){
+  const nombre=$('ec-nombre').value.trim();
+  if(!nombre){ toast('Falta el nombre'); return; }
+  const limite=toNum($('ec-limite').value);
+  const c = (idx!==null&&idx!==undefined) ? D.categorias[idx] : null;
+  const anterior=c?c.nombre:'';
+  const catId=c?c.id:('cat_'+Date.now());
+  const gsel=$('ec-grupos')?$('ec-grupos').querySelector('[style*="var(--text)"]'):null;
+  const grupo=gsel?gsel.dataset.cat:'Otros';
+  if(c){ c.nombre=nombre; c.tipo=grupo; } else D.categorias.push({id:catId, nombre, tipo:grupo});
+  const k=mesKey();
+  const p=D.presupuestos.find(x=>x.catId===catId&&x.mes===k);
+  if(p) p.limite=limite; else D.presupuestos.push({catId, mes:k, limite});
+  CONFIG_IDX=null;
+  cerrarSheet(); guardarCache(); render(); toast('Categoría guardada');
+  /* Tu script ya tiene setCategoriaPersonal (hoja Categorias) y
+     setPresupuestoMes (hoja Presupuestos, parámetros al tope). */
+  await apiPost({ action:'setCategoriaPersonal', categoria:{ id:catId, nombre, tipo:grupo, color:'#888780', activo:true } });
+  await apiPost({ action:'setPresupuestoMes', catId:catId, mes:k, limite:limite });
+  if(anterior&&anterior!==nombre){
+    await apiPost({ action:'fusionarCategorias', datos:{ desde:anterior, hacia:nombre }, desde:anterior, hacia:nombre });
+    cargar({silencioso:true});
+  }
+}
+/* Elimina la fila de origen por índice: filtrar por nombre nunca distingue homónimas. */
+async function fusionarCat(idxDesde, hacia){
+  const c=D.categorias[idxDesde];
+  if(!c) return;
+  const desde=c.nombre;
+  D.movimientos.forEach(m=>{ if(normClave(m.cat)===normClave(desde)) m.cat=hacia; });
+  D.categorias.splice(idxDesde,1);
+  CONFIG_IDX=null;
+  cerrarSheet(); guardarCache(); render();
+  toast(normClave(desde)===normClave(hacia)?'Copia eliminada':'Fusionadas en «'+hacia+'»');
+  await apiPost({ action:'fusionarCategorias', desde, hacia });
+  cargar({silencioso:true});
+}
+/* No hay acción de copia en el script: se replica límite por límite. */
+async function copiarLimites(){
+  const d=mesRef(); d.setMonth(d.getMonth()-1);
+  const anterior=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+  const origen=D.presupuestos.filter(p=>p.mes===anterior&&p.limite>0);
+  if(!origen.length){ toast('Sin límites en '+anterior); return; }
+  toast('Copiando '+origen.length+' límite'+(origen.length===1?'':'s')+'…');
+  const k=mesKey();
+  for(const p of origen){
+    const ya=D.presupuestos.find(x=>x.catId===p.catId&&x.mes===k);
+    if(ya) ya.limite=p.limite; else D.presupuestos.push({catId:p.catId, mes:k, limite:p.limite});
+    await apiPost({ action:'setPresupuestoMes', catId:p.catId, mes:k, limite:p.limite });
+  }
+  CONFIG_IDX=null; guardarCache(); render(); toast('Límites copiados');
+}
+
 /* ── navegación y render ────────────────────────────────── */
 function ir(tab){ UI.tab=tab; UI.prop=null; window.scrollTo(0,0); render(); }
 function verProp(id){ UI.prop=id; window.scrollTo(0,0); render(); }
 function volverProps(){ UI.prop=null; window.scrollTo(0,0); render(); }
-function cambiarMes(d){ if(d>0&&UI.mesOffset>=0) return; UI.mesOffset+=d; UI.prop=null; render(); }
+function cambiarMes(d){
+  const n=UI.mesOffset+d;
+  if(n<-24||n>12) return;
+  UI.mesOffset=n; UI.prop=null; render();
+}
 function irAlMesActual(){ UI.mesOffset=0; render(); }
 function toggleSaldo(){ UI.saldoAbierto=!UI.saldoAbierto; render(); }
 function setAhorro(f){ UI.ahorroFactor=f; render(); }
@@ -1066,6 +1429,7 @@ function render(){
   const v = UI.tab==='gastos' ? vistaGastos()
           : UI.tab==='props' ? vistaPropiedades()
           : UI.tab==='compromisos' ? vistaCompromisos()
+          : UI.tab==='ajustes' ? vistaAjustes()
           : vistaInicio();
   $('view').innerHTML=v;
   $('nav').innerHTML=navHtml();
