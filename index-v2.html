@@ -81,14 +81,14 @@ input{font:inherit;color:inherit}
 .tag{font-size:12px;font-weight:600;background:var(--n200);padding:3px 9px}
 
 .nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:520px;
-  display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg);
+  display:grid;grid-template-columns:repeat(5,1fr);background:var(--bg);
   border-top:2px solid var(--divider);border-left:2px solid var(--text);border-right:2px solid var(--text);z-index:30}
 .nav button{padding:11px 4px calc(14px + env(safe-area-inset-bottom));text-align:center;position:relative}
 .nav button+button{border-left:1px solid var(--rule)}
 .nav button.on{background:var(--text);color:var(--bg)}
 .nav svg{display:block;margin:0 auto 5px}
-.nav .lbl{font-size:10px;font-weight:800;letter-spacing:.05em}
-.nav .badge{position:absolute;top:6px;right:calc(50% - 34px);background:var(--accent);color:var(--bg);
+.nav .lbl{font-size:9px;font-weight:800;letter-spacing:.01em}
+.nav .badge{position:absolute;top:6px;right:calc(50% - 24px);background:var(--accent);color:var(--bg);
   font-size:10px;font-weight:800;padding:1px 5px}
 .nav button.on .badge{background:var(--bg);color:var(--accent)}
 
@@ -121,6 +121,7 @@ input{font:inherit;color:inherit}
   .nav button+button{border-left:0}
   .nav svg{margin:0}
   .nav .badge{position:static;margin-left:auto}
+  .nav .lbl{font-size:10px;letter-spacing:.05em}
   .desk2{display:grid;grid-template-columns:1fr 380px}
   .desk2>*+*{border-left:2px solid var(--divider)}
 }
@@ -613,6 +614,30 @@ async function nuevoGasto({monto,desc,cat,fecha}){
     id, mes:g.mes, descripcion:desc, categoria:cat, tipo:'puntual',
     montoEstimado:monto, montoReal:monto, confirmado:true, fechaConfirmacion:fecha, notas:'' } });
 }
+
+/* ── historial mes a mes ────────────────────────────────── */
+function claveDe(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+/* Los n meses hasta el mes en pantalla, sin pasar del mes en curso.
+   Cada mes se mide con las MISMAS funciones que la vista del mes (gastadoDelMes,
+   presupuestoTotal), moviendo el mes de referencia: dos implementaciones
+   paralelas daban dos totales distintos para el mismo mes. */
+function claveDe(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+function historial(n){
+  const hoy=new Date(); hoy.setDate(1); hoy.setHours(0,0,0,0);
+  let fin=mesRef(); if(fin>hoy) fin=hoy;
+  const orig=UI.mesOffset, out=[];
+  try{
+    for(let i=n-1;i>=0;i--){
+      const d=new Date(fin.getFullYear(), fin.getMonth()-i, 1);
+      const off=(d.getFullYear()-hoy.getFullYear())*12+(d.getMonth()-hoy.getMonth());
+      UI.mesOffset=off;
+      out.push({ k:claveDe(d), d, label:MESES[d.getMonth()].slice(0,3).toUpperCase(),
+        anio:d.getFullYear(), monto:gastadoDelMes(), presu:presupuestoTotal(), offset:off });
+    }
+  } finally { UI.mesOffset=orig; }
+  return out;
+}
+
 
 /* ── vistas ─────────────────────────────────────────────── */
 function topbar(titulo, extra){
@@ -1387,6 +1412,159 @@ async function copiarLimites(){
   CONFIG_IDX=null; guardarCache(); render(); toast('Límites copiados');
 }
 
+function vistaAnalisis(){
+  const hist=historial(12);
+  const actual=hist[hist.length-1];
+  const conDato=hist.filter(x=>x.monto>0);
+  const prom=conDato.length?Math.round(conDato.reduce((a,x)=>a+x.monto,0)/conDato.length):0;
+  const presuLinea=actual?actual.presu:0;
+  const tope=Math.max(prom, presuLinea, ...hist.map(x=>x.monto))*1.1||1;
+  const alto=v=>Math.max(v>0?2:0, Math.round(v/tope*100));
+
+  let h=topbar('ANÁLISIS')+bannerError();
+
+  if(esMesFuturo()){
+    h+='<div class="block pad"><div class="kicker" style="margin-bottom:6px">MES FUTURO</div>'+
+      '<div style="font-size:15px;font-weight:600">'+mesNombre()+' no tiene gasto ejecutado todavía.</div>'+
+      '<div style="font-size:13px;color:var(--n700);margin-top:6px">El análisis compara meses cerrados y el mes en curso. '+
+      'Para planificar '+mesNombre()+', anda a Gastos.</div>'+
+      '<button onclick="irAlMesActual()" class="btnprim" style="margin-top:14px">Volver al mes en curso</button></div>';
+    return h;
+  }
+
+  h+='<div class="desk2"><div>';
+
+  /* ── tendencia ── */
+  h+='<div class="block"><div class="secthead"><span>GASTO MENSUAL · 12 MESES</span>'+
+    '<span class="muted">PROMEDIO '+fmt(prom)+'</span></div><div class="pad">';
+  h+='<div style="position:relative;height:180px;display:flex;align-items:flex-end;gap:3px">';
+  if(presuLinea>0)
+    h+='<div style="position:absolute;left:0;right:0;bottom:'+alto(presuLinea)+'%;height:0;'+
+      'border-top:2px dashed var(--accent);pointer-events:none;z-index:2"></div>';
+  if(prom>0)
+    h+='<div style="position:absolute;left:0;right:0;bottom:'+alto(prom)+'%;height:0;'+
+      'border-top:1px solid var(--n500);pointer-events:none;z-index:2"></div>';
+  hist.forEach((x,i)=>{
+    const sel=x.offset===UI.mesOffset;
+    const anclaje=i>=hist.length-2?'right:0;left:auto;transform:none'
+      :(i<=1?'left:0;transform:none':'left:50%;transform:translateX(-50%)');
+    const over=x.presu>0&&x.monto>x.presu;
+    const fill=sel?'var(--text)':(over?'var(--accent)':'var(--n300)');
+    h+='<button onclick="irAMes('+x.offset+')" title="'+x.label+' '+x.anio+' · '+fmt(x.monto)+'" '+
+      'style="flex:1;height:100%;display:flex;align-items:flex-end;position:relative">'+
+      '<span style="display:block;width:100%;height:'+alto(x.monto)+'%;background:'+fill+'"></span>'+
+      (sel&&x.monto>0
+        ? '<span class="num" style="position:absolute;'+anclaje+';bottom:calc('+alto(x.monto)+'% + 6px);'+
+          'font-size:11px;white-space:nowrap;z-index:3">'+fmt(x.monto)+'</span>'
+        : '')+
+      '</button>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:3px;margin-top:7px;border-top:1px solid var(--rule);padding-top:6px">';
+  hist.forEach((x,i)=>{
+    const sel=x.offset===UI.mesOffset;
+    const nuevoAnio=i===0||x.anio!==hist[i-1].anio;
+    h+='<span style="flex:1;text-align:center;font-size:9px;font-weight:800;letter-spacing:.02em;'+
+      (sel?'':'color:var(--n600)')+'">'+x.label.slice(0,1)+
+      (nuevoAnio?'<span style="display:block;font-size:8px;color:var(--n500)">\''+String(x.anio).slice(2)+'</span>':'')+
+      '</span>';
+  });
+  h+='</div>';
+  h+='<div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:11px;color:var(--n700)">'+
+    (presuLinea>0?'<span style="display:flex;align-items:center;gap:5px">'+
+      '<span style="width:16px;border-top:2px dashed var(--accent)"></span>presupuesto '+fmt(presuLinea)+'</span>':'')+
+    (prom>0?'<span style="display:flex;align-items:center;gap:5px">'+
+      '<span style="width:16px;border-top:1px solid var(--n500)"></span>promedio</span>':'')+
+    '<span style="display:flex;align-items:center;gap:5px">'+
+      '<span style="width:10px;height:10px;background:var(--accent);display:block"></span>sobre presupuesto</span>'+
+    '</div>';
+  h+='</div></div>';
+
+  /* ── tabla mes a mes ── */
+  h+='<div class="block"><div class="secthead"><span>MES A MES</span><span class="muted">GASTO / PRESUPUESTO</span></div>';
+  hist.slice().reverse().forEach(x=>{
+    const sel=x.offset===UI.mesOffset;
+    const dif=x.presu>0?x.monto-x.presu:0;
+    h+='<button onclick="irAMes('+x.offset+')" class="row" style="display:grid;grid-template-columns:1fr auto;'+
+      'width:100%;padding:11px 18px;'+(sel?'background:var(--surface)':'')+'">'+
+      '<span style="text-align:left"><span style="display:block;font-size:14px;font-weight:600">'+
+        x.label+' '+x.anio+'</span>'+
+      '<span class="muted" style="font-size:11px">'+
+        (x.monto===0?'sin movimientos'
+          : x.presu>0
+            ? (dif>0?'+'+fmt(dif)+' sobre presupuesto':fmt(-dif)+' bajo presupuesto')
+            : 'sin presupuesto definido')+
+      '</span></span>'+
+      '<span class="num'+(dif>0?' alerttext':'')+'" style="font-size:15px;align-self:center">'+fmt(x.monto)+'</span>'+
+      '</button>';
+  });
+  h+='</div>';
+
+  h+='</div><div>';
+
+  /* ── proyección ── */
+  const gastado=gastadoDelMes(), presu=presupuestoTotal();
+  const banco=gastosBanco().reduce((a,m)=>a+m.monto,0);
+  const pendiente=porPagar();
+  const dia=diaHoy(), dias=diasDelMes(), rest=Math.max(0,dias-dia);
+  const ritmo=dia>0?Math.round(banco/dia):0;
+  const cierre=esMesActual()? gastado+pendiente+ritmo*rest : gastado;
+  const previos=hist.slice(0,-1).filter(x=>x.monto>0).slice(-3);
+  const prom3=previos.length?Math.round(previos.reduce((a,x)=>a+x.monto,0)/previos.length):0;
+
+  h+='<div class="block"><div class="secthead"><span>'+
+    (esMesActual()?'CIERRE ESTIMADO DE '+mesNombre().toUpperCase():'CERRÓ EN')+'</span></div><div class="pad">'+
+    '<div class="mid'+(presu>0&&cierre>presu?' alerttext':'')+'" style="font-size:38px">'+fmt(cierre)+'</div>';
+  if(presu>0)
+    h+='<div style="font-size:13px;color:var(--n700);margin-top:8px">'+
+      (cierre>presu
+        ? 'Supera el presupuesto de '+fmt(presu)+' en '+fmt(cierre-presu)+'.'
+        : 'Queda '+fmt(presu-cierre)+' bajo el presupuesto de '+fmt(presu)+'.')+'</div>';
+  else
+    h+='<div style="font-size:13px;color:var(--n700);margin-top:8px">Sin presupuesto definido para este mes.</div>';
+  if(prom3>0){
+    const d3=cierre-prom3, p3=Math.round(Math.abs(d3)/prom3*100);
+    h+='<div style="font-size:13px;color:var(--n700);margin-top:4px">'+
+      (Math.abs(p3)<3?'Igual que':(d3>0?p3+'% más que':p3+'% menos que'))+
+      ' el promedio de los últimos '+previos.length+' meses ('+fmt(prom3)+').</div>';
+  }
+  h+='</div>';
+  if(esMesActual()){
+    const filas=[
+      ['Ya gastado', gastado, 'banco y compromisos pagados'],
+      ['Compromisos por pagar', pendiente, 'montos ya conocidos'],
+      ['Gasto diario estimado', ritmo*rest, rest+' días × '+fmt(ritmo)+' al día'],
+    ];
+    h+='<div class="secthead"><span>DE DÓNDE SALE</span></div>';
+    filas.forEach(([n,v,sub])=>{
+      h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px">'+
+        '<span><span style="display:block;font-size:14px;font-weight:600">'+n+'</span>'+
+        '<span class="muted" style="font-size:11px">'+sub+'</span></span>'+
+        '<span class="num" style="font-size:15px;align-self:center">'+fmt(v)+'</span></div>';
+    });
+    h+='<div class="pad muted" style="font-size:11px">El ritmo diario usa sólo los cargos del banco, '+
+      'para no proyectar dos veces lo que ya está comprometido.</div>';
+  }
+  h+='</div>';
+
+  /* ── mayor movimiento del mes ── */
+  const top=gastosBanco().slice().sort((a,b)=>b.monto-a.monto).slice(0,5);
+  if(top.length){
+    h+='<div class="block"><div class="secthead"><span>LOS 5 MÁS GRANDES</span></div>';
+    top.forEach(m=>{
+      h+='<button onclick="abrirCategorias('+m.idx+')" class="row" style="display:grid;'+
+        'grid-template-columns:1fr auto;width:100%;padding:11px 18px">'+
+        '<span style="text-align:left"><span style="display:block;font-size:14px;font-weight:600">'+esc(m.desc||'—')+'</span>'+
+        '<span class="muted" style="font-size:11px">'+esc(m.fecha)+' · '+esc(m.cat||'sin categoría')+'</span></span>'+
+        '<span class="num" style="font-size:15px;align-self:center">'+fmt(m.monto)+'</span></button>';
+    });
+    h+='</div>';
+  }
+
+  h+='</div></div>';
+  return h;
+}
+
 /* ── navegación y render ────────────────────────────────── */
 function ir(tab){ UI.tab=tab; UI.prop=null; window.scrollTo(0,0); render(); }
 function verProp(id){ UI.prop=id; window.scrollTo(0,0); render(); }
@@ -1397,6 +1575,7 @@ function cambiarMes(d){
   UI.mesOffset=n; UI.prop=null; render();
 }
 function irAlMesActual(){ UI.mesOffset=0; render(); }
+function irAMes(n){ UI.mesOffset=n; UI.prop=null; render(); }
 function toggleSaldo(){ UI.saldoAbierto=!UI.saldoAbierto; render(); }
 function setAhorro(f){ UI.ahorroFactor=f; render(); }
 function programarAhorro(){ UI.ahorroProgramado=true; render(); toast('Anotado para fin de mes'); }
@@ -1410,6 +1589,7 @@ const ICONOS = {
   inicio:'<path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
   gastos:'<path d="M4 2v20l2-1 2 1 2-1 2 1 2-1 2 1 2-1 2 1V2l-2 1-2-1-2 1-2-1-2 1-2-1-2 1"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 17.5v-11"/>',
   props:'<path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/>',
+  analisis:'<path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/>',
   compromisos:'<path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18"/><path d="M3 10h18"/><path d="M8 14h.01"/><path d="M12 14h.01"/><path d="M16 14h.01"/>'
 };
 function navHtml(){
@@ -1421,12 +1601,13 @@ function navHtml(){
       '<span class="lbl">'+label+'</span>'+
       (badge?'<span class="badge">'+badge+'</span>':'')+
     '</button>';
-  return item('inicio','INICIO',0)+item('gastos','GASTOS',nPend)+
+  return item('inicio','INICIO',0)+item('gastos','GASTOS',nPend)+item('analisis','ANÁLISIS',0)+
          item('props','PROPIEDADES',0)+item('compromisos','COMPROMISOS',nComp);
 }
 
 function render(){
   const v = UI.tab==='gastos' ? vistaGastos()
+          : UI.tab==='analisis' ? vistaAnalisis()
           : UI.tab==='props' ? vistaPropiedades()
           : UI.tab==='compromisos' ? vistaCompromisos()
           : UI.tab==='ajustes' ? vistaAjustes()
