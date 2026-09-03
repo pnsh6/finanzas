@@ -144,7 +144,7 @@ input{font:inherit;color:inherit}
    · saldo auditable por cuenta          · conciliación como bandeja
    · compromisos unificados              · pintado inmediato desde caché
    ══════════════════════════════════════════════════════════════ */
-const API_URL = 'https://script.google.com/macros/s/AKfycbysJ3esCOYQwHNw4SpjeMsQoRQ1_VLqnxFAV1Oc6IiRwr-i-AyHaJHBoxfEI_NS6yGC/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyt30Snel2ffdCGZ1JMYH0NlY8jRwmjukdauwD5zmbGQxoJivBF6sMTsYdUYozGEFA0/exec';
 const CACHE_KEY = 'finanzas_v2_cache_2';
 const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
 
@@ -538,7 +538,7 @@ function movsSinCuenta(){
    "02-09-2026" se leería como 2 de septiembre o como febrero según el navegador. */
 function parseFecha(f){
   if(!f) return null;
-  const s=String(f).trim();
+  const s=String(f).trim().replace(/^'/,'');
   const dmy=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
   if(dmy){
     const d=new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
