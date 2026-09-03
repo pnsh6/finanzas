@@ -130,7 +130,8 @@ input{font:inherit;color:inherit}
 <body>
 
 <div id="app">
-  <div id="view"><div class="topbar"><span class="brand">FINANZAS</span></div><div class="pad muted">Cargando…</div></div>
+  <div id="progreso" hidden style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--n200);z-index:60"></div>
+  <div id="view"><div class="topbar"><span class="brand">FINANZAS</span></div><div class="pad muted" id="cargatxt">Cargando…</div></div>
   <nav class="nav" id="nav"></nav>
 </div>
 <div class="sheet" id="sheet" hidden><div class="sheetbox" id="sheetbox"></div></div>
@@ -154,7 +155,7 @@ let D = { movimientos:[], saldos:[], propiedades:[], gastosProp:[], pagosProp:[]
           arriendos:[], responsables:[], arrendatarios:[], categorias:[], presupuestos:[],
           gastosPersonales:[], config:{} };
 let UI = { tab:'inicio', prop:null, mesOffset:0, saldoAbierto:true, ahorroFactor:1,
-           ahorroProgramado:false, cargando:true, error:'', diag:[] };
+           ahorroProgramado:false, cargando:true, error:'', diag:[], listas:0, totales:0 };
 
 /* ── utilidades ─────────────────────────────────────────── */
 const $ = id => document.getElementById(id);
@@ -196,7 +197,7 @@ function toast(msg){
 async function fetchSheet(nombre){
   /* Sin chequeo de r.ok: Apps Script redirige a googleusercontent y puede responder
      con códigos raros aunque el cuerpo sea válido — v1 tampoco lo miraba. */
-  const r = await fetch(API_URL+'?sheet='+encodeURIComponent(nombre));
+  const r = await conTimeout(API_URL+'?sheet='+encodeURIComponent(nombre), 20000);
   const t = await r.text();
   let j;
   try{ j=JSON.parse(t); }
@@ -206,10 +207,20 @@ async function fetchSheet(nombre){
   if(Array.isArray(j)) return j;
   return j && Array.isArray(j.rows) ? j.rows : [];
 }
+/* Un fetch sin tope puede no resolverse nunca. Con tope, la carga siempre
+   termina: o con datos, o con un error que el usuario puede reintentar. */
+async function conTimeout(url, ms){
+  const ctl=new AbortController();
+  const t=setTimeout(()=>ctl.abort(), ms);
+  try{ return await fetch(url,{signal:ctl.signal}); }
+  catch(e){ throw new Error(e&&e.name==='AbortError'?'no respondió en '+Math.round(ms/1000)+'s':(e.message||'falló la conexión')); }
+  finally{ clearTimeout(t); }
+}
 /* Ninguna hoja individual puede tumbar la carga completa. */
 async function hoja(nombre, fallidas){
-  try{ return await fetchSheet(nombre); }
-  catch(e){ fallidas.push(nombre); UI.diag.push(nombre+': '+(e&&e.message?e.message:e)); return []; }
+  try{ const r=await fetchSheet(nombre); UI.listas++; pintarProgreso(); return r; }
+  catch(e){ fallidas.push(nombre); UI.listas++; pintarProgreso();
+    UI.diag.push(nombre+': '+(e&&e.message?e.message:e)); return []; }
 }
 async function apiPost(payload){
   const p=new URLSearchParams();
@@ -217,7 +228,7 @@ async function apiPost(payload){
     if(v!==null&&v!==undefined) p.set(k, typeof v==='object'?JSON.stringify(v):String(v));
   });
   try{
-    const r=await fetch(API_URL+'?'+p.toString());
+    const r=await conTimeout(API_URL+'?'+p.toString(), 20000);
     const t=await r.text();
     try{ return JSON.parse(t); }catch(e){ return {ok:true}; }
   }catch(e){ return {error:e.message}; }
@@ -243,7 +254,7 @@ function guardarCache(){
 async function cargar({silencioso=false}={}){
   if(!silencioso) UI.cargando = !D.movimientos.length;
   const fallidas=[];
-  UI.diag=[];
+  UI.diag=[]; UI.listas=0; UI.totales=12; pintarProgreso();
   try{
     const F=n=>hoja(n,fallidas);
     const [movs,saldos,props,config,gastos,pagos,arriendos,resp,arrend,cats,pres,gp] = await Promise.all([
@@ -252,15 +263,29 @@ async function cargar({silencioso=false}={}){
       F('Arrendatarios'), F('Categorias'), F('Presupuestos'), F('GastosPersonales')
     ]);
     if(fallidas.length===12){
-      UI.cargando=false; UI.error=mensajeSinConexion(); render(); return;
+      UI.cargando=false; UI.totales=0; UI.error=mensajeSinConexion(); render(); return;
     }
     normalizar({movs,saldos,props,config,gastos,pagos,arriendos,resp,arrend,cats,pres,gp});
-    UI.cargando=false;
+    UI.cargando=false; UI.totales=0;
     UI.error = fallidas.length ? 'No cargaron estas hojas: '+fallidas.join(', ')+'. El resto está al día.' : '';
     guardarCache(); render();
   }catch(e){
-    UI.cargando=false; UI.error=mensajeSinConexion(); render();
+    UI.cargando=false; UI.totales=0; UI.error=mensajeSinConexion(); render();
   }
+}
+/* Barra de progreso propia, fuera de render(): la carga avanza hoja por hoja
+   y repintar la vista entera en cada una es caro y hace saltar el scroll. */
+function pintarProgreso(){
+  const el=$('progreso'); if(!el) return;
+  const activo=UI.totales>0&&UI.listas<UI.totales;
+  el.hidden=!activo;
+  if(activo){
+    el.innerHTML='<span style="display:block;height:100%;background:var(--accent);'+
+      'width:'+Math.round(UI.listas/UI.totales*100)+'%;transition:width .2s"></span>';
+    el.setAttribute('aria-label','Cargando '+UI.listas+' de '+UI.totales+' hojas');
+  }
+  const t=$('cargatxt');
+  if(t) t.textContent = activo ? 'Cargando '+UI.listas+' de '+UI.totales+' hojas…' : 'Cargando…';
 }
 
 function normalizar(r){
@@ -455,26 +480,82 @@ function gastadoDelMes(){
   });
   return t;
 }
+/* El saldo de la hoja es una foto del día en que lo anotaste. Los movimientos
+   con fecha POSTERIOR a esa foto no están descontados todavía; los anteriores sí
+   (el banco ya los había procesado), así que restarlos otra vez sería contarlos
+   dos veces. De ahí que el corte sea la fecha de actualización y no el mes. */
+/* El corte sólo sirve si la foto es de este mes. Con una fecha vieja —la hoja
+   arrastra fechas de meses anteriores— restar "todo lo posterior" descontaría
+   medio año de gastos y el saldo se iría a negativo. En ese caso no se proyecta
+   nada y se pide actualizar, que es la única cifra que el banco puede confirmar. */
+function anclaDeCuenta(fechaCorte){
+  const d=parseFecha(fechaCorte);
+  if(!d) return null;
+  /* mesRef() conserva la hora actual: sin normalizar a medianoche, un saldo
+     anotado hoy mismo cae "antes" del inicio del mes y el ancla se descarta. */
+  const r=mesRef(), ini=new Date(r.getFullYear(), r.getMonth(), 1);
+  const fin=new Date(r.getFullYear(), r.getMonth()+1, 1);
+  return (d>=ini && d<fin) ? d : null;
+}
+function movsPosteriores(banco, fechaCorte){
+  const corte=anclaDeCuenta(fechaCorte);
+  if(!corte) return [];
+  const k=mesKey();
+  return D.movimientos.filter(m=>{
+    if(!mismoBanco(m.banco, banco)) return false;
+    if((m.cat||'').toLowerCase()==='ignorado') return false;
+    if(mesDeFecha(m.fecha)!==k) return false;
+    const f=parseFecha(m.fecha);
+    return f && f>corte;
+  });
+}
 function saldoPorCuenta(){
   const k=mesKey();
-  return D.saldos.map(s=>({
-    banco:s.banco,
-    monto:toNum(s.raw[k])||toNum(s.raw['Saldo'])||0,
-    fecha:s.fecha,
-    dias:diasDesde(s.fecha)
-  }));
+  return D.saldos.map(s=>{
+    const informado=toNum(s.raw[k])||toNum(s.raw['Saldo'])||0;
+    /* En un mes que no es el actual la foto no se puede proyectar: se muestra tal cual. */
+    const ancla=esMesActual()?anclaDeCuenta(s.fecha):null;
+    const post=ancla?movsPosteriores(s.banco, s.fecha):[];
+    const gastos=post.filter(m=>m.tipo==='gasto').reduce((a,m)=>a+m.monto,0);
+    const ingresos=post.filter(m=>m.tipo==='ingreso').reduce((a,m)=>a+m.monto,0);
+    return {
+      banco:s.banco, informado, gastos, ingresos, nPost:post.length, ancla:!!ancla,
+      ajuste:ingresos-gastos,
+      monto:informado-gastos+ingresos,
+      fecha:s.fecha, dias:diasDesde(s.fecha)
+    };
+  });
 }
-/* La hoja entrega la fecha en dd/mm/yyyy o como string de Date completo. */
+/* Movimientos cuyo banco no calza con ninguna cuenta: no se descuentan de nada,
+   y callarlo dejaría el saldo alto sin explicación. */
+function movsSinCuenta(){
+  if(!esMesActual()||!D.saldos.length) return [];
+  return movsDelMes().filter(m=>m.tipo==='gasto'&&(m.cat||'').toLowerCase()!=='ignorado'
+    && !D.saldos.some(s=>mismoBanco(m.banco, s.banco)));
+}
+/* La hoja entrega la fecha en dd/mm/yyyy, los movimientos en dd-mm-yyyy, y a
+   veces llega un string de Date completo o un ISO. Sin distinguir dd-mm de ISO,
+   "02-09-2026" se leería como 2 de septiembre o como febrero según el navegador. */
 function parseFecha(f){
   if(!f) return null;
   const s=String(f).trim();
-  const p=s.split('/');
-  if(p.length===3){
-    const d=new Date(+p[2], +p[1]-1, +p[0]);
+  const dmy=s.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+  if(dmy){
+    const d=new Date(+dmy[3], +dmy[2]-1, +dmy[1]);
+    return isNaN(d)?null:d;
+  }
+  const iso=s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if(iso){
+    const d=new Date(+iso[1], +iso[2]-1, +iso[3]);
     return isNaN(d)?null:d;
   }
   const d=new Date(s);
   return isNaN(d)?null:d;
+}
+function mismoBanco(a,b){
+  const x=normClave(a), y=normClave(b);
+  if(!x||!y) return false;
+  return x===y||x.indexOf(y)>=0||y.indexOf(x)>=0;
 }
 function fechaCorta(f){
   const d=parseFecha(f);
@@ -486,6 +567,29 @@ function diasDesde(f){
   return Math.floor((new Date()-d)/86400000);
 }
 function saldoTotal(){ return saldoPorCuenta().reduce((a,c)=>a+c.monto,0); }
+function hoyISO(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function isoADmy(iso){ const p=String(iso||'').split('-'); return p.length===3?p[2]+'/'+p[1]+'/'+p[0]:''; }
+function fechaAISO(f){ const d=parseFecha(f); return d?d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'):hoyISO(); }
+/* Lo que se descontaría si el saldo llevara esa fecha. Se muestra antes de
+   guardar: es la única forma de notar que la fecha está equivocada.
+   banco===null suma todas las cuentas; un banco vacío no calza con ninguna. */
+function previewDescuento(banco, iso){
+  const corte=parseFecha(isoADmy(iso));
+  if(!corte) return { n:0, suma:0 };
+  const k=mesKey();
+  if(!String(banco||'').trim()&&banco!==null) return { n:0, suma:0 };
+  const post=D.movimientos.filter(m=>{
+    if(banco!==null&&!mismoBanco(m.banco, banco)) return false;
+    if((m.cat||'').toLowerCase()==='ignorado') return false;
+    if(mesDeFecha(m.fecha)!==k) return false;
+    const f=parseFecha(m.fecha);
+    return f && f>corte;
+  });
+  return {
+    n:post.length,
+    suma:post.reduce((a,m)=>a+(m.tipo==='gasto'?m.monto:-m.monto),0)
+  };
+}
 function porPagar(){
   return compromisos().filter(c=>!c.ingreso&&c.mio&&!c.pagado).reduce((a,c)=>a+c.monto,0);
 }
@@ -545,6 +649,138 @@ function porConciliar(){
   });
 }
 
+/* ── importar movimientos (texto pegado u OCR de imagen) ──── */
+const IMP = { filas:[], leyendo:false, nota:'' };
+
+/* Un número de documento es un dígito largo sin separadores ni signo:
+   se descarta antes de buscar montos, o se confunde con el saldo. */
+function esDocumento(t){ return /^\d{6,}$/.test(t.replace(/\s/g,'')); }
+function tokensMonto(resto){
+  const out=[];
+  (resto.match(/-?\s?\$?\s?\d{1,3}(?:[.,]\d{3})+(?:[.,]\d{2})?|-?\s?\$\s?\d+/g)||[]).forEach(t=>{
+    const limpio=t.replace(/\s/g,'');
+    if(esDocumento(limpio)) return;
+    out.push({ neg:/-|−/.test(limpio), valor:toNum(limpio.replace(/[-−$]/g,'')) });
+  });
+  return out.filter(x=>x.valor>0);
+}
+/* Con slashes, igual que la hoja: mesDeFecha() sólo reconoce el mes en
+   dd/mm/yyyy, y con guiones el movimiento importado quedaba fuera del mes. */
+function normFecha(t){
+  const m=t.match(/(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{2,4})/);
+  if(!m) return '';
+  let a=m[3]; if(a.length===2) a='20'+a;
+  return String(m[1]).padStart(2,'0')+'/'+String(m[2]).padStart(2,'0')+'/'+a;
+}
+/* Lee una línea de cartola. Deja fuera el saldo corrido: cuando hay dos o más
+   montos, el último es el saldo de la cuenta, no el movimiento. */
+function parsearLinea(linea){
+  const cruda=String(linea).replace(/\u00a0/g,' ').trim();
+  if(!cruda||cruda.length<8) return null;
+  if(/^(fecha|descripci|saldo|cargos|abonos|n°|nro)/i.test(cruda)) return null;
+  const fecha=normFecha(cruda);
+  if(!fecha) return null;
+  const iFecha=cruda.search(/\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4}/);
+  const tras=cruda.slice(iFecha).replace(/^\S+\s*/,'');
+  const montos=tokensMonto(tras);
+  if(!montos.length) return null;
+  const negativo=montos.find(x=>x.neg);
+  let monto, tipo;
+  if(negativo){ monto=negativo.valor; tipo='gasto'; }
+  else if(montos.length>=2){ monto=montos[0].valor; tipo='ingreso'; }
+  else { monto=montos[0].valor; tipo='gasto'; }
+  /* La descripción termina donde empieza el primer monto o número de documento.
+     No corta en cualquier dígito: "Nro 4114" es parte del nombre del cargo. */
+  const corte=tras.search(/-?\s?\$\s?\d|\b\d{1,3}[.,]\d{3}\b|\b\d{6,}\b/);
+  let desc=(corte>0?tras.slice(0,corte):tras).replace(/[\t|]+/g,' ').replace(/\s{2,}/g,' ').trim();
+  desc=desc.replace(/[\s.,;:-]+$/,'');
+  if(!desc) return null;
+  return { fecha, desc, monto, tipo };
+}
+function parsearTexto(txt){
+  const filas=[];
+  String(txt||'').split(/\r?\n/).forEach(l=>{
+    /* Una línea puede traer dos movimientos pegados si el OCR no cortó el salto. */
+    const partes=l.split(/(?=\d{2}[-\/.]\d{2}[-\/.]\d{4})/).filter(x=>x.trim());
+    (partes.length>1?partes:[l]).forEach(p=>{ const f=parsearLinea(p); if(f) filas.push(f); });
+  });
+  return filas;
+}
+/* Ya está en la hoja si coincide fecha y monto exacto: dos cargos idénticos el
+   mismo día son casi siempre el mismo, y el duplicado es peor que el faltante. */
+function yaExiste(f){
+  return D.movimientos.some(m=>m.fecha===f.fecha&&Math.round(m.monto)===Math.round(f.monto));
+}
+function prepararFilas(filas){
+  IMP.filas=filas.map((f,i)=>{
+    const s=sugerir({desc:f.desc});
+    return { ...f, i, cat:s.cat, razon:s.razon, dup:yaExiste(f), incluir:!yaExiste(f) };
+  });
+}
+
+async function cargarOCR(){
+  if(window.Tesseract) return true;
+  return new Promise(res=>{
+    const s=document.createElement('script');
+    s.src='https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
+    s.onload=()=>res(true); s.onerror=()=>res(false);
+    document.head.appendChild(s);
+  });
+}
+async function leerImagen(file){
+  if(!file||!/^image\//.test(file.type)) return;
+  IMP.leyendo=true; IMP.nota='Cargando el lector…'; pintarImportar();
+  const ok=await cargarOCR();
+  if(!ok){ IMP.leyendo=false; IMP.nota='No se pudo cargar el lector de imágenes. Pega el texto en su lugar.'; pintarImportar(); return; }
+  try{
+    IMP.nota='Leyendo la imagen…'; pintarImportar();
+    const r=await window.Tesseract.recognize(file,'spa',{
+      logger:m=>{ if(m.status==='recognizing text'){ IMP.nota='Leyendo la imagen… '+Math.round(m.progress*100)+'%'; pintarImportar(); } }
+    });
+    const filas=parsearTexto(r.data.text);
+    IMP.leyendo=false;
+    if(!filas.length){ IMP.nota='No reconocí ninguna fila. Prueba con una captura más grande, o pega el texto.'; }
+    else{ IMP.nota='Leído de la imagen — revisa los montos, el OCR se equivoca.'; prepararFilas(filas); }
+    pintarImportar();
+  }catch(e){
+    IMP.leyendo=false; IMP.nota='La lectura falló. Pega el texto en su lugar.'; pintarImportar();
+  }
+}
+function leerTexto(){
+  const txt=($('imp-txt')||{}).value||'';
+  const filas=parsearTexto(txt);
+  if(!filas.length){ IMP.nota='No reconocí ninguna fila. Cada línea necesita fecha, descripción y monto.'; IMP.filas=[]; }
+  else { IMP.nota=''; prepararFilas(filas); }
+  pintarImportar();
+}
+function impToggle(i){ const f=IMP.filas[i]; f.incluir=!f.incluir; pintarImportar(); }
+function impCampo(i,campo,v){
+  const f=IMP.filas[i];
+  if(campo==='monto') f.monto=toNum(v); else f[campo]=v;
+  if(campo==='monto'||campo==='fecha'){ f.dup=yaExiste(f); }
+  if(campo==='desc'){ const s=sugerir({desc:v}); f.cat=s.cat; f.razon=s.razon; }
+  pintarImportar();
+}
+function impTipo(i,t){ IMP.filas[i].tipo=t; pintarImportar(); }
+async function guardarImportadas(){
+  const elegidas=IMP.filas.filter(f=>f.incluir);
+  if(!elegidas.length){ toast('No hay filas seleccionadas'); return; }
+  const banco=($('imp-banco')||{}).value||'Security';
+  const sello=Date.now();
+  const nuevos=elegidas.map((f,n)=>({
+    idx:D.movimientos.length+n, id:'manual-'+sello+'-'+n, fecha:f.fecha, desc:f.desc,
+    cat:f.cat, monto:f.monto, banco, tipo:f.tipo, subtipo:'manual'
+  }));
+  D.movimientos=D.movimientos.concat(nuevos);
+  cerrarSheet(); guardarCache(); render();
+  toast(nuevos.length+' movimiento'+(nuevos.length===1?'':'s')+' agregado'+(nuevos.length===1?'':'s'));
+  const r=await apiPost({ action:'agregarMovimientos', movimientos:nuevos.map(m=>({
+    id:m.id, fecha:m.fecha, descripcion:m.desc, categoria:m.cat,
+    monto:String(m.monto), banco:m.banco, tipo:m.tipo, subtipo:'manual' })) });
+  if(r&&r.error) toast('Quedaron en pantalla, pero la hoja no los recibió');
+  else cargar({silencioso:true});
+}
+
 /* ── acciones (optimistas: pintan primero, guardan después) ─ */
 async function clasificar(movIdx, cat){
   const m=D.movimientos[Number(movIdx)];
@@ -596,13 +832,22 @@ async function marcarCompromiso(id){
       fechaPago:fila.fechaPago, montoReal:fila.montoReal, notas:fila.notas } });
   }
 }
-async function guardarSaldos(valores){
-  const k=mesKey(), hoy=new Date().toLocaleDateString('es-CL');
-  D.saldos.forEach((s,i)=>{ s.raw[k]=valores[i]; s.raw['Saldo']=valores[i]; s.fecha=hoy; s.raw['Fecha actualización']=hoy; });
+async function guardarSaldos(valores, iso){
+  const k=mesKey(), fecha=isoADmy(iso||hoyISO());
+  D.saldos.forEach((s,i)=>{ s.raw[k]=valores[i]; s.raw['Saldo']=valores[i]; s.fecha=fecha; s.raw['Fecha actualización']=fecha; });
   cerrarSheet(); guardarCache(); render();
   toast('Saldos actualizados');
-  await apiPost({ action:'setSaldos', mesKey:k, saldos:D.saldos.map((s,i)=>({
-    banco:s.banco, cc:valores[i], lc_disp:0, lc_apro:0, tc_disp:0, tc_apro:0 })) });
+  /* setCuenta y no setSaldos: setSaldos escribe el monto pero no la fecha de
+     actualización, y sin esa fecha el saldo no tiene desde cuándo descontar.
+     Un solo camino de guardado evita que los dos formularios difieran. */
+  let falla=false;
+  for(let i=0;i<D.saldos.length;i++){
+    const r=await apiPost({ action:'setCuenta', cuenta:{
+      banco:D.saldos[i].banco, bancoAnterior:D.saldos[i].banco, saldo:valores[i], mes:k, fecha } });
+    if(r&&r.error) falla=true;
+  }
+  if(falla) toast('La hoja no recibió todos los saldos');
+  else cargar({silencioso:true});
 }
 async function nuevoGasto({monto,desc,cat,fecha}){
   const id='gp_'+Date.now();
@@ -724,6 +969,15 @@ function vistaInicio(){
         : 'Ver de dónde sale')+
     '</button></div></div>';
 
+  const sinAncla=esMesActual()&&cuentas.length&&cuentas.every(c=>!c.ancla)&&gastosBanco().length;
+  if(sinAncla)
+    h+='<button onclick="abrirSaldos()" class="block pad" style="display:block;width:100%;text-align:left;background:var(--a100)">'+
+      '<div class="kicker" style="margin-bottom:4px;color:var(--a700)">SALDO SIN ACTUALIZAR</div>'+
+      '<div style="font-size:14px;font-weight:600;color:var(--a700)">Ese saldo no incluye los gastos de '+mesNombre()+'.</div>'+
+      '<div style="font-size:12px;color:var(--a700);margin-top:4px">Fue anotado el '+
+        esc(cuentas[0].fecha?(fechaCorta(cuentas[0].fecha)||cuentas[0].fecha):'—')+
+        '. Actualízalo y desde ahí la app descuenta sola cada movimiento nuevo.</div></button>';
+
   if(UI.saldoAbierto){
     h+='<div class="block"><div class="secthead"><span>DE DÓNDE SALE</span>'+
       '<button onclick="toggleSaldo()" class="muted" style="font-size:11px;font-weight:800;letter-spacing:.08em">CERRAR</button></div>';
@@ -733,14 +987,36 @@ function vistaInicio(){
       h+='<button onclick="abrirSaldos()" class="row" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:11px 18px;'+(alerta?'background:var(--a100)':'')+'">'+
         '<span><span style="font-size:14px;font-weight:600">'+esc(c.banco)+'</span>'+
         '<span style="display:block;font-size:11px;'+(alerta?'font-weight:600;color:var(--a700)':'color:var(--n600)')+'">'+
-          (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)+(alerta?' · hace '+c.dias+' días':'')):'sin fecha')+'</span></span>'+
+          (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)+(alerta?' · hace '+c.dias+' días':'')):'sin fecha')+'</span>'+
+        (c.nPost
+          ? '<span style="display:block;font-size:11px;color:var(--n600);margin-top:2px">'+
+            fmt(c.informado)+' informado − '+c.nPost+' movimiento'+(c.nPost===1?'':'s')+' posterior'+(c.nPost===1?'':'es')+
+            (c.ingresos>0?' ('+fmt(c.gastos)+' en gastos, '+fmt(c.ingresos)+' en abonos)':' ('+fmt(c.gastos)+')')+'</span>'
+          : '')+
+        '</span>'+
         '<span class="num" style="font-size:15px;align-self:center;'+(alerta?'color:var(--a700)':'')+'">'+fmt(c.monto)+'</span></button>';
     });
     const ingresos=comp.filter(c=>c.ingreso&&c.pagado).reduce((a,c)=>a+c.monto,0);
     /* El titular es la suma de las cuentas y nada más: la fila de total lo demuestra. */
     h+='<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px;background:var(--surface)">'+
       '<span style="font-size:13px;font-weight:800;letter-spacing:.04em">TOTAL EN CUENTAS</span>'+
-      '<span class="num" style="font-size:15px;align-self:center">'+fmt(total)+'</span></div></div>';
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(total)+'</span></div>';
+    const ajusteTotal=cuentas.reduce((a,c)=>a+c.ajuste,0);
+    if(ajusteTotal!==0)
+      h+='<div class="pad muted" style="font-size:11px">Cada cuenta parte del saldo que anotaste y le descuenta lo que '+
+        'pasó después de esa fecha. Lo anterior ya venía descontado por el banco.</div>';
+    const huerfanos=movsSinCuenta();
+    if(huerfanos.length){
+      const suma=huerfanos.reduce((a,m)=>a+m.monto,0);
+      h+='<button onclick="editarCuenta()" class="row" style="display:grid;grid-template-columns:1fr auto;'+
+        'width:100%;padding:11px 18px;background:var(--a100)">'+
+        '<span style="text-align:left"><span style="display:block;font-size:13px;font-weight:800;color:var(--a700)">'+
+          'SIN CUENTA ASIGNADA</span>'+
+        '<span style="font-size:11px;color:var(--a700)">'+huerfanos.length+' movimiento'+(huerfanos.length===1?'':'s')+
+          ' de '+[...new Set(huerfanos.map(m=>m.banco||'sin banco'))].join(', ')+' — no se descuentan de ningún saldo</span></span>'+
+        '<span class="num" style="font-size:15px;align-self:center;color:var(--a700)">'+fmt(suma)+'</span></button>';
+    }
+    h+='</div>';
     /* Arriendos y gastos no son sumandos del saldo — sección aparte, sin insinuar aritmética. */
     h+='<div class="block"><div class="secthead"><span>MOVIMIENTO DEL MES</span></div>'+
       '<div class="row" style="display:grid;grid-template-columns:1fr auto;padding:11px 18px">'+
@@ -749,7 +1025,8 @@ function vistaInicio(){
       '<button onclick="ir(\'gastos\')" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:11px 18px">'+
       '<span style="font-size:14px;color:var(--n700)">Gastos del mes · '+gastosBanco().length+' movimientos</span>'+
       '<span class="num" style="font-size:15px;align-self:center">'+fmt(gastado)+'</span></button>'+
-      '<div class="pad muted" style="font-size:11px">Ya reflejados en los saldos de arriba cuando el banco los registró.</div></div>';
+      '<div class="pad muted" style="font-size:11px">El total del mes, para contrastar con el presupuesto. '+
+      'Del saldo de arriba sólo se descuentan los posteriores a la última actualización de cada cuenta.</div></div>';
   }
 
   h+='<div class="block grid2">'+
@@ -929,7 +1206,9 @@ function vistaGastos(){
         ? (proy>presu ? 'A este ritmo superas el presupuesto en '+fmt(proy-presu)+'.' : 'A este ritmo te sobran '+fmt(presu-proy)+'.')
         : 'Define límites por categoría para proyectar contra presupuesto.')+
     '</div></div></div>';
-  h+='<div class="block pad"><button onclick="abrirNuevoGasto()" class="btnprim" style="width:100%">+ Registrar gasto</button></div>';
+  h+='<div class="block pad" style="display:flex;gap:8px;flex-wrap:wrap">'+
+    '<button onclick="abrirNuevoGasto()" class="btnprim" style="flex:1;min-width:150px">+ Registrar gasto</button>'+
+    '<button onclick="abrirImportar()" class="btnsec" style="flex:1;min-width:150px">Importar del banco</button></div>';
   h+='</div></div>';
   return h;
 }
@@ -1110,6 +1389,104 @@ function vistaCompromisos(){
   return h;
 }
 
+function abrirImportar(){
+  IMP.filas=[]; IMP.leyendo=false; IMP.nota='';
+  abrirSheet('<div id="imp-cuerpo"></div>');
+  pintarImportar();
+  const z=$('imp-zona');
+  if(z){
+    z.addEventListener('dragover', e=>{ e.preventDefault(); z.style.background='var(--n200)'; });
+    z.addEventListener('dragleave', ()=>{ z.style.background=''; });
+    z.addEventListener('drop', e=>{ e.preventDefault(); z.style.background='';
+      const f=e.dataTransfer.files&&e.dataTransfer.files[0]; if(f) leerImagen(f); });
+  }
+  const t=$('imp-txt');
+  if(t) t.addEventListener('paste', e=>{
+    const it=[...(e.clipboardData.items||[])].find(x=>/^image\//.test(x.type));
+    if(it){ e.preventDefault(); leerImagen(it.getAsFile()); }
+  });
+}
+function pintarImportar(){
+  const c=$('imp-cuerpo'); if(!c) return;
+  const foco=document.activeElement, focoId=foco&&foco.id?foco.id:'', pos=foco&&foco.selectionStart;
+  const bancos=D.saldos.map(s=>s.banco);
+  if(!bancos.length) bancos.push('Security');
+  const n=IMP.filas.filter(f=>f.incluir).length;
+  const total=IMP.filas.filter(f=>f.incluir).reduce((a,f)=>a+(f.tipo==='gasto'?f.monto:-f.monto),0);
+
+  let h='<div class="secthead"><span>IMPORTAR MOVIMIENTOS</span>'+
+    '<button onclick="cerrarSheet()" class="muted" style="font-weight:800">CERRAR</button></div>';
+
+  if(!IMP.filas.length){
+    h+='<div class="pad" style="padding-bottom:0"><div style="font-size:13px;color:var(--n700)">'+
+      'Copia la tabla desde el sitio del banco y pégala abajo. También puedes soltar una captura '+
+      '— la leo, pero revisa los montos antes de guardar.</div></div>';
+    h+='<div class="field"><label>TEXTO DE LA CARTOLA</label>'+
+      '<textarea class="input" id="imp-txt" rows="6" style="font-family:ui-monospace,monospace;font-size:12px" '+
+      'placeholder="02-09-2026&#9;PAC TARJETA DE CREDITO&#9;-$ 3.748&#9;$ 4.719.236"></textarea></div>';
+    h+='<div class="pad" style="padding-top:0;display:flex;gap:8px;flex-wrap:wrap">'+
+      '<button onclick="leerTexto()" class="btnprim">Leer el texto</button>'+
+      '<label class="btnsec" style="cursor:pointer">Subir imagen'+
+        '<input type="file" accept="image/*" hidden onchange="leerImagen(this.files[0])"></label></div>';
+    h+='<div id="imp-zona" class="pad" style="margin:0 18px 18px;border:2px dashed var(--divider);'+
+      'text-align:center;font-size:12px;font-weight:800;color:var(--n600);padding:22px">'+
+      (IMP.leyendo?esc(IMP.nota||'Leyendo…'):'O SUELTA UNA CAPTURA AQUÍ')+'</div>';
+    if(IMP.nota&&!IMP.leyendo)
+      h+='<div class="pad" style="padding-top:0;font-size:12px;color:var(--a700);font-weight:600">'+esc(IMP.nota)+'</div>';
+    c.innerHTML=h; return;
+  }
+
+  if(IMP.nota)
+    h+='<div class="pad" style="padding-bottom:0;font-size:12px;color:var(--n700)">'+esc(IMP.nota)+'</div>';
+  h+='<div class="pad" style="padding-bottom:6px;font-size:13px;font-weight:600">'+
+    IMP.filas.length+' fila'+(IMP.filas.length===1?'':'s')+' reconocida'+(IMP.filas.length===1?'':'s')+
+    '. Corrige lo que esté mal y desmarca lo que no quieras.</div>';
+
+  IMP.filas.forEach((f,i)=>{
+    h+='<div class="row" style="padding:12px 18px;'+(f.incluir?'':'opacity:.45')+'">'+
+      '<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">'+
+        '<input type="checkbox" '+(f.incluir?'checked':'')+' onchange="impToggle('+i+')" '+
+          'style="width:18px;height:18px;accent-color:var(--accent);flex:none">'+
+        '<input class="input" id="imp-d'+i+'" value="'+esc(f.desc)+'" '+
+          'oninput="impCampo('+i+',\'desc\',this.value)" style="font-weight:600">'+
+      '</div>'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">'+
+        '<input class="input" id="imp-f'+i+'" value="'+esc(f.fecha)+'" '+
+          'oninput="impCampo('+i+',\'fecha\',this.value)">'+
+        '<input class="input num" id="imp-m'+i+'" inputmode="numeric" value="'+Math.round(f.monto).toLocaleString('es-CL')+'" '+
+          'oninput="impCampo('+i+',\'monto\',this.value)" style="text-align:right;font-weight:800">'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">'+
+        '<div class="seg" style="display:flex">'+
+          '<button onclick="impTipo('+i+',\'gasto\')" class="seg-opt" style="padding:6px 12px;font-size:12px;font-weight:800;'+
+            'border:1px solid var(--divider);'+(f.tipo==='gasto'?'background:var(--text);color:var(--bg)':'')+'">GASTO</button>'+
+          '<button onclick="impTipo('+i+',\'ingreso\')" class="seg-opt" style="padding:6px 12px;font-size:12px;font-weight:800;'+
+            'border:1px solid var(--divider);border-left:0;'+(f.tipo==='ingreso'?'background:var(--text);color:var(--bg)':'')+'">INGRESO</button>'+
+        '</div>'+
+        '<select class="input" id="imp-c'+i+'" onchange="impCampo('+i+',\'cat\',this.value)" '+
+          'style="flex:1;min-width:120px;padding:6px 8px;font-size:12px">'+
+          D.categorias.map(x=>'<option '+(normClave(x.nombre)===normClave(f.cat)?'selected':'')+'>'+esc(x.nombre)+'</option>').join('')+
+          (D.categorias.some(x=>normClave(x.nombre)===normClave(f.cat))?'':'<option selected>'+esc(f.cat)+'</option>')+
+        '</select>'+
+      '</div>'+
+      '<div class="muted" style="font-size:11px;margin-top:6px">'+
+        (f.dup?'<span class="alerttext" style="font-weight:800">YA HAY UN MOVIMIENTO CON ESA FECHA Y MONTO</span>'
+              :'categoría sugerida '+esc(f.razon))+
+      '</div></div>';
+  });
+
+  h+='<div class="pad" style="display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center">'+
+    '<span style="font-size:12px;color:var(--n700)">'+n+' de '+IMP.filas.length+' · '+fmt(total)+'</span>'+
+    '<select class="input" id="imp-banco" style="padding:6px 8px;font-size:12px">'+
+      bancos.map(b=>'<option>'+esc(b)+'</option>').join('')+'</select></div>';
+  h+='<div class="pad" style="padding-top:0;display:flex;gap:8px">'+
+    '<button onclick="guardarImportadas()" class="btnprim" style="flex:1">Agregar '+n+' movimiento'+(n===1?'':'s')+'</button>'+
+    '<button onclick="abrirImportar()" class="btnsec">Empezar de nuevo</button></div>';
+
+  c.innerHTML=h;
+  if(focoId){ const el=$(focoId); if(el&&el.setSelectionRange){ el.focus(); try{ el.setSelectionRange(pos,pos); }catch(e){} } }
+}
+
 /* ── hojas modales ──────────────────────────────────────── */
 function abrirSheet(html){ $('sheetbox').innerHTML=html; $('sheet').hidden=false; }
 function cerrarSheet(){ $('sheet').hidden=true; $('sheetbox').innerHTML=''; }
@@ -1118,17 +1495,33 @@ $('sheet').addEventListener('click', e=>{ if(e.target.id==='sheet') cerrarSheet(
 function abrirSaldos(){
   const c=saldoPorCuenta();
   let h='<div class="secthead"><span>SALDO POR CUENTA</span><button onclick="cerrarSheet()" style="font-size:11px;font-weight:800;letter-spacing:.08em">CERRAR</button></div>';
+  /* La fecha del saldo no es la de hoy por defecto: es la del dato que copiaste
+     del banco. Suponerla "hoy" hace que los gastos de ayer no se descuenten
+     nunca, porque quedan antes del corte. */
+  h+='<div class="field"><label>¿DE QUÉ DÍA ES ESTE SALDO?</label>'+
+    '<input class="input" id="sal-fecha" type="date" value="'+hoyISO()+'" max="'+hoyISO()+'" oninput="notaSaldos('+c.length+')">'+
+    '<div id="sal-nota" class="muted" style="font-size:11px;margin-top:6px"></div></div>';
   c.forEach((x,i)=>{
     h+='<div class="field"><label>'+esc(x.banco)+(x.dias>5?' · sin actualizar hace '+x.dias+' días':'')+'</label>'+
-      '<input class="input" id="sal-'+i+'" inputmode="numeric" value="'+Math.round(x.monto).toLocaleString('es-CL')+'"></div>';
+      '<input class="input" id="sal-'+i+'" inputmode="numeric" value="'+Math.round(x.informado).toLocaleString('es-CL')+'"></div>';
   });
   h+='<div class="pad"><button class="btnprim" style="width:100%" onclick="submitSaldos('+c.length+')">Guardar '+mesLabel()+'</button></div>';
   abrirSheet(h);
+  notaSaldos(c.length);
+}
+function notaSaldos(){
+  const el=$('sal-nota'); if(!el) return;
+  const iso=($('sal-fecha')||{}).value||hoyISO();
+  const p=previewDescuento(null, iso);
+  el.innerHTML = p.n
+    ? 'Se descontarán '+p.n+' movimiento'+(p.n===1?'':'s')+' registrado'+(p.n===1?'':'s')+
+      ' después de esa fecha · '+fmt(p.suma)
+    : 'No hay movimientos registrados después de esa fecha, así que el saldo queda tal cual.';
 }
 function submitSaldos(n){
   const v=[];
   for(let i=0;i<n;i++) v.push(toNum($('sal-'+i).value));
-  guardarSaldos(v);
+  guardarSaldos(v, ($('sal-fecha')||{}).value||hoyISO());
 }
 
 function abrirCategorias(movIdx){
@@ -1205,8 +1598,9 @@ function vistaAjustes(){
     h+='<button onclick="editarCuenta(\''+esc(c.banco)+'\')" class="row" style="display:grid;grid-template-columns:1fr auto;width:100%;padding:12px 18px">'+
       '<span><span style="display:block;font-size:15px;font-weight:600">'+esc(c.banco)+'</span>'+
       '<span style="display:block;font-size:11px;'+(alerta?'font-weight:600;color:var(--a700)':'color:var(--n600)')+'">'+
-        (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)):'sin fecha')+'</span></span>'+
-      '<span class="num" style="font-size:15px;align-self:center">'+fmt(c.monto)+'</span></button>';
+        (c.fecha?('actualizado '+esc(fechaCorta(c.fecha)||c.fecha)):'sin fecha')+
+        (c.nPost?' · '+fmt(c.monto)+' hoy':'')+'</span></span>'+
+      '<span class="num" style="font-size:15px;align-self:center">'+fmt(c.informado)+'</span></button>';
   });
   h+='</div>';
 
@@ -1298,23 +1692,37 @@ function editarCuenta(banco){
   let h='<div class="secthead"><span>'+(nuevo?'NUEVA CUENTA':'EDITAR CUENTA')+'</span>'+
     '<button onclick="cerrarSheet()" style="font-size:11px;font-weight:800;letter-spacing:.08em">CERRAR</button></div>'+
     '<div class="field"><label>BANCO</label><input class="input" id="ac-banco" value="'+esc(c?c.banco:'')+'" placeholder="Banco de Chile"></div>'+
-    '<div class="field"><label>SALDO EN '+mesLabel()+'</label><input class="input" id="ac-saldo" inputmode="numeric" style="font-size:24px;font-weight:800" value="'+(c?Math.round(c.monto).toLocaleString('es-CL'):'')+'" placeholder="0"></div>'+
+    '<div class="field"><label>SALDO EN '+mesLabel()+'</label><input class="input" id="ac-saldo" inputmode="numeric" style="font-size:24px;font-weight:800" value="'+(c?Math.round(c.informado).toLocaleString('es-CL'):'')+'" placeholder="0"></div>'+
+    '<div class="field"><label>¿DE QUÉ DÍA ES ESE SALDO?</label>'+
+      '<input class="input" id="ac-fecha" type="date" value="'+hoyISO()+'" max="'+hoyISO()+'" oninput="notaCuenta()">'+
+      (c&&c.fecha?'<div class="muted" style="font-size:11px;margin-top:6px">El saldo guardado era del '+esc(fechaCorta(c.fecha)||c.fecha)+'.</div>':'')+
+      '<div id="ac-nota" class="muted" style="font-size:11px;margin-top:6px"></div></div>'+
     '<div class="pad"><button class="btnprim" style="width:100%" onclick="guardarCuenta('+(c?'\''+esc(c.banco)+'\'':'null')+')">Guardar</button></div>';
   if(c) h+='<div class="pad" style="padding-top:0"><button class="btnsec" style="width:100%" onclick="borrarCuenta(\''+esc(c.banco)+'\')">Eliminar cuenta</button></div>';
   abrirSheet(h);
+  notaCuenta();
+}
+function notaCuenta(){
+  const el=$('ac-nota'); if(!el) return;
+  const banco=($('ac-banco')||{}).value||'';
+  const p=previewDescuento(banco, ($('ac-fecha')||{}).value||hoyISO());
+  el.textContent = p.n
+    ? 'Se descontarán '+p.n+' movimiento'+(p.n===1?'':'s')+' posterior'+(p.n===1?'':'es')+' · '+fmt(p.suma)
+    : 'Sin movimientos posteriores a esa fecha: el saldo queda tal cual.';
 }
 async function guardarCuenta(anterior){
   const banco=$('ac-banco').value.trim();
   if(!banco){ toast('Falta el nombre del banco'); return; }
   const saldo=toNum($('ac-saldo').value);
-  const k=mesKey(), hoy=new Date().toLocaleDateString('es-CL');
+  const k=mesKey(), fecha=isoADmy(($('ac-fecha')||{}).value||hoyISO());
   let s=D.saldos.find(x=>x.banco===(anterior||banco));
-  if(!s){ s={banco, fecha:hoy, raw:{Banco:banco}}; D.saldos.push(s); }
-  s.banco=banco; s.fecha=hoy; s.raw['Banco']=banco; s.raw[k]=saldo; s.raw['Saldo']=saldo;
-  s.raw['Fecha actualización']=hoy;
+  if(!s){ s={banco, fecha, raw:{Banco:banco}}; D.saldos.push(s); }
+  s.banco=banco; s.fecha=fecha; s.raw['Banco']=banco; s.raw[k]=saldo; s.raw['Saldo']=saldo;
+  s.raw['Fecha actualización']=fecha;
   cerrarSheet(); guardarCache(); render(); toast('Cuenta guardada');
-  const r=await apiPost({ action:'setCuenta', cuenta:{ banco, bancoAnterior:anterior||'', saldo, mes:k } });
+  const r=await apiPost({ action:'setCuenta', cuenta:{ banco, bancoAnterior:anterior||'', saldo, mes:k, fecha } });
   if(r&&r.error) toast('No se pudo guardar en la hoja');
+  else cargar({silencioso:true});
 }
 async function borrarCuenta(banco){
   D.saldos=D.saldos.filter(x=>x.banco!==banco);
